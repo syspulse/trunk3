@@ -18,12 +18,11 @@ import spray.json._
 import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.serde._
-import io.syspulse.haas.core.{ Block, Transaction, TokenTransfer, Event, Tx }
 
 import io.syspulse.haas.ingest.eth.EthURI
 
 import io.syspulse.haas.ingest.Decoder
+import io.syspulse.haas.ingest.eth._
 
 trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx] {
 

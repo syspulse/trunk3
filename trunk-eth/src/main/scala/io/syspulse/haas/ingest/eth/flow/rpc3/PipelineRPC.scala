@@ -34,9 +34,8 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.core.{ Block, Tx, TokenTransfer, Event }
-import io.syspulse.haas.ingest.eth.rpc3._
-import io.syspulse.haas.ingest.eth.rpc3.EthRpcJson._
+import io.syspulse.haas.ingest.eth.flow.rpc3._
+import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 
 import io.syspulse.haas.ingest.eth.EthURI
 import io.syspulse.haas.ingest.PipelineIngest

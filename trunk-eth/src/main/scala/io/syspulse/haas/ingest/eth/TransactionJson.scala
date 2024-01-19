@@ -1,4 +1,4 @@
-package io.syspulse.haas.serde
+package io.syspulse.haas.ingest.eth
 
 import scala.jdk.CollectionConverters._
 
@@ -6,8 +6,6 @@ import scala.util.Random
 
 import spray.json._
 import DefaultJsonProtocol._
-
-import io.syspulse.haas.core.Transaction
 
 object TransactionJson extends DefaultJsonProtocol {
   

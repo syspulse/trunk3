@@ -29,11 +29,10 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.core.Tx
-import io.syspulse.haas.serde.TxJson
-import io.syspulse.haas.serde.TxJson._
-import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
+import io.syspulse.haas.ingest.eth.TxJson
+import io.syspulse.haas.ingest.eth.TxJson._
+import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.PipelineIngest
 
 abstract class PipelineLakeTx[E <: skel.Ingestable](config:Config)(implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 

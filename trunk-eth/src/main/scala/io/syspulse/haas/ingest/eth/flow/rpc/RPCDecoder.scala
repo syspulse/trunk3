@@ -18,8 +18,7 @@ import spray.json._
 import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.serde._
-import io.syspulse.haas.core.{ Block, Tx, TokenTransfer, Event }
+import io.syspulse.haas.ingest.eth._
 
 import io.syspulse.haas.ingest.eth.EthURI
 
@@ -28,6 +27,10 @@ import io.syspulse.haas.ingest.eth.rpc._
 import io.syspulse.haas.ingest.eth.rpc.EthRpcJson
 
 import io.syspulse.haas.ingest.Decoder
+import io.syspulse.haas.ingest.eth.BlockJson
+import io.syspulse.haas.ingest.eth.EventJson
+import io.syspulse.haas.ingest.eth.TokenTransferJson
+import io.syspulse.haas.ingest.eth.TxJson
 
 trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,RpcTx] {
 

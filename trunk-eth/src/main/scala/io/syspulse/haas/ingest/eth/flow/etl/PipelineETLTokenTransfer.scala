@@ -34,9 +34,8 @@ import io.syspulse.haas.ingest.eth._
 
 import java.util.concurrent.atomic.AtomicLong
 
-import io.syspulse.haas.core.TokenTransfer
-import io.syspulse.haas.serde.TokenTransferJson
-import io.syspulse.haas.serde.TokenTransferJson._
+import io.syspulse.haas.ingest.eth.TokenTransferJson
+import io.syspulse.haas.ingest.eth.TokenTransferJson._
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.EthEtlJson._

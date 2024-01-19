@@ -9,9 +9,6 @@ import io.syspulse.skel.Ingestable
 import spray.json._
 import spray.json.{DefaultJsonProtocol,NullOptions}
 
-import io.syspulse.haas.core.Tx
-import io.syspulse.haas.core.Block
-
 case class EthBlock(
   number:Long,
   hash:String,  

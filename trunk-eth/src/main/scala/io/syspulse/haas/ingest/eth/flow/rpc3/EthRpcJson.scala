@@ -1,4 +1,4 @@
-package io.syspulse.haas.ingest.eth.rpc3
+package io.syspulse.haas.ingest.eth.flow.rpc3
 
 import com.typesafe.scalalogging.Logger
 

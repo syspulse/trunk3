@@ -32,10 +32,9 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
 
-import io.syspulse.haas.ingest.eth.EvmTx
-import io.syspulse.haas.core.MempoolTx
+import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.EvmTxPoolJson._
-import io.syspulse.haas.serde.MempoolJson._
+import io.syspulse.haas.ingest.eth.MempoolJson._
 import io.syspulse.haas.ingest.PipelineIngest
 
 abstract class PipelineEthMempool[E <: skel.Ingestable](config:Config)

@@ -29,9 +29,9 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.core.Block
-import io.syspulse.haas.serde.BlockJson
-import io.syspulse.haas.serde.BlockJson._
+import io.syspulse.haas.ingest.eth._
+import io.syspulse.haas.ingest.eth.BlockJson
+import io.syspulse.haas.ingest.eth.BlockJson._
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.rpc._
 import io.syspulse.haas.ingest.eth.rpc.EthRpcJson._

@@ -30,14 +30,14 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.core.Block
-import io.syspulse.haas.core.Tx
-import io.syspulse.haas.serde.TxJson
-import io.syspulse.haas.serde.TxJson._
+import io.syspulse.haas.ingest.eth._
+
+import io.syspulse.haas.ingest.eth.Tx
+import io.syspulse.haas.ingest.eth.TxJson._
+
 import io.syspulse.haas.ingest.Config
-import io.syspulse.haas.ingest.eth.rpc3._
-import io.syspulse.haas.ingest.eth.rpc3.EthRpcJson._
-import io.syspulse.haas.core.EventTx
+import io.syspulse.haas.ingest.eth.flow.rpc3._
+import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
 
 abstract class PipelineRpcTx[E <: skel.Ingestable](config:Config)
                                                   (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -61,7 +61,8 @@ abstract class PipelineRpcTx[E <: skel.Ingestable](config:Config)
 }
 
 class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
-
+  import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
+  
   def transform(block: RpcBlock): Seq[Tx] = {
     val b = block.result.get
 
@@ -82,7 +83,6 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
       val receipts:Map[String,RpcReceipt] = receiptsRsp.statusCode match {
         case 200 =>
           // need to import it here for List[]
-          import io.syspulse.haas.ingest.eth.rpc3.EthRpcJson._
 
           val batchRsp = receiptsRsp.data.toString
 

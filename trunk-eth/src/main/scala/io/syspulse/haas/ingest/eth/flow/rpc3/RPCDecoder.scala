@@ -18,13 +18,11 @@ import spray.json._
 import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.serde._
-import io.syspulse.haas.core.{ Block, Tx, TokenTransfer, Event }
-
+import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.EthURI
 
-import io.syspulse.haas.ingest.eth.rpc3._
-import io.syspulse.haas.ingest.eth.rpc3.EthRpcJson
+import io.syspulse.haas.ingest.eth.flow.rpc3._
+import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
 
 import io.syspulse.haas.ingest.Decoder
 

@@ -19,6 +19,7 @@ import io.syspulse.haas.ingest.eth
 import io.syspulse.haas.ingest.icp
 import io.syspulse.haas.ingest.starknet
 import io.syspulse.haas.ingest.vechain
+import eth.flow.rpc3.rpc3.{PipelineTx, PipelineBlock}
 
 object App extends skel.Server {
   

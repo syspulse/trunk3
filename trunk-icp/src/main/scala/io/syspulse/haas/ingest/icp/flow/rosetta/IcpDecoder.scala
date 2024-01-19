@@ -19,7 +19,6 @@ import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.serde._
-import io.syspulse.haas.core.{ Block, Tx, TokenTransfer, Event }
 
 import io.syspulse.haas.ingest.icp.IcpURI
 

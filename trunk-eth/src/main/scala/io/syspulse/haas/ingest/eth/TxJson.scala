@@ -1,4 +1,4 @@
-package io.syspulse.haas.serde
+package io.syspulse.haas.ingest.eth
 
 import scala.jdk.CollectionConverters._
 
@@ -7,7 +7,8 @@ import scala.util.Random
 import spray.json._
 import DefaultJsonProtocol._
 
-import io.syspulse.haas.core.Tx
+import io.syspulse.haas.ingest.eth.BlockJson
+import io.syspulse.haas.ingest.eth.EventJson
 
 object TxJson extends DefaultJsonProtocol {
   import BlockJson._

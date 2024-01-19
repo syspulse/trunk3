@@ -29,9 +29,8 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.core.TokenTransfer
-import io.syspulse.haas.serde.TokenTransferJson
-import io.syspulse.haas.serde.TokenTransferJson._
+import io.syspulse.haas.ingest.eth.TokenTransferJson
+import io.syspulse.haas.ingest.eth.TokenTransferJson._
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.PipelineIngest

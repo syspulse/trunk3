@@ -1,4 +1,4 @@
-package io.syspulse.haas.core
+package io.syspulse.haas.ingest.eth
 
 import io.syspulse.skel.Ingestable
 

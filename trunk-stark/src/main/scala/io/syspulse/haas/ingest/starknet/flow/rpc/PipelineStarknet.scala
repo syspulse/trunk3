@@ -34,7 +34,6 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.core.{ Block, Tx, TokenTransfer, Event }
 import io.syspulse.haas.ingest.starknet.flow.rpc._
 import io.syspulse.haas.ingest.starknet.flow.rpc.StarknetRpcJson._
 

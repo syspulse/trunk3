@@ -29,11 +29,10 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.core.Event
-import io.syspulse.haas.serde.EventJson
-import io.syspulse.haas.serde.EventJson._
-import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
+import io.syspulse.haas.ingest.eth.EventJson
+import io.syspulse.haas.ingest.eth.EventJson._
+import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.EthEtlJson._
 import io.syspulse.haas.ingest.PipelineIngest
 
