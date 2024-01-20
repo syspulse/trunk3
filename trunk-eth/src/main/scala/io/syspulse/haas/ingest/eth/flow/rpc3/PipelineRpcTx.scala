@@ -78,44 +78,7 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
 
     log.info(s"transaction: ${b.transactions.size}")
       
-    val receipts:Map[String,RpcReceipt] = if(b.transactions.size > 0) {
-      val receiptsRsp = requests.post(config.feed, data = json,headers = Map("content-type" -> "application/json"))
-      val receipts:Map[String,RpcReceipt] = receiptsRsp.statusCode match {
-        case 200 =>
-          // need to import it here for List[]
-
-          val batchRsp = receiptsRsp.data.toString
-
-          try {
-            val batchReceipts = batchRsp.parseJson.convertTo[List[RpcReceiptResultBatch]]
-
-            val rr:Seq[RpcReceipt] = batchReceipts.flatMap { r => 
-              
-              if(r.result.isDefined) {
-                Some(r.result.get)
-              } else {
-                log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
-                None
-              }
-            }
-
-            // commit cursor
-            cursor.commit(toLong(b.number))
-
-            rr.map( r => r.transactionHash -> r).toMap
-
-          } catch {
-            case e:Exception =>
-              log.error(s"could not parse receipts batch: ${receiptsRsp}",e)
-              Map()
-          }
-        case _ => 
-          log.warn(s"could not get receipts batch: ${receiptsRsp}")
-          Map()
-      }
-      receipts
-    } else
-      Map()
+    val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
 
     b.transactions.map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt

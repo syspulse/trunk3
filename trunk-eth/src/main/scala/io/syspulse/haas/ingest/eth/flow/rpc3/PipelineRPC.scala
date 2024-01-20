@@ -248,10 +248,66 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   }
 
   def decodeSingle(rsp:String):Seq[String] = Seq(rsp)
+
   def decodeBatch(rsp:String):Seq[String] = {
     // ATTENTION !!!
     // very inefficient, optimize with web3-proxy approach 
     val jsonBatch = ujson.read(rsp)
     jsonBatch.arr.map(a => a.toString()).toSeq
+  }
+
+  def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {
+    val b = block.result.get
+
+    val ts = toLong(b.timestamp)
+    val block_number = toLong(b.number)
+
+    val json = 
+    "[" + b.transactions.map( t => 
+      s"""{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["${t.hash}"],"id":"${t.hash}"}"""
+     ).mkString(",") +
+    "]"
+    .trim.replaceAll("\\s+","")
+
+    log.info(s"transaction: ${b.transactions.size}")
+      
+    if(b.transactions.size > 0) {
+      val receiptsRsp = requests.post(config.feed, data = json,headers = Map("content-type" -> "application/json"))
+      val receipts:Map[String,RpcReceipt] = receiptsRsp.statusCode match {
+        case 200 =>
+          // need to import it here for List[]
+
+          val batchRsp = receiptsRsp.data.toString
+
+          try {
+            val batchReceipts = batchRsp.parseJson.convertTo[List[RpcReceiptResultBatch]]
+
+            val rr:Seq[RpcReceipt] = batchReceipts.flatMap { r => 
+              
+              if(r.result.isDefined) {
+                Some(r.result.get)
+              } else {
+                log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
+                None
+              }
+            }
+
+            // commit cursor
+            cursor.commit(toLong(b.number))
+
+            rr.map( r => r.transactionHash -> r).toMap
+
+          } catch {
+            case e:Exception =>
+              log.error(s"could not parse receipts batch: ${receiptsRsp}",e)
+              Map()
+          }
+        case _ => 
+          log.warn(s"could not get receipts batch: ${receiptsRsp}")
+          Map()
+      }
+      receipts
+    } else
+      Map()    
   }
 }

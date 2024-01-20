@@ -4,8 +4,8 @@ import io.syspulse.skel.Ingestable
 
 case class Event(
   ts:Long,
-  block:Long,
-  contract:String,
+  blk:Long,
+  con:String,
   data:String,
   hash:String,   // transaction hash !
   topics:Seq[String] = Seq(), 

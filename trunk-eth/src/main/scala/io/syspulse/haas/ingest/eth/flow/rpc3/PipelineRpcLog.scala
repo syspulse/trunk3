@@ -32,18 +32,18 @@ import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.ingest.eth._
 
-import io.syspulse.haas.ingest.eth.Transaction
-import io.syspulse.haas.ingest.eth.TransactionJson._
+import io.syspulse.haas.ingest.eth.Event
+import io.syspulse.haas.ingest.eth.EventJson._
 
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
 
-abstract class PipelineRpcTransaction[E <: skel.Ingestable](config:Config)
+abstract class PipelineRpcEvent[E <: skel.Ingestable](config:Config)
                 (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineRPC[RpcBlock,RpcBlock,E](config) {
   
-  def apiSuffix():String = s"/transaction"
+  def apiSuffix():String = s"/log"
 
   def parse(data:String):Seq[RpcBlock] = {
     val bb = parseBlock(data)
@@ -59,10 +59,10 @@ abstract class PipelineRpcTransaction[E <: skel.Ingestable](config:Config)
   }
 }
 
-class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transaction](config) {
+class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
   import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
   
-  def transform(block: RpcBlock): Seq[Transaction] = {
+  def transform(block: RpcBlock): Seq[Event] = {
     val b = block.result.get
 
     val ts = toLong(b.timestamp)
@@ -79,39 +79,24 @@ class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transact
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
     
-    b.transactions.map{ tx:RpcTx => {
+    b.transactions.flatMap( tx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
-      val receipt = receipts.get(tx.hash)
+      val receipt = receipts(tx.hash)
+      val logs = receipt.logs
       
-      Transaction(
-        ts * 1000L,
-        transaction_index,
-        tx.hash,
-        block_number,
-
-        tx.from,
-        tx.to,
-        
-        toLong(tx.gas),
-        toBigInt(tx.gasPrice),
-        
-        tx.input,
-        toBigInt(tx.value),
-        toLong(tx.nonce),
-        
-        tx.maxFeePerGas.map(toBigInt(_)), //tx.max_fee_per_gas,
-        tx.maxPriorityFeePerGas.map(toBigInt(_)), //tx.max_priority_fee_per_gas, 
-
-        tx.`type`.map(r => toLong(r).toInt),
-
-        receipt.map(r => toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
-        receipt.map(r => toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
-        receipt.map(_.contractAddress).flatten, //tx.receipt_contract_address, 
-        Some(b.receiptsRoot), //tx.receipt_root, 
-        receipt.map(r => toLong(r.status).toInt), //tx.receipt_status, 
-        receipt.map(_.effectiveGasPrice.map(r => toBigInt(r))).flatten, //tx.receipt_effective_gas_price
-
-      )
-    }}.toSeq
+      logs.map( log => {
+        Event(
+          ts = ts * 1000L,
+          blk = block_number,
+          con = receipt.contractAddress.getOrElse(""),
+          data = log.data,
+          hash = tx.hash,                                 // transaction hash !
+          topics = log.topics, 
+          i = toLong(log.logIndex).toInt,                 // log index
+          tix = toLong(tx.transactionIndex).toInt         // transaction index          
+        )
+      })
+      
+    }).toSeq
   }
 }
