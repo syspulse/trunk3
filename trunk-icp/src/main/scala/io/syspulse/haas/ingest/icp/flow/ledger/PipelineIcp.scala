@@ -148,7 +148,8 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                 throw e
             } 
 
-            //log.info(s"rsp=${rsp.statusCode}: ${rsp.text()}")
+            log.debug(s"rsp=${rsp.statusCode}: ${rsp.text()}")
+            
             val lastBlock = if(rsp.statusCode != 200) {
               log.error(s"failed to get latest block: ${rsp}")
               0

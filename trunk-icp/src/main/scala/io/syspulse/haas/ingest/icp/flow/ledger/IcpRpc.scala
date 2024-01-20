@@ -30,6 +30,13 @@ import io.syspulse.skel.Ingestable
 // } 
 
 
+// Ledger API Spec
+// https://ledger-api.internetcomputer.org/swagger-ui/
+// 
+// https://ic-api.internetcomputer.org/api/v3/swagger
+// https://ic-api.internetcomputer.org/api
+// brief: https://mmapped.blog/posts/13-icp-ledger
+
 case class IcpRpcBlock(
   block_height: String, 
   parent_hash: String,
