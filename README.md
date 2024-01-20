@@ -24,7 +24,7 @@ Streaming Web3 RPC ingestion engine
 | EVM    | http://geth:8545 | Standard EVM RPC             |
 | [ethereumetl](https://github.com/syspulse/ethereum-etl)|     | From ethereumetl stream (kafka) |
 | ICP | icp:// | Dfinity Rosetta/[Ledger](https://ledger-api.internetcomputer.org/swagger-ui/#/) RPC | 
-| Starknet | starknet:// | Starknet RPC (default is public) |
+| Starknet | stark:// | Starknet RPC (default is public) |
 | Vechain | vechain:// | Vechain RPC | 
 |     |  |
 
@@ -57,6 +57,8 @@ By default it streams into `stdout` without formatting
 
 
 ## Usage Examples
+
+Run from [trunk-ingest](trunk-ingest) directory
 
 ### via RPC
 
