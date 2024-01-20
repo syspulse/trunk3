@@ -14,6 +14,9 @@ Streaming Web3 RPC ingestion engine
 - File Sink timestamp partitions support
 
 
+<img src="doc/trunk3-Architecture-overview.drawio.png" width="800">
+
+
 ## Sources
 | source | description |
 |-------------|--------------|
