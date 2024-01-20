@@ -4,11 +4,11 @@ import io.syspulse.skel.Ingestable
 
 case class TokenTransfer(
   ts:Long,
-  block:Long,
-  contract:String,
+  blk:Long,
+  con:String,
   from:String,
   to:String,
-  value:BigInt,
+  v:BigInt,
   hash:String,
   i:Int
   

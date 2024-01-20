@@ -185,6 +185,8 @@ object App extends skel.Server {
             Some(new eth.flow.rpc3.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           case "log" | "event" | "log.rpc" | "event.rpc" =>
             Some(new eth.flow.rpc3.PipelineEvent(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "transfer" | "token" | "transafer.rpc" | "token.rpc" =>
+            Some(new eth.flow.rpc3.PipelineTokenTransfer(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // ICP Rosetta API
           case "block.icp.rosetta" =>
