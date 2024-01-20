@@ -32,26 +32,25 @@ import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.ingest.eth._
 
-import io.syspulse.haas.ingest.eth.Tx
-import io.syspulse.haas.ingest.eth.TxJson._
+import io.syspulse.haas.ingest.eth.Transaction
+import io.syspulse.haas.ingest.eth.TransactionJson._
 
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
 
-abstract class PipelineRpcTx[E <: skel.Ingestable](config:Config)
-                                                  (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
+abstract class PipelineRpcTransaction[E <: skel.Ingestable](config:Config)
+                (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineRPC[RpcBlock,RpcBlock,E](config) {
   
-  def apiSuffix():String = s"/tx"
+  def apiSuffix():String = s"/transaction"
 
   def parse(data:String):Seq[RpcBlock] = {
     val bb = parseBlock(data)
     if(bb.size!=0) {
       val b = bb.last.result.get
       latestTs.set(toLong(b.timestamp) * 1000L)
-    }
-    
+    }    
     bb
   }
 
@@ -60,10 +59,10 @@ abstract class PipelineRpcTx[E <: skel.Ingestable](config:Config)
   }
 }
 
-class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
+class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transaction](config) {
   import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
   
-  def transform(block: RpcBlock): Seq[Tx] = {
+  def transform(block: RpcBlock): Seq[Transaction] = {
     val b = block.result.get
 
     val ts = toLong(b.timestamp)
@@ -116,17 +115,17 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
       receipts
     } else
       Map()
-
+    
     b.transactions.map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
-      val logs = receipts.get(tx.hash).get.logs
       val receipt = receipts.get(tx.hash)
 
-      Tx(
-        // ts * 1000L,
+      
+      Transaction(
+        ts * 1000L,
         transaction_index,
         tx.hash,
-        // block_number,
+        block_number,
 
         tx.from,
         tx.to,
@@ -150,39 +149,6 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
         receipt.map(r => toLong(r.status).toInt), //tx.receipt_status, 
         receipt.map(_.effectiveGasPrice.map(r => toBigInt(r))).flatten, //tx.receipt_effective_gas_price
 
-        block = Block(
-          toLong(b.number),
-          b.hash,
-          b.parentHash,
-          b.nonce,
-          b.sha3Uncles,        
-          b.logsBloom,
-          b.transactionsRoot,
-          b.stateRoot,        
-          b.receiptsRoot,
-          b.miner,
-          
-          toBigInt(b.difficulty),
-          toBigInt(b.totalDifficulty),
-          toLong(b.size),
-
-          b.extraData, 
-              
-          toLong(b.gasLimit), 
-          toLong(b.gasUsed), 
-          toLong(b.timestamp) * 1000L, 
-          b.transactions.size,
-          b.baseFeePerGas.map(d => toLong(d))
-        ),
-
-        logs = logs.map( r => {
-          EventTx(
-            toLong(r.logIndex).toInt,
-            r.address,
-            r.data,
-            r.topics
-          )
-        })
       )
     }}.toSeq
   }

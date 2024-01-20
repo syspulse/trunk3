@@ -19,7 +19,7 @@ import io.syspulse.haas.ingest.eth
 import io.syspulse.haas.ingest.icp
 import io.syspulse.haas.ingest.starknet
 import io.syspulse.haas.ingest.vechain
-import eth.flow.rpc3.rpc3.{PipelineTx, PipelineBlock}
+
 
 object App extends skel.Server {
   
@@ -148,24 +148,21 @@ object App extends skel.Server {
       case "stream" => {
         val pp:Seq[PipelineIngest[_,_,_]] = config.entity.flatMap( e => e match {
 
-          // ethereum_etl 
-          case "block" | "block.etl" =>
+          // ethereum_etl compatible
+          case "block.etl" =>
             Some(new eth.flow.etl.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-
-          case "transaction" | "transaction.etl" =>
-            Some(new eth.flow.etl.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTx,config.output)))
-          
-          case "transfer" | "token" | "transfer.etl" | "token.etl" =>
+          case "transaction.etl" =>
+            Some(new eth.flow.etl.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTx,config.output)))          
+          case "transfer.etl" | "token.etl" =>
             Some(new eth.flow.etl.PipelineTokenTransfer(orf(config,config.feedTransfer,config.feed,config.outputTransfer,config.output)))
-
-          case "log" | "event" | "log.etl" | "event.etl" => 
+          case "log.etl" | "event.etl" => 
             Some(new eth.flow.etl.PipelineLog(orf(config,config.feedLog,config.feed,config.outputLog,config.output)))
-              
+          case "tx.etl" =>
+            Some(new eth.flow.etl.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
+
+          // mempool              
           case "mempool" => 
             Some(new eth.flow.PipelineMempool(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-
-          case "tx" | "tx.etl" =>
-            Some(new eth.flow.etl.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
 
           // Lake stored
           case "block.lake" =>
@@ -179,11 +176,13 @@ object App extends skel.Server {
           case "tx.lake" =>
             Some(new eth.flow.lake.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
 
-          // Web3 RPC Transaction and Tx return the same !!
-          case "block.rpc" =>
+          // Web3 RPC 
+          case "block" | "block.rpc" =>
             Some(new eth.flow.rpc3.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "transaction.rpc" | "tx.rpc" =>
+          case "tx" | "tx.rpc" =>
             Some(new eth.flow.rpc3.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "transaction" | "transaction.rpc" =>
+            Some(new eth.flow.rpc3.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // ICP Rosetta API
           case "block.icp.rosetta" =>
