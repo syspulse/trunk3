@@ -24,8 +24,8 @@ Streaming Web3 RPC ingestion engine
 | EVM    | http://geth:8545 | Standard EVM RPC             |
 | [ethereumetl](https://github.com/syspulse/ethereum-etl)|     | From ethereumetl stream (kafka) |
 | ICP | icp:// | Dfinity Rosetta/[Ledger](https://ledger-api.internetcomputer.org/swagger-ui/#/) RPC | 
-| Starknet | stark:// | Starknet RPC (default is public) |
-| Vechain | vechain:// | Vechain RPC | 
+| Starknet | stark:// | Starknet RPC (default is Infura with key) |
+| Vechain | vechain:// | Vechain RPC (default is public RPC) | 
 |     |  |
 
 By default Source is `stdin`
@@ -94,7 +94,9 @@ Transactions + Logs:
 
 ### Lag (to prevent reorg-ed data)
 
-It will return blocks in past from lastest block at the depth of `lag` parameter
+It will produce stream from lastest block at the past block depth of `lag` parameter. 
+For example, lag=1 will stream block 99 when latest block is 100. Thus if 100 is reorged, it will not be streamed but replaced with a new 100.
+NOTE: Ethereum PoS reorgs are usually 1 block deep.
 
 ```
 ./run-trunk.sh -e block.eth -f http://geth:8545 --delimiter= --block=latest --lag=2 
@@ -102,15 +104,22 @@ It will return blocks in past from lastest block at the depth of `lag` parameter
 
 ### Reorg Detection (Blockchain re-organizations)
 
-`--reorg` option allows to catch reorganizations when new block replaces old one. `reorg` specifies how deep the memory for old blocks must be to detect reorg
+`--reorg` option allows to monitor reorganizations (new block replaces  old ones).
+
+`--reorg` specifies how deep the history for old blocks must be
 
 __NOTES__: 
-1. Important to have `throttle` small enough to detect fast reorgs (more detection than etherscan)
-2. `--lag` and `--reorg` are not compatible and should not be used together
+1. It is important to have `throttle` small enough to detect fast reorgs (more detection than etherscan)
+2. `--lag` and `--reorg` options are not compatible and should not be used together
 
+Example of a command to show re-orged blocks:
+
+(Be careful using it agains public RPC since it asks the node about latest block every second)
 ```
 ./run-trunk.sh -e block -f http://geth:8545 --delimiter= --block=latest --logging=WARN --reorg=2 --throttle=1000
 ```
+
+Reorg supports `block` and `transaction` entity
 
 ----
 
