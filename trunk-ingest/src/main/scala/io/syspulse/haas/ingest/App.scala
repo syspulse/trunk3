@@ -164,7 +164,7 @@ object App extends skel.Server {
           case "mempool" => 
             Some(new eth.flow.PipelineMempool(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
-          // Lake stored
+          // Lake format
           case "block.lake" =>
             Some(new eth.flow.lake.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
           case "transaction.lake" =>
@@ -176,16 +176,16 @@ object App extends skel.Server {
           case "tx.lake" =>
             Some(new eth.flow.lake.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
 
-          // Web3 RPC 
-          case "block" | "block.rpc" =>
+          // Standard Web3 RPC 
+          case "block" | "block.eth" =>
             Some(new eth.flow.rpc3.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "tx" | "tx.rpc" =>
+          case "tx" | "tx.eth" =>
             Some(new eth.flow.rpc3.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "transaction" | "transaction.rpc" =>
+          case "transaction" | "transaction.eth" =>
             Some(new eth.flow.rpc3.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "log" | "event" | "log.rpc" | "event.rpc" =>
+          case "log" | "event" | "log.eth" | "event.eth" =>
             Some(new eth.flow.rpc3.PipelineEvent(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "transfer" | "token" | "transafer.rpc" | "token.rpc" =>
+          case "transfer" | "token" | "transafer.eth" | "token.eth" =>
             Some(new eth.flow.rpc3.PipelineTokenTransfer(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // ICP Rosetta API
@@ -201,9 +201,9 @@ object App extends skel.Server {
             Some(new icp.flow.ledger.PipelineTansaction(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           // Starknet
-          case "block.starknet" =>
+          case "block.stark" =>
             Some(new starknet.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "transaction.starknet" =>
+          case "transaction.stark" =>
             Some(new starknet.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Vechain

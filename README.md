@@ -18,15 +18,34 @@ Streaming Web3 RPC ingestion engine
 
 
 ## Sources
-| source | description |
-|-------------|--------------|
-| EVM    |  Standard EVM RPC             |
-| [ethereumetl](https://github.com/syspulse/ethereum-etl)    | From ethereumetl stream (kafka) |
-| ICP | Dfinity Rosetta/[Ledger](https://ledger-api.internetcomputer.org/swagger-ui/#/) RPC |
-| Starknet | Starknet RPC |
-| Vechain | Vechain RPC |
-|     | 
 
+| source | uri | description |
+|--------|-----|--------------|
+| EVM    | http://geth:8545 | Standard EVM RPC             |
+| [ethereumetl](https://github.com/syspulse/ethereum-etl)|     | From ethereumetl stream (kafka) |
+| ICP | icp:// | Dfinity Rosetta/[Ledger](https://ledger-api.internetcomputer.org/swagger-ui/#/) RPC | 
+| Starknet | starknet:// | Starknet RPC (default is public) |
+| Vechain | vechain:// | Vechain RPC | 
+|     |  |
+
+By default Source is `stdin`
+
+## Entities
+
+Entity is specified as `entity.blockchain` (e.g `block.icp` - ICP block)
+
+| Entity |  Supported Blockchain| description |
+|--------|-----|--------------|
+| block       | .eth .icp .stark| Block       |
+| transaction | .eth .icp .stark| Transaction (with status and block info)     |
+| log         | .eth| Event Logs | 
+| token       | .eth| Token Transfer |
+| tx          | .eth .stark| Fat Transaction (with block, receupt and logs ) | 
+|     |  |
+
+
+If no blockchain suffix is specified, `eth` (`rpc`) is assumed
+ 
 ## Sinks
 
 `trunk3` uses [skel-ingest](https://github.com/syspulse/skel/tree/main/skel-ingest/ingest-flow) Pipeline engine and can stream into any supported sinks:
@@ -43,32 +62,32 @@ By default it streams into `stdout` without formatting
 
 Blocks from latest:
 ```
-./run-trunk.sh -e block.rpc -f http://geth:8545 --block=latest 
+./run-trunk.sh -e block -f http://geth:8545 --block=latest 
 ```
 
 Blocks catch-up:
 ```
-./run-trunk.sh -e block.rpc -f http://geth:8545 --throttle=30000
+./run-trunk.sh -e block -f http://geth:8545 --throttle=30000
 ```
 
 Blocks from specific block in batches:
 ```
-./run-trunk.sh -e block.rpc -f http://geth:8545 --block=19999 --batch=10
+./run-trunk.sh -e block -f http://geth:8545 --block=19999 --batch=10
 ```
 
 Blocks Range:
 ```
-./run-trunk.sh -e block.rpc -f http://geth:8545 --block=0 --block.end=100
+./run-trunk.sh -e block -f http://geth:8545 --block=0 --block.end=100
 ```
 
 Blocks from the state file (to continue stream with restarts)
 ```
-./run-trunk.sh -e block.rpc -f http://geth:8545 --block=file://BLOCKS 
+./run-trunk.sh -e block -f http://geth:8545 --block=file://BLOCKS 
 ```
 
-Transactions + Receipts:
+Transactions + Logs:
 ```
-./run-trunk.sh -e tx.rpc -f http://geth:8545
+./run-trunk.sh -e tx -f http://geth:8545
 ```
 
 ### Lag (to prevent reorg-ed data)
@@ -76,7 +95,7 @@ Transactions + Receipts:
 It will return blocks in past from lastest block at the depth of `lag` parameter
 
 ```
-./run-trunk.sh -e block.rpc -f http://geth:8545 --delimiter= --block=latest --lag=2 
+./run-trunk.sh -e block.eth -f http://geth:8545 --delimiter= --block=latest --lag=2 
 ```
 
 ### Reorg Detection (Blockchain re-organizations)
@@ -88,7 +107,7 @@ __NOTES__:
 2. `--lag` and `--reorg` are not compatible and should not be used together
 
 ```
-./run-trunk.sh -e block.rpc -f http://geth:8545 --delimiter= --block=latest --logging=WARN --reorg=2 --throttle=1000
+./run-trunk.sh -e block -f http://geth:8545 --delimiter= --block=latest --logging=WARN --reorg=2 --throttle=1000
 ```
 
 ----
@@ -124,7 +143,7 @@ export INFURA_KEY=1234
 ```
 
 ```
-./run-trunk.sh -f starknet:// -e transaction.starknet --api.token=$INFURA_KEY
+./run-trunk.sh -f stark:// -e transaction.stark --api.token=$INFURA_KEY
 ```
 
 ----

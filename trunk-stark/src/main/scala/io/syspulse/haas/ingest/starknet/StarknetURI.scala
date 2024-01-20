@@ -1,11 +1,11 @@
 package io.syspulse.haas.ingest.starknet
 
 /* 
-starknet://host:port/api
+stark://host:port/api
 */
 
 case class StarknetURI(rpcUri:String,apiSuffix:String="",apiToken:String="") {
-  val PREFIX = "starknet://"
+  val PREFIX = "stark://"
 
   val DEFAULT_HOST = "starknet-mainnet.infura.io"
   def rpcUrl(apiToken:String = "") = s"/v3/${apiToken}"
