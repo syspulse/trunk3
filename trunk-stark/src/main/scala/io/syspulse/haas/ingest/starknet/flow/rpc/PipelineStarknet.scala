@@ -73,7 +73,7 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
     
   override def source(feed:String) = {
     feed.split("://").toList match {
-      case "http" :: _ | "https" :: _ | "starknet" :: _ => 
+      case "http" :: _ | "https" :: _ | "stark" :: _ | "starknet" :: _ => 
 
         val rpcUri = StarknetURI(feed,apiToken = config.apiToken)
         val uri = rpcUri.uri
