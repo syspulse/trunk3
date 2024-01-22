@@ -8,9 +8,7 @@ Streaming Web3 RPC ingestion engine
 - Entities (`block`,`transaction`,`tx`(fat transaction),`log`)
 - Lag support (to avoid re-orgs)
 - Reorg support (to detect re-orgs)
-- Flexible Source/Sink (stdin/stdout,file,kafka)
-- Support to write to Parquet files Sink
-- Support to write to S3 files
+- Different Sink destinations (kafka,files) and formats (json,parquet)
 - File Sink timestamp partitions support
 
 
@@ -58,7 +56,6 @@ By default it streams into `stdout` without formatting
 
 ## Usage Examples
 
-Run from [trunk-ingest](trunk-ingest) directory
 
 ### via RPC
 
@@ -82,9 +79,9 @@ Blocks Range:
 ./run-trunk.sh -e block -f http://geth:8545 --block=0 --block.end=100
 ```
 
-Blocks from the state file (to continue stream with restarts)
+Blocks from the state file (to continue stream with restarts) to Kafka topic `blocks`
 ```
-./run-trunk.sh -e block -f http://geth:8545 --block=file://BLOCKS 
+./run-trunk.sh -e block -f http://geth:8545 -o kafka://broker-1:9092/blocks --block=file://BLOCKS 
 ```
 
 Transactions + Logs:
