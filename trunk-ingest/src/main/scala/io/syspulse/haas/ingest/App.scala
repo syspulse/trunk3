@@ -63,7 +63,7 @@ object App extends skel.Server {
 
         ArgString('t', "filter",s"Filter (def='${d.filter}')"),
         
-        ArgString('d', "datastore",s"datastore for intercetpions (def: ${d.datastore})"),
+        ArgString('d', "datastore",s"datastore dir (def: ${d.datastore})"),
         ArgString('_', "abi",s"directory with ABI jsons (format: NAME-0xaddress.json) (def=${d.abi}"),
 
         ArgString('_', "ingest.cron",s"Ingest load cron (currently only seconds interval Tick supported) (def: ${d.ingestCron})"),

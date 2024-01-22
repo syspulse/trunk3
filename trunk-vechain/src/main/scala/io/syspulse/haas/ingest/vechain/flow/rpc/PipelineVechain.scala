@@ -69,7 +69,7 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
 
   import VechainRpcJson._
 
-  val cursor = new CursorBlock("BLOCK-vechain")  
+  val cursor = new CursorBlock("BLOCK-vechain")(config)
     
   override def source(feed:String) = {
     feed.split("://").toList match {

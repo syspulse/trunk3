@@ -66,7 +66,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
   import EthRpcJson._
 
-  val cursor = new CursorBlock("BLOCK-eth")
+  val cursor = new CursorBlock("BLOCK-eth")(config)
   val reorg = new ReorgBlock(config.blockReorg)
     
   override def source(feed:String) = {

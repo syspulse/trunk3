@@ -69,7 +69,7 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
 
   import StarknetRpcJson._
 
-  val cursor = new CursorBlock("BLOCK-starknet")  
+  val cursor = new CursorBlock("BLOCK-starknet")(config)
     
   override def source(feed:String) = {
     feed.split("://").toList match {

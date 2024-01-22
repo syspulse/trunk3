@@ -251,8 +251,7 @@ lazy val trunk_core = (project in file("trunk-core"))
         Seq(
           libSkelCore,
           libSkelCore,
-          libSkelIngest,
-          libSkelIngestFlow,
+          libSkelIngest,          
           
           libUUID, 
           libScalaTest % "test"
@@ -268,8 +267,7 @@ lazy val trunk_eth = (project in file("trunk-eth"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelIngest,
-          libSkelIngestFlow,
+          libSkelIngest,          
 
           libCsv,
           libUUID,           
@@ -288,8 +286,7 @@ lazy val trunk_icp = (project in file("trunk-icp"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelIngest,
-          libSkelIngestFlow,
+          libSkelIngest,          
 
           libCsv,
           libUUID,           
@@ -308,8 +305,7 @@ lazy val trunk_vechain = (project in file("trunk-vechain"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelIngest,
-          libSkelIngestFlow,
+          libSkelIngest,          
 
           libCsv,
           libUUID,           
@@ -328,8 +324,7 @@ lazy val trunk_stark = (project in file("trunk-stark"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelIngest,
-          libSkelIngestFlow,
+          libSkelIngest,          
 
           libCsv,
           libUUID,           
@@ -358,8 +353,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
     
     libraryDependencies ++= libHttp ++ libAkka ++ libAlpakka ++ libPrometheus ++ Seq(
       libSkelCore,
-      libSkelIngest,
-      libSkelIngestFlow,
+      libSkelIngest,      
       libSkelDSL,
       libSkelNotify,
       libUpickleLib,

@@ -19,7 +19,7 @@ object Dependencies {
 
     lazy val skelVersion = "0.0.8"
     lazy val appVersion = "0.2.0"
-    lazy val jarPrefix = "server-"
+    lazy val jarPrefix = ""
     
     lazy val appDockerRoot = "/app"
 
@@ -191,7 +191,7 @@ object Dependencies {
     val libSkelAuthCore =     "io.syspulse"                     %% "skel-auth-core"                 % skelVersion
     val libSkelCrypto =       "io.syspulse"                     %% "skel-crypto"                    % skelVersion
     val libSkelIngest =       "io.syspulse"                     %% "skel-ingest"                    % skelVersion
-    val libSkelIngestFlow =   "io.syspulse"                     %% "ingest-flow"                    % skelVersion
+    //val libSkelIngestFlow =   "io.syspulse"                     %% "ingest-flow"                    % skelVersion
     val libSkelIngestElastic ="io.syspulse"                     %% "ingest-elastic"                 % skelVersion
     val libSkelDSL =          "io.syspulse"                     %% "skel-dsl"                       % skelVersion
     val libSkelNotify =       "io.syspulse"                     %% "skel-notify"                    % skelVersion

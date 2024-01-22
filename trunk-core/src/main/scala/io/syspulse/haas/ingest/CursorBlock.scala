@@ -6,24 +6,24 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
 import com.typesafe.scalalogging.Logger
 
-class CursorBlock(file:String = "BLOCK",lag:Int = 0) {
+class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   private val log = Logger(this.getClass)
 
   override def toString() = s"${current} [${blockStart} : ${blockEnd}]"
 
-  var stateFile = file
+  var stateFile = s"${config.datastore}/${file}"
   private var current:Long = 0
   var blockStart:Long = 0
   var blockEnd:Long = 0
 
   def read(newStateFile:String = file):String = this.synchronized {
-    stateFile = newStateFile
+    stateFile = s"${config.datastore}/${newStateFile}"
     // can be string lile ("latest")
-    os.read(os.Path(stateFile,os.pwd))    
+    os.read(os.Path(stateFile,os.pwd))
   }
 
   def write(current:Long) = this.synchronized {
-    os.write.over(os.Path(file,os.pwd),current.toString)    
+    os.write.over(os.Path(stateFile,os.pwd),current.toString)    
   }
   
   def init(blockStart:Long, blockEnd:Long) = {

@@ -39,11 +39,11 @@ case class Config(
 
   throttle:Long = 3000L,
   
-  entity:Seq[String] = Seq("transaction"),
+  entity:Seq[String] = Seq("block"),
   
   expr:String = "",
   
-  datastore:String = "dir://store",
+  datastore:String = "data", // store directory
 
   filter:Seq[String] = Seq(),
 
