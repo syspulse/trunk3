@@ -70,7 +70,8 @@ val sharedConfigDocker = Seq(
   //dockerBaseImage := "openjdk:8-jre-alpine",
   //dockerBaseImage := "openjdk:18-slim",
   //dockerBaseImage := "openjdk-s3fs:18-slim",
-  dockerBaseImage := "openjdk-s3fs:11-slim",  // WARNING: this image is needed for JavaScript Nashorn !
+  //dockerBaseImage := "openjdk-s3fs:11-slim",  // WARNING: this image is needed for JavaScript Nashorn !
+  dockerBaseImage := "syspulse/openjdk-s3fs:11-slim",  // WARNING: this image is needed for JavaScript Nashorn !
 
   // Add S3 mount options
   // Requires running docker: 
