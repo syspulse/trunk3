@@ -119,7 +119,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
         val sourceHttp = Source.tick(FiniteDuration(10,TimeUnit.MILLISECONDS), 
                             FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
-                            s"ingest-eth-${feed}")
+                            s"${feed}")
         .map(h => {
           log.info(s"Cron --> ${h}")          
 

@@ -83,28 +83,35 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
         val blockStart = blockStr.strip match {
           case "latest" =>
-            val rsp = requests.post(uri.uri,
-              headers = Seq(("Content-Type","application/json")),
-              data = s"""{
-                "jsonrpc":"2.0","method":"eth_getBlockByNumber",
-                "params":["latest",false],
-                "id":0
+            val json = s"""{
+                "jsonrpc":"2.0","method":"eth_blockNumber",
+                "params":[],
+                "id": 0
               }""".trim.replaceAll("\\s+","")
-            )
-            if(rsp.statusCode != 200) {
-              log.error(s"failed to get latest block: ${rsp}")
-              0
-            } else {              
-               try {
-                val latest = ujson.read(rsp.text()).obj("result").obj("number").str
-                java.lang.Long.parseLong(latest.stripPrefix("0x"),16).toLong
-              } catch {
-                case e:Exception =>
-                  log.error(s"failed to get block: ${rsp.text()}",e)
-                  sys.exit(3)
-                  0
-              }
-            }
+
+            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))            
+            
+            rsp.statusCode match {
+              case 200 => //
+                val body = rsp.text()
+                log.debug(s"${body}")
+
+                try {
+                  val r = ujson.read(rsp.text())
+                  java.lang.Long.decode(r.obj("result").str).toLong
+
+                } catch {
+                  case e:Exception =>
+                    log.error(s"failed to get block: ${body}",e)
+                    sys.exit(3)
+                    0
+                }
+              case _ => 
+                log.error(s"failed to get latest block: ${rsp}")
+                sys.exit(3)
+                0
+            }            
+
           case hex if hex.startsWith("0x") =>
             java.lang.Long.parseLong(hex.drop(2),16).toLong
           case dec =>
@@ -128,24 +135,12 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           FiniteDuration(10,TimeUnit.MILLISECONDS), 
           //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
           FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
-          s"ingest-eth-${uri.uri}"
+          s"${uri.uri}"
         )
 
         // ----- Reorg -----------------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
           if(config.blockReorg > 0 ) {            
-            // // check the block again for reorg
-            // val blockHex = s"0x${lastBlock.toHexString}"
-            // val blocksReq = s"""{
-            //       "jsonrpc":"2.0","method":"eth_getBlockByNumber",
-            //       "params":["${blockHex}",true],
-            //       "id":0
-            //     }""".trim.replaceAll("\\s+","")
-                        
-            // val json = blocksReq
-            // val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            // log.info(s"rsp=${rsp.statusCode}: checking reorg: ${lastBlock}")              
-            // val r = ujson.read(decodeSingle(rsp.text()).head)
             
             val r = ujson.read(lastBlock)
             val result = r.obj("result").obj
@@ -175,8 +170,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           .map(h => {
             log.debug(s"Cron --> ${h}")
 
-            // request latest block to know where we are from current
-            val blockHex = "latest"
+            // request latest block to know where we are from current            
             val json = s"""{
                 "jsonrpc":"2.0","method":"eth_blockNumber",
                 "params":[],
@@ -184,16 +178,19 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
               }""".trim.replaceAll("\\s+","")
 
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            //log.info(s"rsp=${rsp.statusCode}: ${rsp.text()}")
+            val body = rsp.text()
+            //log.info(s"rsp=${rsp.statusCode}: ${body}")
+            
             rsp.statusCode match {
               case 200 => //
+                log.debug(s"${body}")
               case _ => 
                 // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
                 throw new RetryException("")
             }
             
-            val r = ujson.read(rsp.text())
+            val r = ujson.read(body)
             val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
             
             log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}")
@@ -228,17 +225,21 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                         
             val json = s"""[${blocksReq.mkString(",")}]"""
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
+            
             log.info(s"rsp=${rsp.statusCode}")
+            
+            val body = rsp.text()
             
             rsp.statusCode match {
               case 200 => //
+                log.trace(s"${body}")
               case _ => 
                 // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
                 throw new RetryException("")
             }
             
-            val batch = decodeBatch(rsp.text())            
+            val batch = decodeBatch(body)
             batch
           })
           .filter(reorgFlow)

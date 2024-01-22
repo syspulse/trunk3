@@ -24,7 +24,7 @@ import io.syspulse.haas.ingest.vechain
 object App extends skel.Server {
   
   def main(args:Array[String]):Unit = {
-    Console.err.println(s"args: '${args.mkString(",")}'")
+    //Console.err.println(s"args: '${args.mkString(",")}'")
 
     val d = Config()
 
@@ -135,7 +135,7 @@ object App extends skel.Server {
       params = c.getParams(),
     )
 
-    Console.err.println(s"Config: ${config}")
+    Console.err.println(s"${config}")
 
     def orf(config:Config,feed1:String,feed2:String,out1:String,out2:String) = {
       val c0 = config
