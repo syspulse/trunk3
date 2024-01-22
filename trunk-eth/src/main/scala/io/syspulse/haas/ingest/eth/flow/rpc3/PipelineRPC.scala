@@ -68,10 +68,11 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
   val cursor = new CursorBlock("BLOCK-eth")(config)
   val reorg = new ReorgBlock(config.blockReorg)
+  implicit val uri = EthURI(config.feed,config.apiToken)
     
   override def source(feed:String) = {
     feed.split("://").toList match {
-      case "http" :: _ | "https" :: _ => 
+      case "http" :: _ | "https" :: _ | "eth" :: _  =>         
         
         val blockStr = 
           (config.block.split("://").toList match {
@@ -82,7 +83,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
         val blockStart = blockStr.strip match {
           case "latest" =>
-            val rsp = requests.post(feed,
+            val rsp = requests.post(uri.uri,
               headers = Seq(("Content-Type","application/json")),
               data = s"""{
                 "jsonrpc":"2.0","method":"eth_getBlockByNumber",
@@ -127,7 +128,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           FiniteDuration(10,TimeUnit.MILLISECONDS), 
           //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
           FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
-          s"ingest-eth-${feed}"
+          s"ingest-eth-${uri.uri}"
         )
 
         // ----- Reorg -----------------------------------------------------------------------------------
@@ -142,7 +143,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             //     }""".trim.replaceAll("\\s+","")
                         
             // val json = blocksReq
-            // val rsp = requests.post(config.feed, data = json,headers = Map("content-type" -> "application/json"))
+            // val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             // log.info(s"rsp=${rsp.statusCode}: checking reorg: ${lastBlock}")              
             // val r = ujson.read(decodeSingle(rsp.text()).head)
             
@@ -182,7 +183,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                 "id": 0
               }""".trim.replaceAll("\\s+","")
 
-            val rsp = requests.post(config.feed, data = json,headers = Map("content-type" -> "application/json"))
+            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             //log.info(s"rsp=${rsp.statusCode}: ${rsp.text()}")
             rsp.statusCode match {
               case 200 => //
@@ -226,7 +227,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             })
                         
             val json = s"""[${blocksReq.mkString(",")}]"""
-            val rsp = requests.post(config.feed, data = json,headers = Map("content-type" -> "application/json"))
+            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             log.info(s"rsp=${rsp.statusCode}")
             
             rsp.statusCode match {
@@ -272,7 +273,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
     log.info(s"transaction: ${b.transactions.size}")
       
     if(b.transactions.size > 0) {
-      val receiptsRsp = requests.post(config.feed, data = json,headers = Map("content-type" -> "application/json"))
+      val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
       val receipts:Map[String,RpcReceipt] = receiptsRsp.statusCode match {
         case 200 =>
           // need to import it here for List[]
