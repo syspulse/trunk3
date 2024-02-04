@@ -27,6 +27,7 @@ import io.syspulse.haas.ingest.stellar.flow.horizon._
 import io.syspulse.haas.ingest.stellar.flow.horizon.StellarRpcJson
 
 import io.syspulse.haas.ingest.Decoder
+import java.time.Instant
 
 trait StellarDecoder[T] extends Decoder[T,StellarRpcBlock,StellarRpcTransaction,Nothing,Nothing,StellarRpcTransaction] {
 
@@ -40,9 +41,15 @@ trait StellarDecoder[T] extends Decoder[T,StellarRpcBlock,StellarRpcTransaction,
   def toOptionLong(data:String) = if(data.isEmpty() || data=="0x") None else Some(toLong(data))
 
   // "2024-02-04T14:25:24Z"
-  val tsFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HHmmssZ")
+  //val tsFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
   def parseTs(ts:String) = {
-    ZonedDateTime.parse(ts,tsFormat).toInstant().toEpochMilli()
+    try {
+      Instant.from(DateTimeFormatter.ISO_INSTANT.parse(ts)).toEpochMilli()
+    } catch {
+      case e:Exception =>
+        log.error(s"failed to parse timestamp: ${ts}",e)
+        throw e
+    }
   }
 
   // it really parses StellarTransactions into StellarBlock (Transaction)
@@ -51,15 +58,14 @@ trait StellarDecoder[T] extends Decoder[T,StellarRpcBlock,StellarRpcTransaction,
     
     // only JSON is supported
     if(data.stripLeading().startsWith("{")) {
-      
+
       val b = try {
         data.parseJson.convertTo[StellarRpcBlock]
       } catch {
         case e:Exception => 
           log.error(s"failed to parse: '${data}'",e)
           throw new RetryException(s"failed to parse: '${data}'")          
-      }
-
+      }      
       Seq(b)
       
     } else {

@@ -19,6 +19,7 @@ import io.syspulse.haas.ingest.eth
 import io.syspulse.haas.ingest.icp
 import io.syspulse.haas.ingest.starknet
 import io.syspulse.haas.ingest.vechain
+import io.syspulse.haas.ingest.stellar
 
 
 object App extends skel.Server {
@@ -211,6 +212,13 @@ object App extends skel.Server {
             Some(new vechain.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
           case "transaction.vechain" =>
             Some(new vechain.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+
+          // Stellar
+          case "block.stellar" =>
+            Some(new stellar.flow.horizon.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+          case "transaction.stellar" =>
+            Some(new stellar.flow.horizon.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

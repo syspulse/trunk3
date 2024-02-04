@@ -136,7 +136,7 @@ case class StellarRpcTimebounds(
 
 case class StellarRpcPrecondition(
   timebounds: StellarRpcTimebounds,
-  min_account_sequence: String
+  min_account_sequence: Option[String]
 )
 
 case class StellarRpcTransaction(

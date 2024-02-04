@@ -57,7 +57,7 @@ abstract class PipelineStellarTransaction[E <: skel.Ingestable](config:Config)
   // }
 }
 
-class PipelineTansaction(config:Config) extends PipelineStellarTransaction[Transaction](config) {    
+class PipelineTransaction(config:Config) extends PipelineStellarTransaction[Transaction](config) {    
 
   def transform(b: StellarRpcBlock): Seq[Transaction] = {
          

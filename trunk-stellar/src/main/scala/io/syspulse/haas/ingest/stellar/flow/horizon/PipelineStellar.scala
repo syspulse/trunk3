@@ -78,7 +78,7 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
 
         // val rpcUri = StellarURI(feed)
         // val uri = rpcUri.uri
-        log.info(s"uri=${uri}")
+        log.info(s"uri=${uri.uri}")
         
         val blockStr = 
           (config.block.split("://").toList match {
@@ -89,20 +89,16 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>
-            val rsp = requests.get(uri + "/transactions?limit=1",
+            val rsp = requests.get(uri.uri,
               headers = Seq(("Content-Type","application/json"))
             )
-            // {
-            // "total": 9333381,
-            // "blocks": [{"block":"9333380"}]
-            // }
-
+            
             if(rsp.statusCode != 200) {
               log.error(s"failed to get latest block: ${rsp}")
               0
             } else {
               val r = ujson.read(rsp.text())
-              val total = r.obj("total").num.toLong
+              val total = r.obj("core_latest_ledger").num.toLong
               total - 1
             }
           case hex if hex.startsWith("0x") =>
@@ -140,7 +136,7 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
 
             // request latest block to know where we are from current
             val rsp = try {
-              requests.get(uri + "/transactions?limit=1",headers = Seq(("Content-Type","application/json")))
+              requests.get(uri.uri,headers = Seq(("Content-Type","application/json")))
             } catch {
               case e:Exception =>
                 log.error(s"failed to get latest block: ${e}")
@@ -154,7 +150,7 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
               0
             } else {
               val r = ujson.read(rsp.text())
-              val total = r.obj("total").num.toLong
+              val total = r.obj("core_latest_ledger").num.toLong
               total - 1
             }
                         
@@ -176,26 +172,27 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
           })
           .map( block => {            
             try {
-              val rsp = requests.get(uri + s"/transactions?limit=1&block_height=${block}", 
+              val rsp = requests.get(uri.uri + s"/ledgers/${block}", 
                 headers = Map("content-type" -> "application/json")
               )
               
+              val body = rsp.text()
               rsp.statusCode match {
-                case 200 => //                  
+                case 200 => //
+                  log.debug(body)
                 case _ => 
                   // retry
-                  log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+                  log.error(s"RPC error: ${rsp.statusCode}: ${body}")
                   throw new RetryException("")
               }
-                            
-              rsp.text()    
+              body
 
             } catch {
               case e:Exception => 
                 log.error(s"failed to get block: ${block}",e)
                 throw e
-            }            
-          })
+            }
+          })          
           .map(b => ByteString(b))
       
       case _ => super.source(feed)
@@ -207,6 +204,8 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
     if(b.successful_transaction_count + b.failed_transaction_count > 0) {
       val txRsp = requests.get(uri.uri + s"/ledgers/${b.sequence}/transactions",headers = Map("content-type" -> "application/json"))      
       
+      log.debug(s"${txRsp}")
+
       val txx:Seq[StellarRpcTransaction] = txRsp.statusCode match {
         case 200 =>          
           try {
