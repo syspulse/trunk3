@@ -59,9 +59,10 @@ class PipelineBlock(config:Config) extends PipelineIcpBlock[Block](config) {
   def transform(b: IcpRpcBlock): Seq[Block] = {
     val block = Block(
       b.block.block_identifier.index,
+      b.block.timestamp * 1000L,
       b.block.block_identifier.hash,
       b.block.parent_block_identifier.hash,
-      b.block.timestamp * 1000L,
+      
       tx = None
     )
 

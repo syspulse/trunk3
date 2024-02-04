@@ -1,4 +1,4 @@
-package io.syspulse.haas.ingest.icp
+package io.syspulse.haas.ingest.stellar
 
 import io.syspulse.skel.Ingestable
 

@@ -1,4 +1,4 @@
-package io.syspulse.haas.ingest.icp.flow.ledger
+package io.syspulse.haas.ingest.stellar.flow.horizon
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
@@ -24,29 +24,30 @@ import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.ingest.Config
 
-import io.syspulse.haas.ingest.icp.Block
-import io.syspulse.haas.ingest.icp.IcpJson._
+import io.syspulse.haas.ingest.stellar.Block
+import io.syspulse.haas.ingest.stellar.StellarJson._
 
-import io.syspulse.haas.ingest.icp.flow.ledger._
-import io.syspulse.haas.ingest.icp.flow.ledger.IcpRpcJson._
+import io.syspulse.haas.ingest.stellar.flow.horizon._
+import io.syspulse.haas.ingest.stellar.flow.horizon.StellarRpcJson._
 
 // The concept of Blocks in Ledger API is somewhat ambiguous
-abstract class PipelineIcpBlock[E <: skel.Ingestable](config:Config)
+abstract class PipelineStellarBlock[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
-  PipelineIcp[IcpRpcBlock,IcpRpcBlock,E](config) {
+  PipelineStellar[StellarRpcBlock,StellarRpcBlock,E](config) {
     
   def apiSuffix():String = ""
 
-  def parse(data:String):Seq[IcpRpcBlock] = {
+  def parse(data:String):Seq[StellarRpcBlock] = {
     val bb = parseBlock(data)    
     if(bb.size!=0) {
       val b = bb.last
-      latestTs.set(b.created_at * 1000L)      
+      val ts = parseTs(b.closed_at)
+      latestTs.set(ts)
     }
     bb
   }
 
-  def convert(block:IcpRpcBlock):IcpRpcBlock = {
+  def convert(block:StellarRpcBlock):StellarRpcBlock = {
     block
   }
 
@@ -55,14 +56,14 @@ abstract class PipelineIcpBlock[E <: skel.Ingestable](config:Config)
   // }
 }
 
-class PipelineBlock(config:Config) extends PipelineIcpBlock[Block](config) {    
+class PipelineBlock(config:Config) extends PipelineStellarBlock[Block](config) {    
 
-  def transform(b: IcpRpcBlock): Seq[Block] = {
+  def transform(b: StellarRpcBlock): Seq[Block] = {
     val block = Block(
-      b.block_height.toLong,
-      b.created_at * 1000L,
-      b.block_hash,
-      b.parent_hash,
+      i = b.sequence,       
+      ts = parseTs(b.closed_at),
+      hash = b.hash, 
+      phash = b.prev_hash,
       tx = None
     )
 

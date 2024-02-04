@@ -69,13 +69,6 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
     val ts = toLong(b.timestamp)
     val block_number = toLong(b.number)
 
-    val json = 
-    "[" + b.transactions.map( t => 
-      s"""{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["${t.hash}"],"id":"${t.hash}"}"""
-     ).mkString(",") +
-    "]"
-    .trim.replaceAll("\\s+","")
-
     log.info(s"transaction: ${b.transactions.size}")
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)

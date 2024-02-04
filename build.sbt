@@ -335,6 +335,26 @@ lazy val trunk_stark = (project in file("trunk-stark"))
         ),
     )
 
+lazy val trunk_stellar = (project in file("trunk-stellar"))
+  .dependsOn(trunk_core)
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+  .settings (
+      sharedConfig,
+      name := "trunk-stellar",
+      libraryDependencies ++= 
+        Seq(
+          libSkelCore,
+          libSkelIngest,          
+
+          libCsv,
+          libUUID,           
+          libRequests, // can be replaced with akka-http
+
+          libScalaTest % "test"
+        ),
+    )
+
+
 lazy val trunk_ingest = (project in file("trunk-ingest"))
   .dependsOn(
     trunk_core,
@@ -342,6 +362,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
     trunk_icp,
     trunk_vechain,
     trunk_stark,
+    trunk_stellar,
   )
   .enablePlugins(JavaAppPackaging)
   .settings (
