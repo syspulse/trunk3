@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="10 seconds">
+  <!-- disable logback own configuration parsing info -->
+  <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+  <appender name="COLOR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <encoder>
+      <pattern>[%date] %highlight([%level]) [%logger{10} %file:%line] %msg%n</pattern>
+      <!--             ^^^^^^^^^^ -->
+    </encoder>
+  </appender>
+  <appender name="STDOUT" target="System.out" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>[%date{ISO8601}] [%level] [%logger] [%thread] [%X{akkaSource}] - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender name="NOCOLOR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <encoder>
+      <pattern>[%date] [%level] [%logger{10} %file:%line] %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>1024</queueSize>
+    <neverBlock>true</neverBlock>
+    <appender-ref ref="NOCOLOR" />
+  </appender>
+
+  <!-- DISABLE akka restart logger (on non-existant block it should restart) -->
+  <logger name="akka.stream.scaladsl.RestartWithBackoffSource" level="error"/>
+
+  <root level="info">
+    <!-- <appender-ref ref="NOCOLOR" /> -->
+  </root>
+
+  <!-- to use enable this mode pass -Dcolor to jvm -->
+  <if condition='isDefined("color")'>
+    <then>
+      <root>
+        <appender-ref ref="COLOR"/>
+      </root>
+    </then>
+    <else>
+      <root>
+        <appender-ref ref="NOCOLOR"/>
+      </root>
+    </else>
+  </if>
+</configuration>
