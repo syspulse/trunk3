@@ -61,21 +61,45 @@ class PipelineTransaction(config:Config) extends PipelineStellarTransaction[Tran
 
   def transform(b: StellarRpcBlock): Seq[Transaction] = {
          
-    val txx = decodeTransactions(b).map( t => {
+    val txx = decodeTransactions(b).view.zipWithIndex.map{ case(t,i) => {
       Transaction(
         ts = parseTs(t.created_at),
         hash = t.id,
         blk = t.ledger,
+        sts = if(t.successful) 1 else 0,              // status 0 - failed (like in ethereum)
 
         from = t.source_account,
-        to = None,
+        //to = None,
         fee = BigInt(t.fee_charged),
-        v = BigInt(0),
+        //v = BigInt(0),
+
+        fromseq = t.source_account_sequence,      // source_account_sequence
+        feeaddr = t.fee_account,                  // fee_account
+        feemax = BigInt(t.max_fee),               // max_fee
+
+        ops = t.operation_count,             // number of operations
+
+        inp = t.envelope_xdr,             // envelope XDR
+        res = t.result_xdr,               // result XDR
+        meta = t.result_meta_xdr,         // result_meta XDR
+        feemeta = t.fee_meta_xdr,         // fee meta XDR
+
+        mtype = t.memo_type,                  // memo type
+        sig = t.signatures,                   // signatures
+        after = t.valid_after.map(parseTs(_)),       // valid after
+        //pre,                                // preconditions
+          
+        i = Some(i)
       )
-    })
+    }}
+
+    //if(txx.size == 0) 
+    {
+      log.info(s"${b.sequence}: transactions: ${txx.size}")
+    }
       
     // commit cursor
     cursor.commit(b.sequence)
-    txx
+    txx.toSeq
   }    
 }

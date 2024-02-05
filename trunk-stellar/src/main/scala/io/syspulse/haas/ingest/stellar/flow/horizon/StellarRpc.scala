@@ -158,7 +158,7 @@ case class StellarRpcTransaction(
   fee_meta_xdr: String,
   memo_type: String,
   signatures: Seq[String],
-  valid_after: String,
-  preconditions: StellarRpcPrecondition
+  valid_after: Option[String],
+  preconditions: Option[StellarRpcPrecondition]
     
 ) extends Ingestable
