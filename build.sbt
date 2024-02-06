@@ -127,7 +127,9 @@ val sharedConfig = Seq(
       "typesafe repo"      at "https://repo.typesafe.com/typesafe/releases/",
       "confluent repo"     at "https://packages.confluent.io/maven/",
       "consensys repo"     at "https://artifacts.consensys.net/public/maven/maven/",
-      "consensys teku"     at "https://artifacts.consensys.net/public/teku/maven/"
+      "consensys teku"     at "https://artifacts.consensys.net/public/teku/maven/",
+
+      "jitpack"            at "https://jitpack.io"
     ),
     
     // needed to fix error with quill-jasync
@@ -344,7 +346,9 @@ lazy val trunk_stellar = (project in file("trunk-stellar"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelIngest,          
+          libSkelIngest,
+
+          libStellar,
 
           libCsv,
           libUUID,           

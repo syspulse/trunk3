@@ -161,6 +161,8 @@ object Dependencies {
     val libLevelDB =          "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"  % Test
     val libElastic4s =        "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % elastic4sVersion
 
+    val libStellar =          "com.github.stellar" %% "java-stellar-sdk" % "0.43.0"
+
     // Projects
     val libAkka = Seq(libAkkaActor,libAkkaActorTyped,libAkkaStream)
     val libAlpakka = Seq(libAlpakkaInfluxDB)
