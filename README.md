@@ -24,6 +24,7 @@ Streaming Web3 RPC ingestion engine
 | ICP | icp:// | Dfinity Rosetta/[Ledger](https://ledger-api.internetcomputer.org/swagger-ui/#/) RPC | 
 | Starknet | stark:// | Starknet RPC (default is Infura with key) |
 | Vechain | vechain:// | Vechain RPC (default is public RPC) | 
+| Stellar | stellar:// | Stellar Horizon RPC | 
 |     |  |
 
 By default Source is `stdin`
