@@ -85,9 +85,16 @@ Blocks from the state file (to continue stream with restarts) to Kafka topic `bl
 ./run-trunk.sh -e block -f http://geth:8545 -o kafka://broker-1:9092/blocks --block=file://BLOCKS 
 ```
 
-Transactions + Logs:
+Transactions + Receipts + Event Logs:
+
 ```
 ./run-trunk.sh -e tx -f http://geth:8545
+```
+
+Transactions + Receipts + Event Logs and proxy it to Websocket clients as JSON:
+
+```
+./run-trunk.sh -e tx -f http://geth:8545 -o server:ws://0.0.0.0:9300/ws --format=json
 ```
 
 ### Lag (to prevent reorg-ed data)

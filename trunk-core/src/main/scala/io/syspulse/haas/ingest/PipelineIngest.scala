@@ -39,7 +39,7 @@ import io.syspulse.haas.ingest.Config
 
 abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
                                                                        (implicit val fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
-  extends Pipeline[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer) {
+  extends Pipeline[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
   
   private val log = Logger(s"${this}")
   
@@ -63,18 +63,8 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
   def process:Flow[T,O,_] = Flow[T].map(t => {
     val o = convert(t)
-    //log.debug(s"${o}")
     o
   })
-
-  // override def source(feed:String) = {
-  //   feed.split("://").toList match {
-  //     case "eth" :: _ => super.source(EthURI(feed,apiSuffix()).uri)
-  //     case "icp" :: _ => super.source(IcpURI(feed,apiSuffix()).uri)
-  //     case _ => super.source(feed)
-  //   }
-  // }
-
 
   // override def processing:Flow[T,T,_] = Flow[T].map(v => {
   //   if(countObj % reportFreq == 0)

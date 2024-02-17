@@ -29,15 +29,13 @@ case class Config(
   
   size:Long = Long.MaxValue,
   limit:Long = Long.MaxValue,
-
   freq: Long = 0L,
-  delimiter:String = "\n", // use "" for http call
-  
+  delimiter:String = "\n", // use "" for http call  
   // Exception in thread "main" akka.stream.scaladsl.Framing$FramingException: Read 1048858 bytes which is more than 1048576 without seeing a line terminator
   // It does not affect: akka.http.parsing.max-chunk-size = 1m
   buffer:Int = 5 * 1024*1024, 
-
   throttle:Long = 3000L,
+  format:String = "",
   
   entity:Seq[String] = Seq("block"),
   

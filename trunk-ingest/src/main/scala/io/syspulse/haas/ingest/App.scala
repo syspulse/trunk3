@@ -56,11 +56,11 @@ object App extends skel.Server {
 
         ArgLong('_', "limit",s"Limit for entities to output (def=${d.limit})"),
         ArgLong('_', "size",s"Size limit for output (def=${d.size})"),
-
         ArgLong('_', "freq",s"Frequency (def=${d.freq}"),
         ArgString('_', "delimiter","""Delimiter characteds (def: '\n'). Usage example: --delimiter=`echo -e $"\r"` """),
         ArgInt('_', "buffer",s"Frame buffer (Akka Framing) (def: ${d.buffer})"),
         ArgLong('_', "throttle",s"Throttle messages in msec (def: ${d.throttle})"),
+        ArgString('_', "format",s"Format output (json,csv,log) (def=${d.format})"),
 
         ArgString('t', "filter",s"Filter (def='${d.filter}')"),
         
@@ -109,11 +109,11 @@ object App extends skel.Server {
 
       limit = c.getLong("limit").getOrElse(d.limit),
       size = c.getLong("size").getOrElse(d.size),
-
       freq = c.getLong("freq").getOrElse(d.freq),
       delimiter = c.getString("delimiter").getOrElse(d.delimiter),
       buffer = c.getInt("buffer").getOrElse(d.buffer),
       throttle = c.getLong("throttle").getOrElse(d.throttle),     
+      format = c.getString("format").getOrElse(d.format),
 
       filter = c.getListString("filter",d.filter),
       

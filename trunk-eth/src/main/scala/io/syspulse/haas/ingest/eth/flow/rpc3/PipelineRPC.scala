@@ -271,7 +271,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
     "]"
     .trim.replaceAll("\\s+","")
 
-    log.info(s"transaction: ${b.transactions.size}")
+    //log.debug(s"transactions: ${b.transactions.size}")
       
     if(b.transactions.size > 0) {
       val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
