@@ -1,4 +1,4 @@
-package io.syspulse.haas.ingest.eth
+package io.syspulse.haas.ingest.eth.etl
 
 import scala.jdk.CollectionConverters._
 
@@ -11,7 +11,7 @@ import io.syspulse.haas.ingest.eth.BlockJson
 import io.syspulse.haas.ingest.eth.EventJson
 
 object TxJson extends DefaultJsonProtocol {
-  import BlockJson._
-  import EventJson._
-  implicit val jf_tx = jsonFormat20(Tx.apply _)  
+  implicit val jf_etl_block = jsonFormat19(Block.apply _)  
+  implicit val jf_etl_logtx = jsonFormat4(LogTx.apply _)  
+  implicit val jf_etl_tx = jsonFormat20(Tx.apply _)  
 }

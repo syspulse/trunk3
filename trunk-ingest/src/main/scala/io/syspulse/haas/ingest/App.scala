@@ -75,6 +75,9 @@ object App extends skel.Server {
         ArgInt('b', "batch",s"Blocks Batch (def: ${d.blockBatch})"),
         ArgInt('_', "reorg",s"Blocks Reorg depth (def: ${d.blockReorg})"),
 
+        ArgInt('_', "receipt.batch",s"Receipt Batch size (def: ${d.receiptBatch})"),
+        ArgLong('_', "receipt.throttle",s"Throttle between receipt batches in msec (def: ${d.receiptThrottle})"),
+
         ArgString('_', "api.token",s"API Token (def: ${d.apiToken})"),
         ArgLogging(),
         ArgParam("<params>",""),
@@ -128,6 +131,9 @@ object App extends skel.Server {
       blockLag = c.getInt("lag").getOrElse(d.blockLag),
       blockBatch = c.getInt("batch").getOrElse(d.blockBatch),
       blockReorg = c.getInt("reorg").getOrElse(d.blockReorg),
+      
+      receiptBatch = c.getInt("receipt.batch").getOrElse(d.receiptBatch),
+      receiptThrottle = c.getLong("receipt.throttle").getOrElse(d.receiptThrottle),
 
       apiToken = c.getString("api.token").getOrElse(d.apiToken),
       
@@ -149,7 +155,7 @@ object App extends skel.Server {
       case "stream" => {
         val pp:Seq[PipelineIngest[_,_,_]] = config.entity.flatMap( e => e match {
 
-          // ethereum_etl compatible
+          // ethereum_etl compatible input !
           case "block.etl" =>
             Some(new eth.flow.etl.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
           case "transaction.etl" =>
@@ -188,6 +194,9 @@ object App extends skel.Server {
             Some(new eth.flow.rpc3.PipelineEvent(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           case "transfer" | "token" | "transafer.eth" | "token.eth" =>
             Some(new eth.flow.rpc3.PipelineTokenTransfer(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "tx.extractor" =>
+            Some(new eth.flow.rpc3.PipelineTxETL(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          
 
           // ICP Rosetta API
           case "block.icp.rosetta" =>

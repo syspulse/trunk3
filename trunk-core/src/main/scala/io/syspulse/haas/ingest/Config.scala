@@ -34,7 +34,7 @@ case class Config(
   // Exception in thread "main" akka.stream.scaladsl.Framing$FramingException: Read 1048858 bytes which is more than 1048576 without seeing a line terminator
   // It does not affect: akka.http.parsing.max-chunk-size = 1m
   buffer:Int = 5 * 1024*1024, 
-  throttle:Long = 3000L,
+  throttle:Long = 5000L,
   format:String = "",
   
   entity:Seq[String] = Seq("block"),
@@ -46,13 +46,16 @@ case class Config(
   filter:Seq[String] = Seq(),
 
   ingestCron:String = "12", // 12 seconds
-  throttleSource:Long = 3000L, // this is only for batched HTTP and for errors
+  throttleSource:Long = 3000L, // not used
 
   block:String = "latest", // which block to use (only for http:// RPC source)
   blockEnd:String = "",    // empty is infinite
   blockBatch:Int = 10,     // batch size (how many blocks to ask)
   blockLag:Int = 0, // lag
   blockReorg:Int = 0, // number of block reorgs
+
+  receiptBatch:Int = -1,      // max receipt batch size
+  receiptThrottle:Long = 1000L, // throttle between receipts batches within the single block
 
   apiToken:String = "",
 
