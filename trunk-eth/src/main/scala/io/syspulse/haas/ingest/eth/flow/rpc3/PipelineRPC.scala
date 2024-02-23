@@ -76,8 +76,16 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
         
         val blockStr = 
           (config.block.split("://").toList match {
+            // start from latest and save to file
+            case "latest" :: file :: Nil => cursor.set(file); "latest"
+            case "last" :: file :: Nil => cursor.set(file); "latest"
+
             case "file" :: file :: Nil => cursor.read(file)
             case "file" :: Nil => cursor.read()
+
+            // start block and save to file (10://file.txt)
+            case block :: file :: Nil => cursor.set(file); block
+
             case _ => config.block
           })
 
@@ -206,12 +214,12 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
               // reorg operation on the tip
               (cursor.get() - config.blockReorg) to lastBlock
           })          
-          .groupedWithin(config.blockBatch,FiniteDuration(1,TimeUnit.MILLISECONDS)) // batch limiter 
+          .groupedWithin(config.blockBatch,FiniteDuration(1L,TimeUnit.MILLISECONDS)) // batch limiter 
           .map(blocks => blocks.filter(_ <= blockEnd))
           .takeWhile(blocks =>  // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0
           )
-          .mapConcat(blocks => {
+          .map(blocks => {
             log.info(s"--> ${blocks}")
             
             val blocksReq = blocks.map(block => {
@@ -239,9 +247,11 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                 throw new RetryException("")
             }
             
-            val batch = decodeBatch(body)
+            val batch = decodeBatch(body)                        
             batch
           })
+          .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
+          .mapConcat(batch => batch)
           .filter(reorgFlow)
           .map(b => ByteString(b))
       

@@ -68,7 +68,7 @@ object App extends skel.Server {
         ArgString('_', "abi",s"directory with ABI jsons (format: NAME-0xaddress.json) (def=${d.abi}"),
 
         ArgString('_', "ingest.cron",s"Ingest load cron (currently only seconds interval Tick supported) (def: ${d.ingestCron})"),
-        ArgLong('_', "throttle.source",s"Throttle source (e.g. http, (def: ${d.throttleSource}))"),
+        ArgLong('_', "block.throttle",s"Throttle between block batches (e.g. (def: ${d.blockThrottle}))"),
         ArgString('_', "block",s"Ingest from this block (def: ${d.block})"),
         ArgString('_', "block.end",s"Ingest until this block (def: ${d.blockEnd})"),
         ArgInt('l', "lag",s"Blocks lag (def: ${d.blockLag})"),
@@ -124,8 +124,9 @@ object App extends skel.Server {
       
       abi = c.getString("abi").getOrElse(d.abi),
 
-      throttleSource = c.getLong("throttle.source").getOrElse(d.throttleSource),
       ingestCron = c.getString("ingest.cron").getOrElse(d.ingestCron),
+
+      blockThrottle = c.getLong("block.throttle").getOrElse(d.blockThrottle),      
       block = c.getString("block").getOrElse(d.block),
       blockEnd = c.getString("block.end").getOrElse(d.blockEnd),
       blockLag = c.getInt("lag").getOrElse(d.blockLag),

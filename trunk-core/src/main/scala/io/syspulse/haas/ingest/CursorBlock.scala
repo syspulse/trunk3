@@ -11,13 +11,19 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
 
   override def toString() = s"${current} [${blockStart} : ${blockEnd}]"
 
-  var stateFile = s"${config.datastore}/${file}"
+  val datastore = if(config.datastore.isBlank()) "" else config.datastore + "/"
+
+  var stateFile = s"${datastore}${file}"
   private var current:Long = 0
   var blockStart:Long = 0
   var blockEnd:Long = 0
 
+  def set(newStateFile:String = file) = this.synchronized {
+    stateFile = s"${datastore}${newStateFile}"    
+  }
+
   def read(newStateFile:String = file):String = this.synchronized {
-    stateFile = s"${config.datastore}/${newStateFile}"
+    set(newStateFile)
     // can be string lile ("latest")
     os.read(os.Path(stateFile,os.pwd))
   }
