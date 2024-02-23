@@ -111,7 +111,7 @@ val sharedConfig = Seq(
     //retrieveManaged := true,  
     organization    := "io.syspulse",
     scalaVersion    := "2.13.9",
-    name            := "trunk",
+    name            := "trunk3",
     version         := appVersion,
 
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:existentials", "-language:implicitConversions", "-language:higherKinds", "-language:reflectiveCalls", "-language:postfixOps"),
@@ -375,7 +375,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
     sharedConfigDocker,
     dockerBuildxSettings,
 
-    appDockerConfig("trunk","io.syspulse.haas.ingest.App"),
+    appDockerConfig("trunk3","io.syspulse.haas.ingest.App"),
     
     libraryDependencies ++= libHttp ++ libAkka ++ libAlpakka ++ libPrometheus ++ Seq(
       libSkelCore,
