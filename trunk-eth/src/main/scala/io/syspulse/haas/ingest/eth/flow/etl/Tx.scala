@@ -17,12 +17,12 @@ case class Tx(
   max_priority_fee_per_gas:Option[BigInt],
   transaction_type:Option[Int],
 
-  cumulative_gas_used:Long,
-  gas_used:Long,
-  contract_address:Option[String],
-  root:Option[String],
-  status:Option[Int],
-  effective_gas_price:Option[BigInt],
+  receipt_cumulative_gas_used:Long,
+  receipt_gas_used:Long,
+  receipt_contract_address:Option[String],
+  receipt_root:Option[String],
+  receipt_status:Option[Int],
+  receipt_effective_gas_price:Option[BigInt],
 
   block:Block,
   logs:Seq[LogTx]
