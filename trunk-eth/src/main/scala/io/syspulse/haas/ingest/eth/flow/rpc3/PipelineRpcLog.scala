@@ -72,7 +72,7 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
     
-    b.transactions.flatMap( tx => {
+    val ee = b.transactions.flatMap( tx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
       val receipt = receipts(tx.hash)
       val logs = receipt.logs
@@ -91,5 +91,12 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
       })
       
     }).toSeq
+
+    if(receipts.size == b.transactions.size) {
+      // commit cursor only if all transactions receipts recevied !
+      cursor.commit(block_number)
+    }
+
+    ee
   }
 }

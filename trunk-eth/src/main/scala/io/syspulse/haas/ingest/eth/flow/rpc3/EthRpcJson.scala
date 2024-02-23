@@ -185,8 +185,13 @@ case class RpcReceiptResultBatch(
   jsonrpc:String,  
   result:Option[RpcReceipt],
   id: Any
-)  extends Ingestable
+) extends Ingestable
 
+case class RpcBlockReceiptsResult(  
+  jsonrpc:String,  
+  result:Seq[RpcReceipt],
+  id: Any
+) extends Ingestable
 
 case class RpcTokenTransfer(data:String)
 
@@ -201,4 +206,5 @@ object EthRpcJson extends JsonCommon {
   implicit val jf_rpc_log = jsonFormat9(RpcLog)
   implicit val jf_rpc_rec = jsonFormat15(RpcReceipt)  
   implicit val jf_rpc_rec_res = jsonFormat3(RpcReceiptResultBatch)  
+  implicit val jf_rpc_blk_rec = jsonFormat3(RpcBlockReceiptsResult)  
 }

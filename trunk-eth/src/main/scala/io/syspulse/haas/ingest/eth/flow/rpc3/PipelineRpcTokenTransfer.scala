@@ -74,7 +74,7 @@ class PipelineTokenTransfer(config:Config) extends PipelineRpcTokenTransfer[Toke
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
     
-    b.transactions.flatMap( tx => {
+    val tt = b.transactions.flatMap( tx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
       val receipt = receipts(tx.hash)
       val logs = receipt.logs
@@ -110,5 +110,12 @@ class PipelineTokenTransfer(config:Config) extends PipelineRpcTokenTransfer[Toke
       })
       
     }).toSeq
+
+    if(receipts.size == b.transactions.size) {
+      // commit cursor only if all transactions receipts recevied !
+      cursor.commit(block_number)
+    }
+
+    tt
   }
 }

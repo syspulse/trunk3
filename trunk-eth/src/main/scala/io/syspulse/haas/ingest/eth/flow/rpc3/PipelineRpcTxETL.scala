@@ -83,7 +83,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       return Seq()
     }
 
-    b.transactions.map{ tx:RpcTx => {
+    val txx = b.transactions.map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
       val logs = receipts.get(tx.hash).get.logs
       val receipt = receipts.get(tx.hash)
@@ -144,5 +144,12 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
         })
       )
     }}.toSeq
+
+    if(receipts.size == b.transactions.size) {
+      // commit cursor only if all transactions receipts recevied !
+      cursor.commit(block_number)
+    }
+
+    txx
   }
 }

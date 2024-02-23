@@ -258,17 +258,14 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
     jsonBatch.arr.map(a => a.toString()).toSeq
   }
 
-  def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {
-    val b = block.result.get
-
-    if(b.transactions.size == 0)
+  // ---- Receipts --------------------------------------------------------------------------------------------------------------------------
+  def decodeTxReceipts(transactions: Seq[String]): Map[String,RpcReceipt] = {
+    
+    if(transactions.size == 0)
       return Map()
-
-    val ts = toLong(b.timestamp)
-    val block_number = toLong(b.number)
-
-    val receiptBatch = if(config.receiptBatch == -1) b.transactions.size else config.receiptBatch
-    val ranges = b.transactions.grouped(receiptBatch).toSeq
+    
+    val receiptBatch = if(config.receiptBatch == -1) transactions.size else config.receiptBatch
+    val ranges = transactions.grouped(receiptBatch).toSeq
 
     val receiptMap = ranges.view.zipWithIndex.map{ case(range,i) => {      
       //log.debug(s"transactions: ${b.transactions.size}")
@@ -279,8 +276,8 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
         }
 
         val json = 
-          "[" + range.map( t => 
-            s"""{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["${t.hash}"],"id":"${t.hash}"}"""
+          "[" + range.map( txHash => 
+            s"""{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["${txHash}"],"id":"${txHash}"}"""
           ).mkString(",") +
           "]"
           .trim.replaceAll("\\s+","")
@@ -323,11 +320,55 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
       } else
         Map()  
     }}.flatten.toMap 
+    
+    receiptMap
+  }
 
-    if(receiptMap.size == b.transactions.size) {
-      // commit cursor only if all transactions receipts recevied !
-      cursor.commit(toLong(b.number))
-    }
+  // --- Receipts via one call
+  def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {
+    val b = block.result.get
+
+    if(b.transactions.size == 0)
+      return Map()
+            
+    val receiptMap = {      
+      //log.debug(s"transactions: ${b.transactions.size}")        
+
+      val id = b.number
+      val json =  s"""{"jsonrpc":"2.0","method":"eth_getBlockReceipts","params":["${b.number}"],"id":"${id}"}"""
+        .trim.replaceAll("\\s+","")
+        
+      val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
+      val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
+        case 200 =>
+          
+          val rsp = receiptsRsp.text()
+          
+          try {
+            if(rsp.contains("""error""") && rsp.contains("""code""")) {
+              throw new Exception(s"${rsp}")
+            }
+          
+            val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
+            rr.map( r => r.transactionHash -> r).toSeq
+
+          } catch {
+            case e:Exception =>
+              log.error(s"could not parse block receipts: ${receiptsRsp}",e)
+              Seq()
+          }
+        case _ => 
+          log.warn(s"could not get block receipts: ${receiptsRsp}")
+          Seq()
+      }
+      receipts
+
+    }.toMap 
+
+    // if(receiptMap.size == b.transactions.size) {
+    //   // commit cursor only if all transactions receipts recevied !
+    //   cursor.commit(toLong(b.number))
+    // }
 
     receiptMap
   }

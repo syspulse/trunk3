@@ -73,7 +73,7 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
 
-    b.transactions.map{ tx:RpcTx => {
+    val txx = b.transactions.map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
       val logs = receipts.get(tx.hash).get.logs
       val receipt = receipts.get(tx.hash)
@@ -141,5 +141,12 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
         })
       )
     }}.toSeq
+
+    if(receipts.size == b.transactions.size) {
+      // commit cursor only if all transactions receipts recevied !
+      cursor.commit(block_number)
+    }
+
+    txx
   }
 }
