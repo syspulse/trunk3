@@ -77,7 +77,10 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
          
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
     
-    log.info(s"block(${block_number},${b.transactions.size},${receipts.size}),${receipts.values.foldLeft(0)((c,r) => c + r.logs.size)}")
+    val numEvents = receipts.values.foldLeft(0)((c,r) => c + r.logs.size)
+    val numTransfers = b.transactions.foldLeft(0)((c,t) => c + {if(t.input.isEmpty() || t.input == "0x") 0 else 1})
+    val numCalls = b.transactions.size - numTransfers
+    log.info(s"Block(${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls},${toLong(b.size)})")
 
     if(receipts.size != b.transactions.size) {
       log.error(s"transactions: ${b.transactions.size}, receipts: ${receipts.size}")
