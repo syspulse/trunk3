@@ -254,6 +254,6 @@ object App extends skel.Server {
     }
 
     Console.err.println(s"Result: ${pp.map(_.countObj)}")
-    sys.exit(0)
+    // sys.exit(0)
   }
 }

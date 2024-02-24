@@ -233,9 +233,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                         
             val json = s"""[${blocksReq.mkString(",")}]"""
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            
-            log.info(s"rsp=${rsp.statusCode}")
-            
+                        
             val body = rsp.text()
             
             rsp.statusCode match {
@@ -244,7 +242,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
               case _ => 
                 // retry
                 log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                throw new RetryException("")
+                throw new RetryException(s"${rsp.statusCode}")
             }
             
             val batch = decodeBatch(body)                        

@@ -74,10 +74,11 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
 
     val ts = toLong(b.timestamp)
     val block_number = toLong(b.number)
-
-    log.info(s"${block_number}: transactions: ${b.transactions.size}")
-      
+         
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
+    
+    log.info(s"block(${block_number},${b.transactions.size},${receipts.size}),${receipts.values.foldLeft(0)((c,r) => c + r.logs.size)}")
+
     if(receipts.size != b.transactions.size) {
       log.error(s"transactions: ${b.transactions.size}, receipts: ${receipts.size}")
       return Seq()
