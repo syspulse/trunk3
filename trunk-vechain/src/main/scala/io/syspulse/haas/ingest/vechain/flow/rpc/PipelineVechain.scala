@@ -80,7 +80,7 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
         log.info(s"uri=${uri}")
         
         val blockStr = config.block.split("://").toList match {
-          case "file" :: file :: Nil => cursor.read(file)
+          case "file" :: file :: Nil => cursor.setFile(file).read()
           case "file" :: Nil => cursor.read()
           case _ => config.block
         }

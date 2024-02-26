@@ -80,7 +80,7 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
         log.info(s"uri=${uri}")
         
         val blockStr = config.block.split("://").toList match {
-          case "file" :: file :: Nil => cursor.read(file)
+          case "file" :: file :: Nil => cursor.setFile(file).read()
           case "file" :: Nil => cursor.read()
           case _ => config.block
         }

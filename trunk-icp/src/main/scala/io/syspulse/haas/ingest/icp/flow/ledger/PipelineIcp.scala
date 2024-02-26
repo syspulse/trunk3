@@ -83,7 +83,7 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
         
         val blockStr = 
           (config.block.split("://").toList match {
-            case "file" :: file :: Nil => cursor.read(file)
+            case "file" :: file :: Nil => cursor.setFile(file).read()
             case "file" :: Nil => cursor.read()
             case _ => config.block
           })
