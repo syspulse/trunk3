@@ -49,6 +49,7 @@ import scala.util.control.NoStackTrace
 import requests.Response
 import akka.stream.scaladsl.Sink
 import io.syspulse.haas.ingest.CursorBlock
+import akka.stream.scaladsl.RestartSource
 
 class RetryException(msg: String) extends RuntimeException(msg) with NoStackTrace
 
@@ -97,7 +98,20 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                 "id": 0
               }""".trim.replaceAll("\\s+","")
 
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))            
+            val rsp = { 
+              var rsp:Option[requests.Response] = None
+              while(!rsp.isDefined)  {
+                rsp = try {
+                  Some(requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json")))
+                } catch {
+                  case e:Exception => 
+                    log.error(s"request latest block failed -> ${uri.uri}",e)
+                    Thread.sleep(config.throttle)
+                    None
+                }              
+              } 
+              rsp.get
+            }
             
             rsp.statusCode match {
               case 200 => //
@@ -174,7 +188,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
         }
         
         // ------- Flow ------------------------------------------------------------------------------------
-        sourceTick
+        val sourceFlow = sourceTick
           .map(h => {
             log.debug(s"Cron --> ${h}")
 
@@ -248,11 +262,19 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             val batch = decodeBatch(body)                        
             batch
           })
+          .log(s"${feed}")
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
           .mapConcat(batch => batch)
           .filter(reorgFlow)
           .map(b => ByteString(b))
       
+        val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>
+          log.info(s"connect -> ${uri.uri}")
+          sourceFlow
+        }
+
+        sourceRestart
+
       case _ => super.source(feed)
     }
   }
