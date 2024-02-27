@@ -289,6 +289,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   }
 
   // ---- Receipts --------------------------------------------------------------------------------------------------------------------------
+  
+  // legacy and very inefficient for the whole Block
+  // However it is supported by 'anvil'
+  def decodeReceiptsBatch(block: RpcBlock): Map[String,RpcReceipt] = {
+    block.result.map(r => decodeTxReceipts(r.transactions.map(_.hash))).getOrElse(Map())
+  }
+
   def decodeTxReceipts(transactions: Seq[String]): Map[String,RpcReceipt] = {
     
     if(transactions.size == 0)
@@ -354,8 +361,16 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
     receiptMap
   }
 
-  // --- Receipts via one call
   def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {
+    config.receiptRequest match {
+      case "block" => decodeReceiptsBlock(block)
+      case "batch" => decodeReceiptsBatch(block)
+      case _ => decodeReceiptsBlock(block)
+    }
+  }
+  
+  // --- Receipts via one call
+  def decodeReceiptsBlock(block: RpcBlock): Map[String,RpcReceipt] = {
     val b = block.result.get
 
     if(b.transactions.size == 0)

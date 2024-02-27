@@ -77,6 +77,7 @@ object App extends skel.Server {
 
         ArgInt('_', "receipt.batch",s"Receipt Batch size (def: ${d.receiptBatch})"),
         ArgLong('_', "receipt.throttle",s"Throttle between receipt batches in msec (def: ${d.receiptThrottle})"),
+        ArgString('_', "receipt.request",s"Receipt request type [block,batch] (def: ${d.receiptRequest})"),
 
         ArgString('_', "api.token",s"API Token (def: ${d.apiToken})"),
         ArgLogging(),
@@ -135,6 +136,7 @@ object App extends skel.Server {
       
       receiptBatch = c.getInt("receipt.batch").getOrElse(d.receiptBatch),
       receiptThrottle = c.getLong("receipt.throttle").getOrElse(d.receiptThrottle),
+      receiptRequest = c.getString("receipt.request").getOrElse(d.receiptRequest),
 
       apiToken = c.getString("api.token").getOrElse(d.apiToken),
       
