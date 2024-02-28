@@ -88,7 +88,7 @@ abstract class PipelineETLTx[E <: skel.Ingestable](config:Config)
       tx.block.extra_data, 
       tx.block.gas_limit, 
       tx.block.gas_used, 
-      tx.block.timestamp, 
+      tx.block.timestamp * 1000L, 
 
       tx.block.transaction_count,
       tx.block.base_fee_per_gas,

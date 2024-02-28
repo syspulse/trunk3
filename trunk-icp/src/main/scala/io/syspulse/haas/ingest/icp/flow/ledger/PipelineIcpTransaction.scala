@@ -33,7 +33,7 @@ import io.syspulse.haas.ingest.icp.flow.ledger._
 import io.syspulse.haas.ingest.icp.flow.ledger.IcpRpcJson._
 
 // The concept of Blocks in Ledger API is somewhat ambiguous
-// IcpRcpBlock has Transaction info inside
+// IcpRcpBlock has Transaction info inside, so every block is 1 transaction
 abstract class PipelineIcpTransaction[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineIcp[IcpRpcBlock,IcpRpcBlock,E](config) {
