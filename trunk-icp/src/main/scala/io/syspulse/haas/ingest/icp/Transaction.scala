@@ -18,7 +18,7 @@ case class Transaction(
   hash:String,          // transaction hash
   blk:Long,             // block number
   
-  from:String,
+  from:Option[String],
   to:Option[String],
   fee:BigInt,
   v:BigInt,

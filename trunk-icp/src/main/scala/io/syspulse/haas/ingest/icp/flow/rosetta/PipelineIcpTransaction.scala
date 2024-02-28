@@ -86,7 +86,7 @@ class PipelineTansaction(config:Config) extends PipelineIcpTransaction[Transacti
       hash = tx.transaction_identifier.hash,
       blk = tx.metadata.block_height,
 
-      from = from.map(_.account.address).getOrElse(""),
+      from = from.map(_.account.address),
       to = to.map(_.account.address),
       fee = fee.map(BigInt(_)).getOrElse(0),
       v = value.map(BigInt(_)).getOrElse(0),

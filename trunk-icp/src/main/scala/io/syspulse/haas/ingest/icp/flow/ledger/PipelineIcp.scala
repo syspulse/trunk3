@@ -70,34 +70,48 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   import IcpRpcJson._
 
   val cursor = new CursorBlock("BLOCK-icp")(config)  
+  implicit val uri = IcpURI(config.feed,config.apiToken)
     
   override def source(feed:String) = {
     feed.split("://").toList match {
       case "http" :: _ | "https" :: _ | "icp" :: _ => 
 
-        val rpcUri = IcpURI(feed)
-        val uri = rpcUri.uri
-        val blockchain = rpcUri.blockchain
-        val network = rpcUri.network        
-        log.info(s"uri=${uri}, blockchain=${blockchain}/${network}")
+        // val rpcUri = IcpURI(feed)
+        // val uri = rpcUri.uri
+        // val blockchain = rpcUri.blockchain
+        // val network = rpcUri.network        
+        log.info(s"uri=${uri.uri}, blockchain=${uri.blockchain}/${uri.network}")
         
         val blockStr = 
           (config.block.split("://").toList match {
+            // start from latest and save to file
+            case "latest" :: file :: Nil => cursor.setFile(file).read(); "latest"
+            case "last" :: file :: Nil => cursor.setFile(file).read(); "latest"
             case "file" :: file :: Nil => cursor.setFile(file).read()
             case "file" :: Nil => cursor.read()
+            // start block and save to file (10://file.txt)
+            case block :: file :: Nil => cursor.setFile(file).read(); block
             case _ => config.block
           })
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>
-            val rsp = requests.get(uri + "/transactions?limit=1",
-              headers = Seq(("Content-Type","application/json"))
-            )
-            // {
-            // "total": 9333381,
-            // "blocks": [{"block":"9333380"}]
-            // }
-
+            
+            val rsp = { 
+              var rsp:Option[requests.Response] = None
+              while(!rsp.isDefined)  {
+                rsp = try {
+                  Some(requests.get(uri.uri + "/transactions?limit=1",headers = Seq(("Content-Type","application/json"))))
+                } catch {
+                  case e:Exception => 
+                    log.error(s"request latest block failed -> ${uri.uri}",e)
+                    Thread.sleep(config.throttle)
+                    None
+                }              
+              } 
+              rsp.get
+            }
+            
             if(rsp.statusCode != 200) {
               log.error(s"failed to get latest block: ${rsp}")
               0
@@ -141,7 +155,7 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
             // request latest block to know where we are from current
             val rsp = try {
-              requests.get(uri + "/transactions?limit=1",headers = Seq(("Content-Type","application/json")))
+              requests.get(uri.uri + "/transactions?limit=1",headers = Seq(("Content-Type","application/json")))
             } catch {
               case e:Exception =>
                 log.error(s"failed to get latest block: ${e}")
@@ -166,7 +180,7 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             cursor.get() to lastBlock            
           })          
           // batch limiter with a small tiny throttle
-          .groupedWithin(config.blockBatch,FiniteDuration( 50L ,TimeUnit.MILLISECONDS)) 
+          .groupedWithin(config.blockBatch,FiniteDuration( 1L ,TimeUnit.MILLISECONDS)) 
           .map(blocks => blocks.filter(_ <= blockEnd))
           .takeWhile(blocks =>  // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0
@@ -177,19 +191,22 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           })
           .map( block => {            
             try {
-              val rsp = requests.get(uri + s"/transactions?limit=1&block_height=${block}", 
+              val rsp = requests.get(uri.uri + s"/transactions?limit=1&block_height=${block}", 
                 headers = Map("content-type" -> "application/json")
               )
+
+              val body = rsp.text()
               
               rsp.statusCode match {
-                case 200 => //                  
+                case 200 =>
+                  log.trace(s"body='${body}'")
                 case _ => 
                   // retry
-                  log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+                  log.error(s"RPC error: ${rsp.statusCode}: ${body}")
                   throw new RetryException("")
               }
                             
-              rsp.text()    
+              body
 
             } catch {
               case e:Exception => 
@@ -197,6 +214,8 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                 throw e
             }            
           })
+          .log(s"${feed}")
+          .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
           .map(b => ByteString(b))
       
       case _ => super.source(feed)

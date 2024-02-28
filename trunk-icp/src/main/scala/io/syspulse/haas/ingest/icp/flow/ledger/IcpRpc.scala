@@ -42,7 +42,7 @@ case class IcpRpcBlock(
   parent_hash: String,
   block_hash: String,
   transaction_hash: String,
-  from_account_identifier: String,
+  from_account_identifier: Option[String],
   to_account_identifier: Option[String],
   spender_account_identifier: Option[String],
   transfer_type: String,

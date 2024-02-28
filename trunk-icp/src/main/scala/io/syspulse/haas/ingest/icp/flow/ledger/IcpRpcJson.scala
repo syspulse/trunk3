@@ -9,6 +9,7 @@ import spray.json.{DefaultJsonProtocol,NullOptions}
 
 import io.syspulse.skel.Ingestable
 
+// object IcpRpcJson extends DefaultJsonProtocol
 object IcpRpcJson extends JsonCommon with NullOptions with ProductFormatsInstances {
   import DefaultJsonProtocol._
   
