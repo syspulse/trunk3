@@ -319,41 +319,48 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           "]"
           .trim.replaceAll("\\s+","")
           
-        val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-        val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
-          case 200 =>
-            
-            val batchRsp = receiptsRsp.text()//receiptsRsp.data.toString
-            
-            try {
-              if(batchRsp.contains("""error""") && batchRsp.contains("""code""")) {
-                throw new Exception(s"${batchRsp}")
-              }
-            
-              val batchReceipts = batchRsp.parseJson.convertTo[List[RpcReceiptResultBatch]]
-
-              val rr:Seq[RpcReceipt] = batchReceipts.flatMap { r => 
-                
-                if(r.result.isDefined) {
-                  Some(r.result.get)
-                } else {
-                  log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
-                  None
-                }
-              }
+        try {
+          val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))        
+          val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
+            case 200 =>
               
-              rr.map( r => r.transactionHash -> r).toSeq              
+              val batchRsp = receiptsRsp.text()//receiptsRsp.data.toString
+              
+              try {
+                if(batchRsp.contains("""error""") && batchRsp.contains("""code""")) {
+                  throw new Exception(s"${batchRsp}")
+                }
+              
+                val batchReceipts = batchRsp.parseJson.convertTo[List[RpcReceiptResultBatch]]
 
-            } catch {
-              case e:Exception =>
-                log.error(s"could not parse receipts batch: ${receiptsRsp}",e)
-                Seq()
-            }
-          case _ => 
-            log.warn(s"could not get receipts batch: ${receiptsRsp}")
-            Seq()
+                val rr:Seq[RpcReceipt] = batchReceipts.flatMap { r => 
+                  
+                  if(r.result.isDefined) {
+                    Some(r.result.get)
+                  } else {
+                    log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
+                    None
+                  }
+                }
+                
+                rr.map( r => r.transactionHash -> r).toSeq              
+
+              } catch {
+                case e:Exception =>
+                  log.error(s"could not parse receipts batch: ${receiptsRsp}",e)
+                  Seq()
+              }
+            case _ => 
+              log.warn(s"could not get receipts batch: ${receiptsRsp}")
+              Seq()
+          }
+          receipts
+        } catch {
+          case e:Exception =>
+            log.error("failed to get receipts",e)
+            Map()
         }
-        receipts
+
       } else
         Map()  
     }}.flatten.toMap 
@@ -383,30 +390,36 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
       val json =  s"""{"jsonrpc":"2.0","method":"eth_getBlockReceipts","params":["${b.number}"],"id":"${id}"}"""
         .trim.replaceAll("\\s+","")
         
-      val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-      val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
-        case 200 =>
-          
-          val rsp = receiptsRsp.text()
-          
-          try {
-            if(rsp.contains("""error""") && rsp.contains("""code""")) {
-              throw new Exception(s"${rsp}")
-            }
-          
-            val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
-            rr.map( r => r.transactionHash -> r).toSeq
+      try {
+        val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
+        val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
+          case 200 =>
+            
+            val rsp = receiptsRsp.text()
+            
+            try {
+              if(rsp.contains("""error""") && rsp.contains("""code""")) {
+                throw new Exception(s"${rsp}")
+              }
+            
+              val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
+              rr.map( r => r.transactionHash -> r).toSeq
 
-          } catch {
-            case e:Exception =>
-              log.error(s"could not parse block receipts: ${receiptsRsp}",e)
-              Seq()
-          }
-        case _ => 
-          log.warn(s"could not get block receipts: ${receiptsRsp}")
-          Seq()
+            } catch {
+              case e:Exception =>
+                log.error(s"could not parse block receipts: ${receiptsRsp}",e)
+                Seq()
+            }
+          case _ => 
+            log.warn(s"could not get block receipts: ${receiptsRsp}")
+            Seq()
+        }
+        receipts
+      } catch {
+        case e:Exception =>
+          log.error("failed to get receipts",e)
+          Map()
       }
-      receipts
 
     }.toMap 
 
