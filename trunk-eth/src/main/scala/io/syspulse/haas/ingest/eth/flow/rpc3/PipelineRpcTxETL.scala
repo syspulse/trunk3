@@ -133,7 +133,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
               
           toLong(b.gasLimit), 
           toLong(b.gasUsed), 
-          toLong(b.timestamp),  // timestamp must be in sec to be compatible with ETL output
+          toLong(b.timestamp) * 1000L,  // ATTENTION: ETL compatibility is broken here !!!
           b.transactions.size,
           b.baseFeePerGas.map(d => toLong(d))
         ),
