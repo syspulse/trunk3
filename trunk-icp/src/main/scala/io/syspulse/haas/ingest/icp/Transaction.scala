@@ -23,7 +23,7 @@ case class Transaction(
   fee:BigInt,
   v:BigInt,
   
-  alw:Option[BigInt],   // allowence
+  alw:Option[BigInt],   // allowance
   alwe:Option[BigInt],  // expected allowence
 
   spend:Option[String], // spender

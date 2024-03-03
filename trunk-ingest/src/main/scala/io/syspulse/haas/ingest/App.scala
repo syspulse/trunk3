@@ -45,12 +45,12 @@ object App extends skel.Server {
         ArgString('_', "feed.log",s"EventLog Feed (def: ${d.feedLog})"),
         ArgString('_', "feed.mempool",s"Mempool Feed (def: ${d.feedMempool})"),
 
-        ArgString('o', "output",s"Output file (pattern is supported: data-{yyyy-MM-dd-HH-mm}.log) def=${d.output}"),        
-        ArgString('_', "output.tx",s"Tx Feed (def: ${d.outputTx})"),
-        ArgString('_', "output.block",s"Block Feed (def: ${d.outputBlock})"),
-        ArgString('_', "output.transfer",s"Token Transfer Feed (def: ${d.outputTransfer})"),
-        ArgString('_', "output.log",s"EventLog Feed (def: ${d.outputLog})"),
-        ArgString('_', "output.mempool",s"Mempool Feed (def: ${d.outputMempool})"),
+        ArgString('o', "output",s"output (def=${d.output})"),        
+        ArgString('_', "output.tx",s"Tx output (def: ${d.outputTx})"),
+        ArgString('_', "output.block",s"Block output (def: ${d.outputBlock})"),
+        ArgString('_', "output.transfer",s"Token Transfer output (def: ${d.outputTransfer})"),
+        ArgString('_', "output.log",s"EventLog output (def: ${d.outputLog})"),
+        ArgString('_', "output.mempool",s"Mempool output (def: ${d.outputMempool})"),
 
         ArgString('e', "entity",s"Ingest entity: (block,transaction,tx,block-tx,transfer,log|event) def=${d.entity}"),
 
@@ -80,6 +80,9 @@ object App extends skel.Server {
         ArgString('_', "receipt.request",s"Receipt request type [block,batch] (def: ${d.receiptRequest})"),
 
         ArgString('_', "api.token",s"API Token (def: ${d.apiToken})"),
+
+        ArgString('a', "output.alert",s"Output for alerts (def=${d.outputAlert})"),        
+
         ArgLogging(),
         ArgParam("<params>",""),
 
@@ -139,6 +142,8 @@ object App extends skel.Server {
       receiptRequest = c.getString("receipt.request").getOrElse(d.receiptRequest),
 
       apiToken = c.getString("api.token").getOrElse(d.apiToken),
+
+      outputAlert = c.getString("output.alert").getOrElse(d.outputAlert),
       
       cmd = c.getCmd().getOrElse(d.cmd),
       
@@ -211,7 +216,7 @@ object App extends skel.Server {
           case "block.icp" =>
             Some(new icp.flow.ledger.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
           case "transaction.icp" | "tx.icp" =>
-            Some(new icp.flow.ledger.PipelineTansaction(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+            Some(new icp.flow.ledger.PipelineTransaction(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           // Starknet
           case "block.stark" =>

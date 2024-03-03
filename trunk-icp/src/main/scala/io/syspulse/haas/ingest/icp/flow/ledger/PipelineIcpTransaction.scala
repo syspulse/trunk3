@@ -58,7 +58,7 @@ abstract class PipelineIcpTransaction[E <: skel.Ingestable](config:Config)
   // }
 }
 
-class PipelineTansaction(config:Config) extends PipelineIcpTransaction[Transaction](config) {    
+class PipelineTransaction(config:Config) extends PipelineIcpTransaction[Transaction](config) {    
 
   def transform(b: IcpRpcBlock): Seq[Transaction] = {
     val tx = Transaction(

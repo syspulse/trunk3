@@ -254,7 +254,9 @@ lazy val trunk_core = (project in file("trunk-core"))
         Seq(
           libSkelCore,
           libSkelCore,
-          libSkelIngest,          
+          libSkelIngest,
+
+          libExtCore,
           
           libUUID, 
           libScalaTest % "test"

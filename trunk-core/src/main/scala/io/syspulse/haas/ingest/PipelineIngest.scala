@@ -5,16 +5,19 @@ import io.syspulse.skel.ingest.flow.Flows
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
+import java.util.concurrent.TimeUnit
 import com.typesafe.scalalogging.Logger
 
 import akka.util.ByteString
+import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Keep
+
 import akka.http.scaladsl.model.{HttpRequest,HttpMethods,HttpEntity,ContentTypes}
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model.MediaTypes
-
 import akka.http.scaladsl
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.Flow
 
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
@@ -26,20 +29,40 @@ import io.syspulse.skel.config._
 
 import io.syspulse.skel.ingest._
 import io.syspulse.skel.ingest.store._
+
 import io.syspulse.skel.ingest.flow.Pipeline
+import io.syspulse.skel.ingest.flow.Pipeline2
 
 import spray.json._
 import DefaultJsonProtocol._
 import io.syspulse.skel.serde.Parq._
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
-import java.util.concurrent.TimeUnit
-
 import io.syspulse.haas.ingest.Config
+import io.jvm.uuid._
+
+case class Output(data:String) extends skel.Ingestable
+
+object OutputJson extends DefaultJsonProtocol {  
+  implicit val jf_output = jsonFormat1(Output)  
+}
+import OutputJson._
+
+// class PipelineIntercept[O <: skel.Ingestable](config:Config)
+//                                                                        (implicit val fmt:JsonFormat[Output],parqEncoders:ParquetRecordEncoder[Output],parsResolver:ParquetSchemaResolver[Output])
+//   extends Pipeline[O,O,Output](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
+  
+//   def process:Flow[O,O,_] = Flow[O].map(o => {
+//     o
+//   })
+
+//   def transform(o: O) = Seq(Output(s"data=${o.toString.size}"))
+// }
+
 
 abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
                                                                        (implicit val fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
-  extends Pipeline[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
+  extends Pipeline2[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
   
   private val log = Logger(s"${this}")
   
@@ -66,10 +89,32 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     o
   })
 
-  // override def processing:Flow[T,T,_] = Flow[T].map(v => {
-  //   if(countObj % reportFreq == 0)
-  //     log.info(s"processed: ${countInput},${countObj}")
-  //   v
-  // })
+  override def sink0() = {
+    import io.syspulse.ext.core.ExtractorJson._
+    import io.syspulse.ext.core.Blockchain
+        
+    val f = Flow[E].map( e => {
+      
+      val event = io.syspulse.ext.core.Event(
+        did = "Interceptor",
+        eid = UUID.random.toString,
+        sid = "trunk:interceptor",
+        category = "EVENT",
+        `type` = "monitor",
+        severity = 0.15,
+        ts = System.currentTimeMillis(),
+        blockchain = io.syspulse.ext.core.Blockchain("ethereum"),
+        metadata = Map(
+          "monitored_contract" -> "0x0000000000000000000000000000000000000007", // use artificical contract name
+          "output" -> ""
+        )
+      )
+        
+      event
+    })
+
+    val s0 = sinking[io.syspulse.ext.core.Event](config.outputAlert)
+    f.to(s0)    
+  }
 
 }
