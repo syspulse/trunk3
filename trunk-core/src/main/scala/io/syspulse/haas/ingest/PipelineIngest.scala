@@ -31,7 +31,6 @@ import io.syspulse.skel.ingest._
 import io.syspulse.skel.ingest.store._
 
 import io.syspulse.skel.ingest.flow.Pipeline
-import io.syspulse.skel.ingest.flow.Pipeline2
 
 import spray.json._
 import DefaultJsonProtocol._
@@ -62,7 +61,7 @@ import OutputJson._
 
 abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
                                                                        (implicit val fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
-  extends Pipeline2[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
+  extends Pipeline[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
   
   private val log = Logger(s"${this}")
   
