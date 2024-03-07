@@ -89,7 +89,15 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
 
     val txx = b.transactions.map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
-      val logs = receipts.get(tx.hash).get.logs
+      val logs = {
+        val logs = receipts.get(tx.hash)
+        if(!logs.isDefined) {
+          log.warn(s"failed to find receipt logs: ${transaction_index}: ${tx.hash}")
+          Seq()
+        } else {
+          logs.get.logs
+        }
+      }
       val receipt = receipts.get(tx.hash)
 
       Tx(

@@ -399,7 +399,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             
             try {
               if(rsp.contains("""error""") && rsp.contains("""code""")) {
-                throw new Exception(s"${rsp}")
+                throw new Exception(s"${b.number}: ${rsp}")
               }
             
               val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
@@ -407,17 +407,17 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
             } catch {
               case e:Exception =>
-                log.error(s"could not parse block receipts: ${receiptsRsp}",e)
+                log.error(s"failed to parse receipts: ${b.number}: ${receiptsRsp}: rsp=${rsp}",e)
                 Seq()
             }
           case _ => 
-            log.warn(s"could not get block receipts: ${receiptsRsp}")
+            log.warn(s"failed to get receipts: ${b.number}: ${receiptsRsp}")
             Seq()
         }
         receipts
       } catch {
         case e:Exception =>
-          log.error("failed to get receipts",e)
+          log.error(s"failed to get block receipts: ${b.number}",e)
           Map()
       }
 
