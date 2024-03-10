@@ -81,7 +81,8 @@ object App extends skel.Server {
 
         ArgString('_', "api.token",s"API Token (def: ${d.apiToken})"),
 
-        ArgString('a', "output.alert",s"Output for alerts (def=${d.outputAlert})"),        
+        ArgString('a', "output.alert",s"Output for alerts (def=${d.outputAlert})"),
+        ArgString('s', "script",s"Interceptor Script  (def=${d.script})"),        
 
         ArgLogging(),
         ArgParam("<params>",""),
@@ -144,6 +145,7 @@ object App extends skel.Server {
       apiToken = c.getString("api.token").getOrElse(d.apiToken),
 
       outputAlert = c.getString("output.alert").getOrElse(d.outputAlert),
+      script = c.getSmartString("script").getOrElse(d.script),
       
       cmd = c.getCmd().getOrElse(d.cmd),
       

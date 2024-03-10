@@ -61,6 +61,7 @@ case class Config(
   apiToken:String = "",
 
   outputAlert:String = "null://",
+  script:String = "",
 
   cmd:String = "stream",
   params: Seq[String] = Seq(),

@@ -39,6 +39,7 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import io.syspulse.haas.ingest.Config
 import io.jvm.uuid._
+import io.syspulse.haas.intercept.Interceptor
 
 case class Output(data:String) extends skel.Ingestable
 
@@ -66,7 +67,8 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   private val log = Logger(s"${this}")
   
   var latestTs:AtomicLong = new AtomicLong(0)
-    
+
+  val interceptor = new Interceptor(config.script)
 
   override def getRotator():Flows.Rotator = 
     new Flows.RotatorTimestamp(() => {
@@ -94,6 +96,8 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
         
     val f = Flow[E].map( e => {
       
+      val r = interceptor.scan[E](e)
+
       val event = io.syspulse.ext.core.Event(
         did = "Interceptor",
         eid = UUID.random.toString,
@@ -105,7 +109,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
         blockchain = io.syspulse.ext.core.Blockchain("ethereum"),
         metadata = Map(
           "monitored_contract" -> "0x0000000000000000000000000000000000000007", // use artificical contract name
-          "output" -> ""
+          "output" -> r.getOrElse("")
         )
       )
         
