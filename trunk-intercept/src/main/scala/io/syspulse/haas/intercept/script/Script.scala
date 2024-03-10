@@ -12,7 +12,7 @@ case class Script(
   typ:String = "js",
   //ts:Long = System.currentTimeMillis(),
 ) {
-  override def toString = s"Script(${name},${src.take(16)}...,${typ})"
+  override def toString = s"Script(${name},'${src.take(16)}...',${typ})"
 }
 
 object Script {

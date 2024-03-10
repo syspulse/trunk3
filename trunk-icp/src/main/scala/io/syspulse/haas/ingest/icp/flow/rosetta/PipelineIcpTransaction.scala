@@ -26,7 +26,6 @@ import io.syspulse.haas.ingest.Config
 
 import io.syspulse.haas.ingest.icp.Block
 import io.syspulse.haas.ingest.icp.Transaction
-import io.syspulse.haas.ingest.icp.Operation
 import io.syspulse.haas.ingest.icp.IcpJson._
 
 import io.syspulse.haas.ingest.icp.flow.rosetta._
