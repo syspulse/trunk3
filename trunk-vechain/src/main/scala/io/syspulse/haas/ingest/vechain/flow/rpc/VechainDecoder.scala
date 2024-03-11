@@ -28,12 +28,7 @@ trait VechainDecoder[T] extends Decoder[T,RpcBlock,RpcTx,Nothing,Nothing,RpcTx] 
   protected val log = Logger(s"${this}")
 
   import VechainRpcJson._ 
-  
-  def toLong(data:String) = java.lang.Long.parseLong(data.stripPrefix("0x"),16)
-  def toBigInt(data:String) = BigInt(Util.unhex(data))
-  def toOption(data:String) = if(data.isEmpty() || data=="0x") None else Some(data)
-  def toOptionLong(data:String) = if(data.isEmpty() || data=="0x") None else Some(toLong(data))
-
+    
   def parseBlock(data:String):Seq[RpcBlock] = {
     if(data.isEmpty()) return Seq()
     

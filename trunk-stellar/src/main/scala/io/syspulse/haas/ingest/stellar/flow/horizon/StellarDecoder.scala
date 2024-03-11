@@ -35,11 +35,6 @@ trait StellarDecoder[T] extends Decoder[T,StellarRpcBlock,StellarRpcTransaction,
 
   import StellarRpcJson._  
   
-  def toLong(data:String) = java.lang.Long.parseLong(data.stripPrefix("0x"),16)
-  def toBigInt(data:String) = BigInt(Util.unhex(data))
-  def toOption(data:String) = if(data.isEmpty() || data=="0x") None else Some(data)
-  def toOptionLong(data:String) = if(data.isEmpty() || data=="0x") None else Some(toLong(data))
-
   // "2024-02-04T14:25:24Z"
   //val tsFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
   def parseTs(ts:String) = {

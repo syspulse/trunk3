@@ -9,8 +9,9 @@ import DefaultJsonProtocol._
 
 import io.syspulse.haas.ingest.eth.BlockJson
 import io.syspulse.haas.ingest.eth.EventJson
+import io.syspulse.skel.service.JsonCommon
 
-object TxJson extends DefaultJsonProtocol {
+object TxJson extends DefaultJsonProtocol { //JsonCommon {
   implicit val jf_etl_block = jsonFormat19(Block.apply _)  
   implicit val jf_etl_logtx = jsonFormat4(LogTx.apply _)  
   implicit val jf_etl_tx = jsonFormat20(Tx.apply _)  

@@ -33,11 +33,6 @@ trait IcpDecoder[T] extends Decoder[T,IcpRpcBlock,IcpRpcBlock,Nothing,Nothing,Ic
 
   import IcpRpcJson._  
   
-  def toLong(data:String) = java.lang.Long.parseLong(data.stripPrefix("0x"),16)
-  def toBigInt(data:String) = BigInt(Util.unhex(data))
-  def toOption(data:String) = if(data.isEmpty() || data=="0x") None else Some(data)
-  def toOptionLong(data:String) = if(data.isEmpty() || data=="0x") None else Some(toLong(data))
-
   // it really parses IcpTransactions into IcpBlock (Transaction)
   def parseBlock(data:String):Seq[IcpRpcBlock] = {
     if(data.isEmpty()) return Seq()

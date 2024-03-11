@@ -19,12 +19,12 @@ case class Tx(
   fee:Option[BigInt],
   tip:Option[BigInt], 
   typ:Option[Int],
-  used2: Long,            // cumulative used
-  used: Long,             // gas used
-  con: Option[String],  // contract
-  root: Option[String],   // receipt root
-  sta: Option[Int],       // status
-  p0: Option[BigInt],      // price Effective
+  used2: Long,              // cumulative used
+  used: Long,               // gas used
+  con: Option[String],      // contract
+  root: Option[String],     // receipt root
+  st: Option[Int],          // status
+  p0: Option[BigInt],       // price Effective
 
   block:Block,
   logs: Seq[EventTx]
