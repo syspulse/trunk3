@@ -14,9 +14,10 @@ class Interceptor(scriptSrc:String) {
     src = scriptSrc
   )
 
+  val engine = ScriptEngine.engines.get(script.typ)
+
   def scan[E](e:E):Option[String] = {
             
-    val engine = ScriptEngine.engines.get(script.typ)
     if(! engine.isDefined) {
       log.error(s"engine not fonud: ${script.typ}")
       return None

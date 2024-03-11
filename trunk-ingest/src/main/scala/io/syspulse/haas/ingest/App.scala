@@ -81,7 +81,16 @@ object App extends skel.Server {
 
         ArgString('_', "api.token",s"API Token (def: ${d.apiToken})"),
 
-        ArgString('a', "output.alert",s"Output for alerts (def=${d.outputAlert})"),
+        ArgString('a', "alert.output",s"Output for alerts (def=${d.alertOutput})"),
+
+        ArgString('_', "interceptor.name",s"Interceptor Name in Alert (def=${d.interceptorName})"),
+        ArgString('_', "interceptor.sid",s"Interceptor sid in Alert (def=${d.interceptorSid})"),
+        ArgString('_', "interceptor.cat",s"Interceptor category in Alert (def=${d.interceptorCat})"),
+        ArgString('_', "interceptor.type",s"Interceptor type in Alert (def=${d.interceptorType})"),
+        ArgDouble('_', "interceptor.severity",s"Interceptor severity in Alert (def=${d.interceptorSeverity})"),
+        ArgString('_', "interceptor.blockchain",s"Interceptor blockchain in Alert (def=${d.interceptorBlockchain})"),
+        ArgString('_', "interceptor.contract",s"Interceptor contract (monitored contract) (def=${d.interceptorContract})"),        
+
         ArgString('s', "script",s"Interceptor Script  (def=${d.script})"),        
 
         ArgLogging(),
@@ -144,7 +153,16 @@ object App extends skel.Server {
 
       apiToken = c.getString("api.token").getOrElse(d.apiToken),
 
-      outputAlert = c.getString("output.alert").getOrElse(d.outputAlert),
+      alertOutput = c.getString("alert.output").getOrElse(d.alertOutput),
+      
+      interceptorName = c.getString("interceptor.name").getOrElse(d.interceptorName),
+      interceptorSid = c.getString("interceptor.sid").getOrElse(d.interceptorSid),
+      interceptorCat = c.getString("interceptor.cat").getOrElse(d.interceptorCat),
+      interceptorType = c.getString("interceptor.type").getOrElse(d.interceptorType),
+      interceptorSeverity = c.getDouble("interceptor.severity").getOrElse(d.interceptorSeverity),
+      interceptorBlockchain = c.getString("interceptor.blockchain").getOrElse(d.interceptorBlockchain),
+      interceptorContract = c.getString("interceptor.contract").getOrElse(d.interceptorContract),
+
       script = c.getSmartString("script").getOrElse(d.script),
       
       cmd = c.getCmd().getOrElse(d.cmd),

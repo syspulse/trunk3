@@ -68,7 +68,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   
   var latestTs:AtomicLong = new AtomicLong(0)
 
-  val interceptor = new Interceptor(config.script)
+  val interceptor = if(config.script.isEmpty()) None else Some(new Interceptor(config.script))
 
   override def getRotator():Flows.Rotator = 
     new Flows.RotatorTimestamp(() => {
@@ -90,33 +90,45 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     o
   })
 
-  override def sink0() = {
+  // Additional sink where data is piped
+  override def sink0() = {    
     import io.syspulse.ext.core.ExtractorJson._
     import io.syspulse.ext.core.Blockchain
         
-    val f = Flow[E].map( e => {
-      
-      val r = interceptor.scan[E](e)
+    val f = Flow[E].mapConcat( e => {
+            
+      interceptor match {
+        case Some(interceptor) => 
+          
+          // run intercept    
+          val r = interceptor.scan[E](e)
 
-      val event = io.syspulse.ext.core.Event(
-        did = "Interceptor",
-        eid = UUID.random.toString,
-        sid = "trunk:interceptor",
-        category = "EVENT",
-        `type` = "monitor",
-        severity = 0.15,
-        ts = System.currentTimeMillis(),
-        blockchain = io.syspulse.ext.core.Blockchain("ethereum"),
-        metadata = Map(
-          "monitored_contract" -> "0x0000000000000000000000000000000000000007", // use artificical contract name
-          "output" -> r.getOrElse("")
-        )
-      )
+          r.map(r => {          
+            val event = io.syspulse.ext.core.Event(
+              did = config.interceptorName,
+              eid = UUID.random.toString,
+              sid = config.interceptorSid,
+              category = config.interceptorCat,
+              `type` = config.interceptorType,
+              severity = config.interceptorSeverity,
+              ts = System.currentTimeMillis(),
+              blockchain = io.syspulse.ext.core.Blockchain(config.interceptorBlockchain),
+              metadata = Map(
+                "monitored_contract" -> config.interceptorContract,
+                "output" -> r
+              )
+            )
+
+            io.syspulse.ext.core.Events(events = Seq(event))
+          })
         
-      event
+        case None => 
+          None
+      } 
+      
     })
 
-    val s0 = sinking[io.syspulse.ext.core.Event](config.outputAlert)
+    val s0 = sinking[io.syspulse.ext.core.Events](config.alertOutput)
     f.to(s0)    
   }
 

@@ -60,7 +60,14 @@ case class Config(
 
   apiToken:String = "",
 
-  outputAlert:String = "null://",
+  alertOutput:String = "null://",
+  interceptorName:String = "Interceptor",
+  interceptorSid:String = "trunk:interceptor",
+  interceptorCat:String = "EVENT",
+  interceptorType:String = "monitor",
+  interceptorSeverity:Double = 0.15,
+  interceptorBlockchain:String = "ethereum",
+  interceptorContract:String = "0x0000000000000000000000000000000000000007",
   script:String = "",
 
   cmd:String = "stream",
