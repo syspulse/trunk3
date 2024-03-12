@@ -88,7 +88,7 @@ case class EthLogTx(
   index:Int,
   address:String,
   data:String,
-  topics: List[String], 
+  topics: Array[String], 
 ) extends Ingestable
 
 
@@ -117,7 +117,7 @@ case class EthTx(
   effective_gas_price: Option[BigInt],
 
   block:EthBlockTx,
-  logs:Seq[EthLogTx]
+  logs:Array[EthLogTx]
 
 )  extends Ingestable
 
@@ -138,7 +138,7 @@ case class EthLog(
   transaction_index:Int,
   address:String,
   data:String,
-  topics: List[String], 
+  topics: Array[String], 
   block_number: Long, 
   block_timestamp:Long, 
   block_hash:String) extends Ingestable

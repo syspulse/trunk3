@@ -8,7 +8,7 @@ case class Event(
   con:String,
   data:String,
   hash:String,   // transaction hash !
-  topics:Seq[String] = Seq(), 
+  topics:Array[String] = Array(), 
   i:Int,         // log index
   tix:Int        // transaction index in block
   
@@ -21,5 +21,5 @@ case class EventTx(
   i:Int,         // log index
   contract:String,
   data:String,  
-  topics:Seq[String] = Seq(), 
+  topics:Array[String] = Array(), 
 ) extends Ingestable

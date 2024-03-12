@@ -132,9 +132,9 @@ case class RpcBlockResult(
   totalDifficulty: String,
   
   //uncles: Seq[RpcUncle],
-  uncles: Seq[String],
+  uncles: Array[String],
 
-  transactions: Seq[RpcTx],
+  transactions: Array[RpcTx],
   size:String,  
     
 )  extends Ingestable
@@ -149,7 +149,7 @@ case class RpcBlock(
 
 case class RpcLog(
   address:String,
-  topics:Seq[String],
+  topics:Array[String],
   data:String,
   blockNumber:String,
   transactionHash:String,
@@ -168,7 +168,7 @@ case class RpcReceipt(
   effectiveGasPrice: Option[String],
   from: String,
   gasUsed: String,
-  logs: Seq[RpcLog],
+  logs: Array[RpcLog],
 
   logsBloom: String,
   status: String,
@@ -189,7 +189,7 @@ case class RpcReceiptResultBatch(
 
 case class RpcBlockReceiptsResult(  
   jsonrpc:String,  
-  result:Seq[RpcReceipt],
+  result:Array[RpcReceipt],
   id: Any
 ) extends Ingestable
 

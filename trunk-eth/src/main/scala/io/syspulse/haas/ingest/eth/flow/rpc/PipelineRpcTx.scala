@@ -166,7 +166,7 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
           b.baseFeePerGas.map(d => toLong(d))
         ),
 
-        logs = Seq()
+        logs = Array()
       )
     }}.toSeq
   }

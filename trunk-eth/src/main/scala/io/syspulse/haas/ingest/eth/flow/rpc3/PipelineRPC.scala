@@ -293,7 +293,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   // legacy and very inefficient for the whole Block
   // However it is supported by 'anvil'
   def decodeReceiptsBatch(block: RpcBlock): Map[String,RpcReceipt] = {
-    block.result.map(r => decodeTxReceipts(r.transactions.map(_.hash))).getOrElse(Map())
+    block.result.map(r => decodeTxReceipts(r.transactions.map(_.hash).toIndexedSeq)).getOrElse(Map())
   }
 
   def decodeTxReceipts(transactions: Seq[String]): Map[String,RpcReceipt] = {

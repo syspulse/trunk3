@@ -7,5 +7,5 @@ case class LogTx(
   index:Int,
   address:String,
   data:String,  
-  topics:Seq[String] = Seq(), 
+  topics:Array[String] = Array(), 
 ) extends Ingestable

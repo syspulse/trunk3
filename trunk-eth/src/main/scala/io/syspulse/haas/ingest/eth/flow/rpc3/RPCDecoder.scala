@@ -86,7 +86,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         throw new RetryException(s"block not found: '${data.strip}'")
       } 
               
-      block.result.get.transactions
+      block.result.get.transactions.toIndexedSeq
 
     } else {
       log.error(s"failed to parse: '${data}'")

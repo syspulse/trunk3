@@ -326,7 +326,7 @@ trait ETLDecoder[T] extends Decoder[T,EthBlock,EthTransaction,EthTokenTransfer,E
                   transaction_index.toInt,
                   address,
                   data,
-                  topics.split(",").toList,
+                  topics.split(",").toArray,
                   block_number.toLong,
                   ts,
                   block_hash

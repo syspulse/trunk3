@@ -251,7 +251,7 @@ trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx]
                   address,
                   data,
                   transaction_hash,
-                  topics.split(",").toList,                  
+                  topics.split(",").toArray,                  
                   log_index.toInt,
                   transaction_index.toInt,
                 ))
