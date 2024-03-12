@@ -163,3 +163,29 @@ export INFURA_KEY=1234
 ```
 
 ----
+
+## Interceptor
+
+Interceptor allows to test Transaction parsing login in `javascript` and send results as Events to another destination.
+
+Use `-o null://` to suppress Transactions output
+
+Use `-a` option to pipe Interceptions as Extractor Events objects
+
+### Extractr ETH transfers from transactions:
+
+[scripts/script-eth-tx.js]
+
+```
+./run-trunk.sh -e tx -f http://geth:8545 -o null:// --script=file://scripts/script-eth-tx.js
+```
+
+### Extractr ERC20 transfers from fat transactions (Extractor Tx):
+
+[scripts/script-eth-ERC20.js]
+
+```
+./run-trunk.sh -e tx.extractor -f http://geth:8545 -o null:// --script=file://scripts/script-eth-ERC20.js
+```
+
+
