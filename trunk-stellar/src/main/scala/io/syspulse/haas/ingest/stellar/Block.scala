@@ -7,7 +7,7 @@ case class Block(
   ts:Long,       // timestamp
   hash:String,  // block hash 
   phash:String, // parent hash  
-  tx:Option[Seq[Transaction]], // transactions
+  tx:Option[Array[Transaction]], // transactions
 
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(i)

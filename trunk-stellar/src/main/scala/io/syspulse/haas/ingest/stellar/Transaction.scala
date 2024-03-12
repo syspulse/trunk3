@@ -35,7 +35,7 @@ case class Transaction(
   feemeta: String,      // fee meta XDR
 
   mtype: String,        // memo type
-  sig: Seq[String],     // signatures
+  sig: Array[String],     // signatures
   after: Option[Long],          // valid after
   //pre,                  // preconditions
     

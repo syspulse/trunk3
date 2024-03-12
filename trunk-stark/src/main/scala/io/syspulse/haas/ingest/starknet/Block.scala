@@ -10,7 +10,7 @@ case class Block(
   sts:String,   // status
   nroot:String,  // new root
   ts:Long,       // timestamp
-  tx:Option[Seq[Transaction]], // transactions
+  tx:Option[Array[Transaction]], // transactions
   l1gas:Option[BigInt] = None
 
 ) extends Ingestable {

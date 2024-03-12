@@ -211,7 +211,7 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
           try {
             val embedded = txRsp.text().parseJson.convertTo[StellarRpcTransactions]
                         
-            embedded._embedded.records
+            embedded._embedded.records.toSeq
 
           } catch {
             case e:Exception =>

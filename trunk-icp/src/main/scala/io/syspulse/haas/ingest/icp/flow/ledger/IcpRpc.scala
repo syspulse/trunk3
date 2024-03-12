@@ -58,6 +58,6 @@ case class IcpRpcBlock(
 
 case class IcpRpcTransactions(
   total: Long,
-  blocks:Seq[IcpRpcBlock],
+  blocks:Array[IcpRpcBlock],
     
 ) extends Ingestable

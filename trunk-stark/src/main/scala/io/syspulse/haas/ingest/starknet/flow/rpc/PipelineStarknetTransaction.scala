@@ -74,7 +74,7 @@ class PipelineTransaction(config:Config) extends PipelineStarknetTransaction[Tra
       typ = tx.`type`,
       ver = toLong(tx.version).toInt,
       sig = tx.signature.mkString(","),
-      data = tx.calldata.getOrElse(Seq()),
+      data = tx.calldata.getOrElse(Array.empty),
       entry = tx.entry_point_selector,
       
       b = tx.block_number.getOrElse(0L),

@@ -22,7 +22,7 @@ case class Block(
   trnk: Boolean,      // is trunk
   fin: Boolean,       // is finalized
   
-  tx:Option[Seq[Transaction]], // transactions
+  tx:Option[Array[Transaction]], // transactions
   
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(i)

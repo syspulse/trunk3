@@ -123,7 +123,7 @@ case class StellarRpcBlock(
 // }
 
 case class StellarRpcEmbedded(
-  records: Seq[StellarRpcTransaction]
+  records: Array[StellarRpcTransaction]
 )
 
 case class StellarRpcTransactions(
@@ -157,7 +157,7 @@ case class StellarRpcTransaction(
   result_meta_xdr: String, 
   fee_meta_xdr: String,
   memo_type: String,
-  signatures: Seq[String],
+  signatures: Array[String],
   valid_after: Option[String],
   preconditions: Option[StellarRpcPrecondition]
     

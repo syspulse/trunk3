@@ -48,7 +48,7 @@ trait IcpDecoder[T] extends Decoder[T,IcpRpcBlock,IcpRpcBlock,Nothing,Nothing,Ic
           throw new RetryException(s"failed to parse: '${data}'")          
       }
       
-      transactions.blocks
+      transactions.blocks.toSeq
       
     } else {
       log.error(s"failed to parse: '${data}'")

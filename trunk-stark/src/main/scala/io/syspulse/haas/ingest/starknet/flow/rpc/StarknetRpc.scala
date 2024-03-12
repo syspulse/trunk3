@@ -47,11 +47,11 @@ import io.syspulse.skel.Ingestable
 //   }
 
 case class RpcTx(
-  calldata: Option[Seq[String]],
+  calldata: Option[Array[String]],
   max_fee: Option[String],
   nonce: String,
   sender_address: Option[String],
-  signature: Option[Seq[String]],
+  signature: Option[Array[String]],
   transaction_hash: String,
   `type`: String,
   version: String,
@@ -77,7 +77,7 @@ case class RpcBlockResult(
   sequencer_address: String,
   status: String,
   timestamp: Long,
-  transactions: Seq[RpcTx],  
+  transactions: Array[RpcTx],  
 
   l1_gas_price:Option[RpcL1Gas]
 )
@@ -101,9 +101,9 @@ case class RpcBlock(
 //   ]
 // }
 case class RpcEvent(  
-  data: Seq[String],  
+  data: Array[String],  
   from_address: String,
-  keys: Seq[String]
+  keys: Array[String]
 )
 
 // "actual_fee": "0x6e6e43922e400",
@@ -114,7 +114,7 @@ case class RpcEventsResult(
   actual_fee: String,
   block_hash: String,
   block_number: Long,
-  events: Seq[String]
+  events: Array[String]
 )
 
 case class RpcEvents(  

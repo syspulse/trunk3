@@ -11,7 +11,7 @@ case class Transaction(
   ver:Int,
   sig:String,       // signature (can be empty)
   
-  data:Seq[String], // calldata
+  data:Array[String], // calldata
   
   entry:Option[String],     // entry_point_selector
 

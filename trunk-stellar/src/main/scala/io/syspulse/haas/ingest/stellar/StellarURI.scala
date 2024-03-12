@@ -20,6 +20,7 @@ case class StellarURI(uri0:String,apiSuffix:String="",apiKey:String="") {
   def parseCred(userPass:String) = userPass.split(":").toList match {
     case u :: p :: _ => (Some(u),Some(p))
     case u :: Nil => (Some(u),None)
+    case _ => (None,None)
   }
 
   def parseNetType(netType:String) = netType.trim.toLowerCase match {
