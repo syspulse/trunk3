@@ -1,6 +1,7 @@
 package io.syspulse.haas.ingest.eth
 
 import io.syspulse.skel.Ingestable
+import io.syspulse.skel.util.Util
 
 case class Event(
   ts:Long,
@@ -14,6 +15,8 @@ case class Event(
   
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
+    
+  override def toString = Util.toStringWithArray(this)
 }
 
 // used only in Fat Tx
@@ -22,4 +25,7 @@ case class EventTx(
   contract:String,
   data:String,  
   topics:Array[String] = Array(), 
-) extends Ingestable
+) extends Ingestable {
+  
+  override def toString = Util.toStringWithArray(this)
+}

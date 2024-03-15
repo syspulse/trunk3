@@ -1,6 +1,7 @@
 package io.syspulse.haas.ingest.eth
 
 import io.syspulse.skel.Ingestable
+import io.syspulse.skel.util.Util
 
 // Transaction with blockinfo
 case class Tx(
@@ -32,4 +33,7 @@ case class Tx(
   //timestamp:Option[Long]
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
+
+  // override to show Array in a nice way
+  override def toString = Util.toStringWithArray(this)
 }
