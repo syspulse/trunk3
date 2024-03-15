@@ -1,6 +1,7 @@
 package io.syspulse.haas.ingest.starknet
 
 import io.syspulse.skel.Ingestable
+import io.syspulse.skel.util.Util
 
 case class Transaction(  
   hash:String,      // transaction hash
@@ -22,4 +23,6 @@ case class Transaction(
 
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
+
+  override def toString = Util.toStringWithArray(this)
 }

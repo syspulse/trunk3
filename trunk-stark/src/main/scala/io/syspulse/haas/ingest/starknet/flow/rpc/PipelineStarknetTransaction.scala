@@ -73,7 +73,7 @@ class PipelineTransaction(config:Config) extends PipelineStarknetTransaction[Tra
       fee = tx.max_fee.map(f => toBigInt(f)),
       typ = tx.`type`,
       ver = toLong(tx.version).toInt,
-      sig = tx.signature.mkString(","),
+      sig = tx.signature.getOrElse(Array.empty).mkString(":"),
       data = tx.calldata.getOrElse(Array.empty),
       entry = tx.entry_point_selector,
       
