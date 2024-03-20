@@ -69,7 +69,7 @@ case class RpcUncle(
 case class RpcL1Gas( 
   price_in_wei:String
 )
-case class RpcBlockResult(  
+case class RpcBlock(  
   block_hash: String,
   block_number: Long,
   new_root: String,
@@ -80,13 +80,13 @@ case class RpcBlockResult(
   transactions: Array[RpcTx],  
 
   l1_gas_price:Option[RpcL1Gas]
-)
+) extends Ingestable
 
-case class RpcBlock(  
+case class RpcBlockResult(  
   jsonrpc:String,  
-  result:Option[RpcBlockResult],
+  result:Option[RpcBlock],
   id: Any
-)  extends Ingestable
+)
 
 // {
 //   "data": [
@@ -110,15 +110,74 @@ case class RpcEvent(
 // "block_hash": "0x2cb295c4d9377617397f1ba7684f8c0dbc19b1f70360dafe39492608886dfa8",
 // "block_number": 458939,
 // "events": [
-case class RpcEventsResult(  
+case class RpcEvents(  
   actual_fee: String,
   block_hash: String,
   block_number: Long,
   events: Array[String]
 )
 
-case class RpcEvents(  
+case class RpcEventsResult(  
   jsonrpc:String,  
-  result:Option[RpcEventsResult],
+  result:Option[RpcEvents],
   id: Any
-)  extends Ingestable
+)
+
+// -------------------------------------------------------------------------------------
+// {
+//   "actual_fee": "0x6e6e43922e400",                                                                                           
+//   "block_hash": "0x2cb295c4d9377617397f1ba7684f8c0dbc19b1f70360dafe39492608886dfa8",
+//   "block_number": 458939,
+//   "events": [
+//     {                                                                                                                        
+//       "data": [
+//         "0x43b6e05126164f05187d24b467a36204fbadf23fd74445ea595cfd0f21b194e",
+//         "0x4b3802058cdd4fc4e352e866e2eef5abde7d62e78116ac68b419654cbebc021",
+//         "0x3971ece",
+//         "0x0"
+//       ],       
+//       "from_address": "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+//       "keys": [                                                                                                              
+//         "0x99cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9"
+//       ]      
+//     },
+//     ...
+//   ],    
+//   "execution_status": "SUCCEEDED",
+//   "finality_status": "ACCEPTED_ON_L2",
+//   "messages_sent": [],
+//   "transaction_hash": "0x7c2864fc1527193bf8c47b9d750d36003f42892ebd7df0c0e099024a32b62f9",
+//   "type": "INVOKE"
+// }
+
+
+case class RcpReceiptMessageL1(
+  from_address:String,
+  to_address:String,
+  payload:Array[String]
+)
+
+case class RpcReceipt(
+  actual_fee: String,
+  block_hash: String,
+  block_number: Long,
+  events: Array[RpcEvent],    
+  execution_status: String,
+  finality_status: String,
+  messages_sent: Array[RcpReceiptMessageL1],
+  transaction_hash: String,
+  `type`: String
+
+) extends Ingestable
+
+case class RpcReceiptResult(  
+  jsonrpc:String,
+  result:Option[RpcReceipt],
+  id: Any
+) 
+
+case class RpcBlockReceiptsResult(
+  jsonrpc:String,  
+  result:Array[RpcReceipt],
+  id: Any
+)

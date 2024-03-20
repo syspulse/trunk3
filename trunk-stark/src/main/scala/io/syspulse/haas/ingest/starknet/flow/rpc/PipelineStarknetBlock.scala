@@ -43,7 +43,7 @@ abstract class PipelineStarknetBlock[E <: skel.Ingestable](config:Config)
       val b = bb.last.result.get
       latestTs.set(b.timestamp * 1000L)      
     }
-    bb
+    bb.flatMap(_.result)
   }
 
   def convert(block:RpcBlock):RpcBlock = {
@@ -55,10 +55,10 @@ abstract class PipelineStarknetBlock[E <: skel.Ingestable](config:Config)
   // }
 }
 
-class PipelineBlock(config:Config) extends PipelineStarknetBlock[Block](config) {    
+class PipelineBlock(config:Config) extends PipelineStarknetBlock[Block](config) { 
 
   def transform(block: RpcBlock): Seq[Block] = {
-    val b = block.result.get
+    val b = block
 
     val blk = Block(
       b.block_number,

@@ -9,6 +9,9 @@ import spray.json.{DefaultJsonProtocol,NullOptions}
 object StarknetJson extends JsonCommon with NullOptions with ProductFormatsInstances {
   import DefaultJsonProtocol._
 
-  implicit val jf_strk_tx = jsonFormat12(Transaction)
+  implicit val jf_strk_tr = jsonFormat12(Transaction)
   implicit val jf_strk_block = jsonFormat9(Block)
+
+  implicit val jf_strk_ev = jsonFormat3(EventTx)
+  implicit val jf_strk_tx = jsonFormat15(Tx)
 }

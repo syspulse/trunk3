@@ -47,9 +47,9 @@ If no blockchain suffix is specified, `eth` (`rpc`) is assumed
  
 ## Sinks
 
-`trunk3` uses [skel-ingest](https://github.com/syspulse/skel/tree/main/skel-ingest/ingest-flow) Pipeline engine and can stream into any supported sinks:
+`trunk3` uses [skel-ingest](https://github.com/syspulse/skel/tree/main/skel-ingest) Pipeline engine and can stream into any supported sinks:
 
-https://github.com/syspulse/skel/tree/main/skel-ingest/ingest-flow#output-feeds
+https://github.com/syspulse/skel/tree/main/skel-ingest#output-feeds
 
 
 By default it streams into `stdout` without formatting
@@ -166,23 +166,46 @@ export INFURA_KEY=1234
 
 ## Interceptor
 
-Interceptor allows to test Transaction parsing login in `javascript` and send results as Events to another destination.
+Interceptor allows to test Transaction parsing logic in `javascript` and propagate results as Events to another sink destination.
+
+Input data is stored in `inputs` variable. Since variable is Scala case class, access is via function call
+For example, `hash` attribute of the tranaction or block can be accessed:
+```
+var hash = inputs.hash();
+```
 
 Use `-o null://` to suppress Transactions output
 
-Use `-a` option to pipe Interceptions as Extractor Events objects
+Use `-a` option to pipe Interceptions as Extractor Events objects. The same destination sinks as in `-o` supported. For example, piping Interceptions as HTTP webhook (use `--format=json` to pass as JSON payload)
 
-### Extractr ETH transfers from transactions:
+```
+./run-trunk.sh -e tx.icp -f icp:// -o null:// --script=file://scripts/script-icp-amount.js -a http://POST@localhost:8300/webhook --format=json
+```
 
-[scripts/script-eth-tx.js]
+### Interceptor Examples
 
+#### Extract ETH transfers from transactions:
+
+[trunk-ingest/scripts/script-eth-tx.js](trunk-ingest/scripts/script-eth-tx.js)
+```
+var hash = inputs.hash();
+var from = inputs.from();
+var to = inputs.to().isDefined() ? inputs.to().get() : "";
+var value = inputs.v();
+var status = inputs.st().isDefined() ? inputs.st().get() : 1;
+var output = hash + ": "+ status +": ("+ from + " -> " + to + " ("+value+"))";
+var res = {tx_hash: hash, output: output};
+Java.asJSONCompatible(res);
+```
+
+Run Ethereum ingest with interception script:
 ```
 ./run-trunk.sh -e tx -f http://geth:8545 -o null:// --script=file://scripts/script-eth-tx.js
 ```
 
-### Extractr ERC20 transfers from fat transactions (Extractor Tx):
+#### Extractr ERC20 transfers from fat transactions (Extractor Tx):
 
-[scripts/script-eth-ERC20.js]
+[trunk-ingest/scripts/script-eth-ERC20.js](trunk-ingest/scripts/script-eth-ERC20.js)
 
 ```
 ./run-trunk.sh -e tx.extractor -f http://geth:8545 -o null:// --script=file://scripts/script-eth-ERC20.js

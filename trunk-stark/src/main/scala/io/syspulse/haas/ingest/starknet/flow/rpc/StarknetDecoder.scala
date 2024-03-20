@@ -23,20 +23,20 @@ import io.syspulse.haas.ingest.starknet.flow.rpc.StarknetRpcJson
 
 import io.syspulse.haas.ingest.Decoder
 
-trait StarknetDecoder[T] extends Decoder[T,RpcBlock,Nothing,Nothing,Nothing,Nothing] {
+trait StarknetDecoder[T] extends Decoder[T,RpcBlockResult,Nothing,Nothing,Nothing,Nothing] {
 
   protected val log = Logger(s"${this}")
 
   import StarknetRpcJson._ 
   
-  def parseBlock(data:String):Seq[RpcBlock] = {
+  def parseBlock(data:String):Seq[RpcBlockResult] = {
     if(data.isEmpty()) return Seq()
     
     // only JSON is supported
     if(data.stripLeading().startsWith("{")) {
       
       val block = try {
-        data.parseJson.convertTo[RpcBlock]
+        data.parseJson.convertTo[RpcBlockResult]
       } catch {
         case e:Exception => 
           log.error(s"failed to parse: '${data}'",e)
@@ -54,16 +54,15 @@ trait StarknetDecoder[T] extends Decoder[T,RpcBlock,Nothing,Nothing,Nothing,Noth
   def parseTransaction(data:String):Seq[Nothing] = parseTx(data) 
 
   def parseTx(data:String):Seq[Nothing] = {
-    throw new Exception(s"Not supported: '${data}'")    
+    throw new Exception(s"Not supported: '${data}'")
   }
   
   def parseTokenTransfer(data:String):Seq[Nothing] = {
     throw new Exception(s"Not supported: '${data}'")    
   }
-
   
   def parseEventLog(data:String):Seq[Nothing] = {
     throw new Exception(s"Not supported: '${data}'")    
   }
-
+  
 }

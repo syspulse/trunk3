@@ -243,6 +243,8 @@ object App extends skel.Server {
             Some(new starknet.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
           case "transaction.stark" =>
             Some(new starknet.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "tx.stark" =>
+            Some(new starknet.flow.rpc.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Vechain
           case "block.vechain" =>

@@ -69,13 +69,13 @@ abstract class PipelineRpcTxETL[E <: skel.Ingestable](config:Config)
 class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
   import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
   
-  def transform(block: RpcBlock): Seq[Tx] = {
-    val b = block.result.get
+  def transform(blk: RpcBlock): Seq[Tx] = {
+    val b = blk.result.get
 
     val ts = toLong(b.timestamp)
     val block_number = toLong(b.number)
          
-    val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
+    val receipts:Map[String,RpcReceipt] = decodeReceipts(blk)
     
     val numEvents = receipts.values.foldLeft(0)((c,r) => c + r.logs.size)
     val numTransfers = b.transactions.foldLeft(0)((c,t) => c + {if(t.input.isEmpty() || t.input == "0x") 0 else 1})
@@ -86,6 +86,31 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       log.error(s"transactions: ${b.transactions.size}, receipts: ${receipts.size}")
       return Seq()
     }
+
+    val block = Block(
+      toLong(b.number),
+      b.hash,
+      b.parentHash,
+      b.nonce,
+      b.sha3Uncles,        
+      b.logsBloom,
+      b.transactionsRoot,
+      b.stateRoot,        
+      b.receiptsRoot,
+      b.miner,
+      
+      toBigInt(b.difficulty),
+      toBigInt(b.totalDifficulty),
+      toLong(b.size),
+
+      b.extraData, 
+          
+      toLong(b.gasLimit), 
+      toLong(b.gasUsed), 
+      toLong(b.timestamp) * 1000L,  // ATTENTION: ETL compatibility is broken here !!!
+      b.transactions.size,
+      b.baseFeePerGas.map(d => toLong(d))
+    )
 
     val txx = b.transactions.map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
@@ -121,30 +146,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
         receipt.map(r => toLong(r.status).toInt), //tx.receipt_status, 
         receipt.map(_.effectiveGasPrice.map(r => toBigInt(r))).flatten, //tx.receipt_effective_gas_price
 
-        block = Block(
-          toLong(b.number),
-          b.hash,
-          b.parentHash,
-          b.nonce,
-          b.sha3Uncles,        
-          b.logsBloom,
-          b.transactionsRoot,
-          b.stateRoot,        
-          b.receiptsRoot,
-          b.miner,
-          
-          toBigInt(b.difficulty),
-          toBigInt(b.totalDifficulty),
-          toLong(b.size),
-
-          b.extraData, 
-              
-          toLong(b.gasLimit), 
-          toLong(b.gasUsed), 
-          toLong(b.timestamp) * 1000L,  // ATTENTION: ETL compatibility is broken here !!!
-          b.transactions.size,
-          b.baseFeePerGas.map(d => toLong(d))
-        ),
+        block = block,
 
         logs = logs.map( r => {
           LogTx(

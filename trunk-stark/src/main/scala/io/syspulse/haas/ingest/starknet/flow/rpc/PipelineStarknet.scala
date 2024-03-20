@@ -70,13 +70,12 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
   import StarknetRpcJson._
 
   val cursor = new CursorBlock("BLOCK-starknet")(config)
+  implicit val uri = StarknetURI(config.feed,config.apiToken)
     
   override def source(feed:String) = {
     feed.split("://").toList match {
       case "http" :: _ | "https" :: _ | "stark" :: _ | "starknet" :: _ => 
 
-        val rpcUri = StarknetURI(feed,apiToken = config.apiToken)
-        val uri = rpcUri.uri
         log.info(s"uri=${uri}")
         
         val blockStr = config.block.split("://").toList match {
@@ -87,7 +86,7 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>
-            val rsp = requests.post(uri,
+            val rsp = requests.post(uri.uri,
               headers = Seq(("Content-Type","application/json")),
               data = s"""{"jsonrpc":"2.0","method":"starknet_blockNumber","params":[],"id":1}"""
             )
@@ -140,7 +139,7 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
                 "id": 0
               }""".trim.replaceAll("\\s+","")
 
-            val rsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))
+            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             //log.info(s"rsp=${rsp.statusCode}: ${rsp.text()}")
             rsp.statusCode match {
               case 200 => //
@@ -183,7 +182,7 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
             })
                         
             val json = s"""[${blocksReq.mkString(",")}]"""
-            val rsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))
+            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             log.info(s"rsp=${rsp.statusCode}")
             
             rsp.statusCode match {
@@ -211,5 +210,142 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
     // very inefficient, optimize with web3-proxy approach 
     val jsonBatch = ujson.read(rsp)
     jsonBatch.arr.map(a => a.toString()).toSeq
+  }
+
+  // ---- Receipts --------------------------------------------------------------------------------------------------------------------------
+  
+  // legacy and very inefficient for the whole Block  
+  def decodeReceiptsBatch(block: RpcBlock): Map[String,RpcReceipt] = {
+    decodeTxReceipts(block.transactions.map(_.transaction_hash).toIndexedSeq)
+  }
+
+  def decodeTxReceipts(transactions: Seq[String]): Map[String,RpcReceipt] = {
+    
+    if(transactions.size == 0)
+      return Map()
+    
+    val receiptBatch = if(config.receiptBatch == -1) transactions.size else config.receiptBatch
+    val ranges = transactions.grouped(receiptBatch).toSeq
+
+    val receiptMap = ranges.view.zipWithIndex.map{ case(range,i) => {      
+      //log.debug(s"transactions: ${b.transactions.size}")
+        
+      if(range.size > 0) {
+        if(i != 0) {
+          Thread.sleep(config.receiptThrottle)
+        }
+
+        val json = 
+          "[" + range.map( txHash => 
+            s"""{"jsonrpc":"2.0","method":"starknet_getTransactionReceipt","params":["${txHash}"],"id":"${txHash}"}"""
+          ).mkString(",") +
+          "]"
+          .trim.replaceAll("\\s+","")
+          
+        try {
+          val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))        
+          val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
+            case 200 =>
+              
+              val batchRsp = receiptsRsp.text()//receiptsRsp.data.toString
+              
+              try {
+                if(batchRsp.contains("""error""") && batchRsp.contains("""code""")) {
+                  throw new Exception(s"${batchRsp}")
+                }
+              
+                val batchReceipts = batchRsp.parseJson.convertTo[List[RpcReceiptResult]]
+
+                val rr:Seq[RpcReceipt] = batchReceipts.flatMap { r => 
+                  
+                  if(r.result.isDefined) {
+                    Some(r.result.get)
+                  } else {
+                    log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
+                    None
+                  }
+                }
+                
+                rr.map( r => r.transaction_hash -> r).toSeq              
+
+              } catch {
+                case e:Exception =>
+                  log.error(s"could not parse receipts batch: ${receiptsRsp}",e)
+                  Seq()
+              }
+            case _ => 
+              log.warn(s"could not get receipts batch: ${receiptsRsp}")
+              Seq()
+          }
+          receipts
+        } catch {
+          case e:Exception =>
+            log.error("failed to get receipts",e)
+            Map()
+        }
+
+      } else
+        Map()  
+    }}.flatten.toMap 
+    
+    receiptMap
+  }
+
+  def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {
+    config.receiptRequest match {
+      case "block" => decodeReceiptsBlock(block)
+      case "batch" => decodeReceiptsBatch(block)
+      case _ => decodeReceiptsBlock(block)
+    }
+  }
+  
+  // --- Receipts via one call
+  def decodeReceiptsBlock(block: RpcBlock): Map[String,RpcReceipt] = {
+    val b = block
+
+    if(b.transactions.size == 0)
+      return Map()
+            
+    val receiptMap = {      
+      //log.debug(s"transactions: ${b.transactions.size}")        
+
+      val id = b.block_number
+      val json =  s"""{"jsonrpc":"2.0","method":"starknet_getBlockWithReceipts","params":["${b.block_number}"],"id":"${id}"}"""
+        .trim.replaceAll("\\s+","")
+        
+      try {
+        val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
+        val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
+          case 200 =>
+            
+            val rsp = receiptsRsp.text()
+            
+            try {
+              if(rsp.contains("""error""") && rsp.contains("""code""")) {
+                throw new Exception(s"${b.block_number}: ${rsp}")
+              }
+            
+              val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
+              rr.map( r => r.transaction_hash -> r).toSeq
+
+            } catch {
+              case e:Exception =>
+                log.error(s"failed to parse receipts: ${b.block_number}: ${receiptsRsp}: rsp=${rsp}",e)
+                Seq()
+            }
+          case _ => 
+            log.warn(s"failed to get receipts: ${b.block_number}: ${receiptsRsp}")
+            Seq()
+        }
+        receipts
+      } catch {
+        case e:Exception =>
+          log.error(s"failed to get block receipts: ${b.block_number}",e)
+          Map()
+      }
+
+    }.toMap 
+    
+    receiptMap
   }
 }
