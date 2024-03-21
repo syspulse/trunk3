@@ -101,7 +101,7 @@ class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transact
         receipt.map(r => toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
         receipt.map(_.contractAddress).flatten, //tx.receipt_contract_address, 
         Some(b.receiptsRoot), //tx.receipt_root, 
-        receipt.map(r => toLong(r.status).toInt), //tx.receipt_status, 
+        receipt.flatMap(r => r.status.map(toLong(_).toInt)), //tx.receipt_status, 
         receipt.map(_.effectiveGasPrice.map(r => toBigInt(r))).flatten, //tx.receipt_effective_gas_price
 
       )

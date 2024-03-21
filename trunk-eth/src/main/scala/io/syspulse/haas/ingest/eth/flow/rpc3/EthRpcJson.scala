@@ -171,7 +171,7 @@ case class RpcReceipt(
   logs: Array[RpcLog],
 
   logsBloom: String,
-  status: String,
+  status: Option[String],
 
   to: Option[String],
   transactionHash: String,
