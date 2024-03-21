@@ -8,7 +8,7 @@ case class Block(
   hash:String,  // block hash 
   phash:String, // parent hash
   seq:String,   // sequencer
-  sts:String,   // status
+  st:String,   // status
   nroot:String,  // new root
   ts:Long,       // timestamp
   tx:Option[Array[Transaction]], // transactions

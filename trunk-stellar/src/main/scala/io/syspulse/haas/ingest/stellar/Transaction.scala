@@ -6,7 +6,7 @@ import io.syspulse.skel.util.Util
 case class Operation(
   i:Long,           // operation index
   typ:String,       // type
-  sts:String,       // status  
+  st:String,       // status  
   addr:String,      // account addr
   v:String,         // value (String ??)
   curr:String,      // currency
@@ -17,7 +17,7 @@ case class Transaction(
   ts:Long,              // timestamp
   hash:String,          // transaction hash
   blk:Long,             // block number
-  sts:Int,              // status 0 - success
+  st:Int,              // status 0 - success
   
   from:String,
   // to:Option[String],  // there is no To in raw transaction

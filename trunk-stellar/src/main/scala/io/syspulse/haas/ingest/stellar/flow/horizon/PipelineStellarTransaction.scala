@@ -66,7 +66,7 @@ class PipelineTransaction(config:Config) extends PipelineStellarTransaction[Tran
         ts = parseTs(t.created_at),
         hash = t.id,
         blk = t.ledger,
-        sts = if(t.successful) 1 else 0,              // status 0 - failed (like in ethereum)
+        st = if(t.successful) 1 else 0,              // status 0 - failed (like in ethereum)
 
         from = t.source_account,
         //to = None,

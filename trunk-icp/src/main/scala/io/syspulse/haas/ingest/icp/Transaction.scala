@@ -6,7 +6,7 @@ import io.syspulse.skel.Ingestable
 // case class Operation(
 //   i:Long,           // operation index
 //   typ:String,       // type
-//   sts:String,       // status  
+//   st:String,       // status  
 //   addr:String,      // account addr
 //   v:String,         // value (String ??)
 //   curr:String,      // currency
