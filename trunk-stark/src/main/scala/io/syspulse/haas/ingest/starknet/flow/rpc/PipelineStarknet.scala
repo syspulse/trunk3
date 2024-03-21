@@ -129,7 +129,7 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
         // ------- Flow ------------------------------------------------------------------------------------
         sourceTick
           .map(h => {
-            log.debug(s"Cron --> ${h}")
+            log.info(s"Cron --> ${uri.uri}")
 
             // request latest block to know where we are from current
             val blockHex = "latest"

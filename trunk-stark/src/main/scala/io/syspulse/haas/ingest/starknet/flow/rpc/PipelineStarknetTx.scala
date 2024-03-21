@@ -57,6 +57,7 @@ abstract class PipelineStarknetTx[E <: skel.Ingestable](config:Config)
   // }
 }
 
+// check block: 624465
 class PipelineTx(config:Config) extends PipelineStarknetTx[Tx](config) {    
 
   def transform(blk: RpcBlock): Seq[Tx] = {
@@ -73,7 +74,7 @@ class PipelineTx(config:Config) extends PipelineStarknetTx[Tx](config) {
     log.info(s"Block(${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls})")
 
     if(receipts.size != b.transactions.size) {
-      log.error(s"transactions: ${b.transactions.size}, receipts: ${receipts.size}")
+      log.error(s"block=${block_number}: transactions=${b.transactions.size}, receipts=${receipts.size}")
       return Seq()
     }
 
