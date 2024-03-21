@@ -49,11 +49,8 @@ import scala.util.control.NoStackTrace
 import requests.Response
 import akka.stream.scaladsl.Sink
 
+import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.CursorBlock
-
-class RetryException(msg: String) extends RuntimeException(msg) with NoStackTrace
-
-case class BlockId(index:Long,hash:String)
 
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !

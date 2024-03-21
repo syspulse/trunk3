@@ -25,6 +25,7 @@ import io.syspulse.haas.ingest.icp.IcpURI
 import io.syspulse.haas.ingest.icp.flow.ledger._
 import io.syspulse.haas.ingest.icp.flow.ledger.IcpRpcJson
 
+import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.Decoder
 
 trait IcpDecoder[T] extends Decoder[T,IcpRpcBlock,IcpRpcBlock,Nothing,Nothing,IcpRpcBlock] {

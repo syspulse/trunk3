@@ -26,6 +26,7 @@ import io.syspulse.haas.ingest.stellar.StellarURI
 import io.syspulse.haas.ingest.stellar.flow.horizon._
 import io.syspulse.haas.ingest.stellar.flow.horizon.StellarRpcJson
 
+import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.Decoder
 import java.time.Instant
 

@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.vechain.flow.rpc._
 import io.syspulse.haas.ingest.vechain.flow.rpc.VechainRpcJson
 
+import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.Decoder
 
 trait VechainDecoder[T] extends Decoder[T,RpcBlock,RpcTx,Nothing,Nothing,RpcTx] {

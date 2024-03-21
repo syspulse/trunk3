@@ -48,12 +48,10 @@ import akka.stream.RestartSettings
 import scala.util.control.NoStackTrace
 import requests.Response
 import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.RestartSource
 
+import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.CursorBlock
-
-class RetryException(msg: String) extends RuntimeException(msg) with NoStackTrace
-
-case class BlockId(index:Long,hash:String)
 
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
@@ -127,9 +125,9 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
         )
                 
         // ------- Flow ------------------------------------------------------------------------------------
-        sourceTick
+        val sourceFlow = sourceTick
           .map(h => {
-            log.info(s"Cron --> ${uri.uri}")
+            log.debug(s"Cron --> ${uri.uri}")
 
             // request latest block to know where we are from current
             val blockHex = "latest"
@@ -197,9 +195,17 @@ abstract class PipelineStarknet[T,O <: skel.Ingestable,E <: skel.Ingestable](con
             val batch = decodeBatch(rsp.text())            
             batch
           })
+          .log(s"${feed}")
           //.filter(reorgFlow)
           .map(b => ByteString(b))
-      
+        
+        val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>
+          log.info(s"connect -> ${uri.uri}")
+          sourceFlow
+        }
+
+        sourceRestart
+          
       case _ => super.source(feed)
     }
   }

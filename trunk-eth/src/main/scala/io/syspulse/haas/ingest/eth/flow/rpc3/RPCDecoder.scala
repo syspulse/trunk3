@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.EthURI
 
+import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
 

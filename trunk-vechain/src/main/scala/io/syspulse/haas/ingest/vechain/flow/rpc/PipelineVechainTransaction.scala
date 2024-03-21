@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.ingest.Config
 
+import io.syspulse.haas.core.RetryException
+
 import io.syspulse.haas.ingest.vechain.Block
 import io.syspulse.haas.ingest.vechain.Transaction
 import io.syspulse.haas.ingest.vechain.VechainJson._
@@ -31,7 +33,6 @@ import io.syspulse.haas.ingest.vechain.VechainJson._
 import io.syspulse.haas.ingest.vechain.flow.rpc._
 import io.syspulse.haas.ingest.vechain.flow.rpc.VechainRpcJson._
 import io.syspulse.haas.ingest.vechain.VechainURI
-
 
 abstract class PipelineVechainTransaction[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 

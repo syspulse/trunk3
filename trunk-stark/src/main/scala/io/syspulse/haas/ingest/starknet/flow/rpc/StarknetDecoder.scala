@@ -18,6 +18,7 @@ import spray.json._
 import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit
 
+import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.starknet.flow.rpc._
 import io.syspulse.haas.ingest.starknet.flow.rpc.StarknetRpcJson
 
