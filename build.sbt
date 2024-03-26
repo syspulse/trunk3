@@ -235,7 +235,12 @@ lazy val root = (project in file("."))
   .dependsOn(
     trunk_core, 
     trunk_eth,
-    trunk_ingest,       
+    trunk_icp,
+    trunk_vechain,
+    trunk_stellar,
+    trunk_stark,
+    trunk_solana,
+    trunk_ingest,
   )
   .disablePlugins(sbtassembly.AssemblyPlugin) // this is needed to prevent generating useless assembly and merge error
   .settings(
@@ -353,6 +358,25 @@ lazy val trunk_stellar = (project in file("trunk-stellar"))
 
           libStellar,
 
+          libCsv,
+          libUUID,           
+          libRequests, // can be replaced with akka-http
+
+          libScalaTest % "test"
+        ),
+    )
+
+lazy val trunk_solana = (project in file("trunk-solana"))
+  .dependsOn(trunk_core)
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+  .settings (
+      sharedConfig,
+      name := "trunk-solana",
+      libraryDependencies ++= 
+        Seq(
+          libSkelCore,
+          libSkelIngest,
+          
           libCsv,
           libUUID,           
           libRequests, // can be replaced with akka-http
