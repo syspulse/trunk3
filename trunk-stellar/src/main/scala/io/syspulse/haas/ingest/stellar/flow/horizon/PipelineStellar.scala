@@ -70,7 +70,7 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
   implicit val uri = StellarURI(config.feed,config.apiToken)
     
   override def source(feed:String) = {
-    feed.split("://").toList match {
+    feed.split("://|:").toList match {
       case "http" :: _ | "https" :: _ | "stellar" :: _ => 
 
         // val rpcUri = StellarURI(feed)

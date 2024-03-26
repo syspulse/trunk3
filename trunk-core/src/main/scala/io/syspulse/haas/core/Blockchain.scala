@@ -21,6 +21,9 @@ object Blockchain {
 
   val SCROLL_MAINNET = Blockchain("scroll",Some("534352"))
   val ZKSYNC_MAINNET = Blockchain("zksync",Some("324"))
+
+  val LINEA_MAINNET = Blockchain("linea",Some("59144")) 
+  val BASE_MAINNET = Blockchain("base",Some("8453")) 
   
   val SEPOLIA = Blockchain("sepolia",Some("11155111"))
   val ANVIL = Blockchain("anvil",Some("31337"))

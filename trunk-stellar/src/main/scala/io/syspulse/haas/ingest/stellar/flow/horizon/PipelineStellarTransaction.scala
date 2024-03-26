@@ -95,7 +95,7 @@ class PipelineTransaction(config:Config) extends PipelineStellarTransaction[Tran
 
     //if(txx.size == 0) 
     {
-      log.info(s"${b.sequence}: transactions: ${txx.size}")
+      log.info(s"${b.sequence}: transactions=${txx.size}")
     }
       
     // commit cursor
