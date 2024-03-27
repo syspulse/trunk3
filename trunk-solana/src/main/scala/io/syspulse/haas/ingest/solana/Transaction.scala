@@ -4,15 +4,21 @@ import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
 case class Transaction(  
-  sig:String,      // transaction signature
-  acc:Array[String],
-  ver:String,
-  
-  b:Option[Long],           // block number
   ts:Option[Long],          // timestamp
-  
-  i:Option[Long] = None,  // transaction index in Block
+  s:Option[Long],           // block slot
+  b:Option[Long],           // block number
 
+  sig:String,      // transaction signature  
+  acc:Array[String],        // account key
+
+  units:Long,               // consumed units
+  fee:Long,                 // fee
+  logs:Array[String],       // log messsages
+  st:String,                // status
+
+  ver:String,  
+  i:Option[Long] = None,  // transaction index in Block
+  
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(sig)
 

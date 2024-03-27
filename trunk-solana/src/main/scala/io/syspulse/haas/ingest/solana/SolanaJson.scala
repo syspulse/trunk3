@@ -9,7 +9,7 @@ import spray.json.{DefaultJsonProtocol,NullOptions}
 object SolanaJson extends JsonCommon with NullOptions with ProductFormatsInstances {
   import DefaultJsonProtocol._
 
-  implicit val jf_strk_tr = jsonFormat6(Transaction)
+  implicit val jf_strk_tr = jsonFormat11(Transaction)
   implicit val jf_strk_block = jsonFormat7(Block)
 
   // implicit val jf_strk_ev = jsonFormat3(EventTx)

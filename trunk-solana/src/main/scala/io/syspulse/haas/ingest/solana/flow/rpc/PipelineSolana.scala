@@ -183,8 +183,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             })
                         
             val json = s"""[${blocksReq.mkString(",")}]"""
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            log.info(s"rsp=${rsp.statusCode}")
+            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))            
             val body = rsp.text()
             
             rsp.statusCode match {

@@ -3,6 +3,8 @@ package io.syspulse.haas.ingest.solana.flow.rpc
 import com.typesafe.scalalogging.Logger
 
 import io.syspulse.skel.Ingestable
+import spray.json.JsArray
+import spray.json.JsObject
 
 // {
 //   "jsonrpc": "2.0",
@@ -95,9 +97,37 @@ case class RpcReward(
   rewardType:String
 )
 
+// "err": {
+//   "InstructionError": [
+//     1,
+//     {
+//       "Custom": 6003
+//     }
+//   ]
+// },
+
+// "status": {
+//   "Err": {
+//     "InstructionError": [
+//       1,
+//       {
+//         "Custom": 6003
+//       }
+//     ]
+//   }
+// }
+
+// "status": {
+//   "Ok": null
+// }
+
+case class RpcErr(
+  `InstructionError`:Option[JsArray]
+)
+
 case class RpcStatus(
   `Ok`: Option[String] = None,
-  `Err`: Option[Map[String,Any]] = None
+  `Err`: Option[JsObject] = None
 )
 
 case class RpcInnerInstruction(
@@ -120,13 +150,13 @@ case class RpcPostTokenBalance(
   uiTokenAmount: RpcUiTokenAmount
 )
 
-case class RpcErr(
-  `Err`: Option[Map[String,Any]]
-)
+// case class RpcError(
+//   `Err`: Option[JsObject]
+// )
 
 case class RpcMeta(
   computeUnitsConsumed: Long,
-  err: Option[RpcErr],
+  err: Option[JsObject],
   fee: Long,
   innerInstructions: Array[RpcInnerInstruction],
   loadedAddresses: RpcLoadedAddresses,

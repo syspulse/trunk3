@@ -65,5 +65,13 @@ trait SolanaDecoder[T] extends Decoder[T,RpcBlockResult,Nothing,Nothing,Nothing,
   def parseEventLog(data:String):Seq[Nothing] = {
     throw new Exception(s"Not supported: '${data}'")    
   }
+
+  def parseStatus(status:RpcStatus):String = {    
+    status.`Err` match {
+      case Some(err) =>
+        err.toString
+      case _ => "Ok"
+    }
+  }
   
 }
