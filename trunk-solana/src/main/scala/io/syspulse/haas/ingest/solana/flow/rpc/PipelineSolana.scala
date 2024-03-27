@@ -186,7 +186,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             
             rsp.statusCode match {
               case 200 => //
-                log.debug(s"body=${body}")
+                log.debug(s"body=${body}")                
+
               case _ => 
                 // retry
                 log.error(s"RPC error: ${rsp.statusCode}: ${body}")
@@ -198,7 +199,14 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
           })
           .log(s"${feed}")
           //.filter(reorgFlow)
-          .map(b => ByteString(b))
+          .map(b => {
+            if(b.contains(""""error":{"code":""")) {
+              log.warn(s"${b}")
+              throw new RetryException("")
+
+            } else
+              ByteString(b)
+          })
         
         val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>
           log.info(s"connect -> ${uri.uri}")

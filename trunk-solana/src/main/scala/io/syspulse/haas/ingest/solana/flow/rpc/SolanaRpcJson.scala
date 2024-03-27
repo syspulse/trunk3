@@ -16,6 +16,11 @@ object SolanaRpcJson extends JsonCommon {
   implicit val jf_rpc_st = jsonFormat2(RpcStatus)
   implicit val jf_rpc_inst = jsonFormat4(RpcInstruction)
   implicit val jf_rpc_iinst = jsonFormat2(RpcInnerInstruction)
+  
+  implicit val jf_rpc_ui = jsonFormat4(RpcUiTokenAmount)
+  implicit val jf_rpc_tok_bal = jsonFormat5(RpcPostTokenBalance)
+
+  implicit val jf_rpc_err = jsonFormat1(RpcErr)
 
   implicit val jf_rpc_meta = jsonFormat11(RpcMeta)
 

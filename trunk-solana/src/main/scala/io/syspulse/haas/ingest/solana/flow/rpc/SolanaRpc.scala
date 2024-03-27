@@ -96,32 +96,44 @@ case class RpcReward(
 )
 
 case class RpcStatus(
-  `Ok`: Option[String],
-  `Err`: Option[String]
+  `Ok`: Option[String] = None,
+  `Err`: Option[Map[String,Any]] = None
 )
-
-// case class RpcInstruction(
-//   accounts: Array[Long],
-//   data:String,
-//   programIdIndex: Int,
-//   stackHeight: Int
-// )
 
 case class RpcInnerInstruction(
   index: Int,
   instructions: Array[RpcInstruction]
 )
 
+case class RpcUiTokenAmount(
+  amount: String,
+  decimals: Int,
+  uiAmount: Double,
+  uiAmountString: String
+)
+
+case class RpcPostTokenBalance(
+  accountIndex: Long,
+  mint: String,
+  owner: String,
+  programId: String,
+  uiTokenAmount: RpcUiTokenAmount
+)
+
+case class RpcErr(
+  `Err`: Option[Map[String,Any]]
+)
+
 case class RpcMeta(
   computeUnitsConsumed: Long,
-  err: Option[String],
+  err: Option[RpcErr],
   fee: Long,
   innerInstructions: Array[RpcInnerInstruction],
   loadedAddresses: RpcLoadedAddresses,
   logMessages: Array[String],
   postBalances: Array[Long],
-  postTokenBalances: Array[String],
-  preTokenBalances: Array[String],
+  postTokenBalances: Array[RpcPostTokenBalance],
+  preTokenBalances: Array[RpcPostTokenBalance],
   rewards: Option[Array[RpcReward]],
   status: RpcStatus
 ) 
