@@ -25,7 +25,8 @@ Streaming Web3 RPC ingestion engine
 | Starknet | stark:// | Starknet RPC (default is Infura with key) |
 | Vechain | vechain:// | Vechain RPC (default is public RPC) | 
 | Stellar | stellar:// | Stellar Horizon RPC | 
-|     |  |
+| Solana | sol://, sol:dev:// | Solana RPC (dev,test) | 
+|  |  |
 
 By default Source is `stdin`
 

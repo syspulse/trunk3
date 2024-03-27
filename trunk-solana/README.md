@@ -16,3 +16,13 @@ Currently supported:
 
 - Blocks
 - Transactions
+
+## Usage
+
+### Ingest blocks from public devnet
+
+Since public RPC has rate limit, we need to specify 
+
+```
+./run-trunk.sh -f sol:dev:// -e block.solana --batch=1 --block.throttle=1000 --throttle=3000
+```
