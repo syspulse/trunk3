@@ -72,7 +72,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     
   override def source(feed:String) = {
     feed.split("://").toList match {
-      case "http" :: _ | "https" :: _ | "stark" :: _ | "solana" :: _ => 
+      case ("http" | "https" | "sol" | "solana" | "sol:dev" | "solana:dev" | "sol:test" | "solana:test") :: _ => 
 
         log.info(s"uri=${uri}")
         
@@ -86,7 +86,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
           case "latest" =>
             val rsp = requests.post(uri.uri,
               headers = Seq(("Content-Type","application/json")),
-              data = s"""{"jsonrpc":"2.0","method":"solana_blockNumber","params":[],"id":1}"""
+              data = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"processed"}],"id":1}"""
             )
             
             if(rsp.statusCode != 200) {
@@ -94,7 +94,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
               0
             } else {
               val r = ujson.read(rsp.text())
-              r.obj("result").num.toLong
+              r.obj("result").obj("context").obj("slot").num.toLong
             }
           case hex if hex.startsWith("0x") =>
             val index = java.lang.Long.parseLong(hex.drop(2),16).toLong
@@ -132,8 +132,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             // request latest block to know where we are from current
             val blockHex = "latest"
             val json = s"""{
-                "jsonrpc":"2.0","method":"solana_blockNumber",
-                "params":[],
+                "jsonrpc":"2.0","method":"getLatestBlockhash",
+                "params":[{"commitment":"processed"}],
                 "id": 0
               }""".trim.replaceAll("\\s+","")
 
@@ -148,7 +148,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             }
             
             val r = ujson.read(rsp.text())
-            val lastBlock = r.obj("result").num.toLong
+            val lastBlock = r.obj("result").obj("context").obj("slot").num.toLong
             
             log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}")
             lastBlock - config.blockLag
@@ -173,8 +173,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             
             val blocksReq = blocks.map(block => {              
               s"""{
-                  "jsonrpc":"2.0","method":"solana_getBlockWithTxs",
-                  "params":[{"block_number":${block}}],
+                  "jsonrpc":"2.0","method":"getBlock\",
+                  "params":[${block},{"encoding":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }],
                   "id":0
                 }""".trim.replaceAll("\\s+","")
             })
@@ -182,17 +182,18 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             val json = s"""[${blocksReq.mkString(",")}]"""
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             log.info(s"rsp=${rsp.statusCode}")
+            val body = rsp.text()
             
             rsp.statusCode match {
               case 200 => //
-                
+                log.debug(s"body=${body}")
               case _ => 
                 // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
                 throw new RetryException("")
             }
             
-            val batch = decodeBatch(rsp.text())            
+            val batch = decodeBatch(body)
             batch
           })
           .log(s"${feed}")

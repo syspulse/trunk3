@@ -20,7 +20,7 @@ import io.syspulse.haas.ingest.icp
 import io.syspulse.haas.ingest.starknet
 import io.syspulse.haas.ingest.vechain
 import io.syspulse.haas.ingest.stellar
-
+import io.syspulse.haas.ingest.solana
 
 object App extends skel.Server {
   
@@ -82,15 +82,7 @@ object App extends skel.Server {
         ArgString('_', "api.token",s"API Token (def: ${d.apiToken})"),
 
         ArgString('a', "alert.output",s"Output for alerts (def=${d.alertOutput})"),
-
-        ArgString('_', "interceptor.name",s"Interceptor Name in Alert (def=${d.interceptorName})"),
-        ArgString('_', "interceptor.sid",s"Interceptor sid in Alert (def=${d.interceptorSid})"),
-        ArgString('_', "interceptor.cat",s"Interceptor category in Alert (def=${d.interceptorCat})"),
-        ArgString('_', "interceptor.type",s"Interceptor type in Alert (def=${d.interceptorType})"),
-        ArgDouble('_', "interceptor.severity",s"Interceptor severity in Alert (def=${d.interceptorSeverity})"),
-        ArgString('_', "interceptor.blockchain",s"Interceptor blockchain in Alert (def=${d.interceptorBlockchain})"),
-        ArgString('_', "interceptor.contract",s"Interceptor contract (monitored contract) (def=${d.interceptorContract})"),        
-
+        
         ArgString('s', "script",s"Interceptor Script  (def=${d.script})"),        
 
         ArgLogging(),
@@ -154,15 +146,7 @@ object App extends skel.Server {
       apiToken = c.getString("api.token").getOrElse(d.apiToken),
 
       alertOutput = c.getString("alert.output").getOrElse(d.alertOutput),
-      
-      interceptorName = c.getString("interceptor.name").getOrElse(d.interceptorName),
-      interceptorSid = c.getString("interceptor.sid").getOrElse(d.interceptorSid),
-      interceptorCat = c.getString("interceptor.cat").getOrElse(d.interceptorCat),
-      interceptorType = c.getString("interceptor.type").getOrElse(d.interceptorType),
-      interceptorSeverity = c.getDouble("interceptor.severity").getOrElse(d.interceptorSeverity),
-      interceptorBlockchain = c.getString("interceptor.blockchain").getOrElse(d.interceptorBlockchain),
-      interceptorContract = c.getString("interceptor.contract").getOrElse(d.interceptorContract),
-
+            
       script = c.getSmartString("script").getOrElse(d.script),
       
       cmd = c.getCmd().getOrElse(d.cmd),
@@ -258,6 +242,11 @@ object App extends skel.Server {
           case "transaction.stellar" =>
             Some(new stellar.flow.horizon.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
+          // Solana
+          case "block.solana" =>
+            Some(new solana.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+          case "transaction.solana" =>
+            Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

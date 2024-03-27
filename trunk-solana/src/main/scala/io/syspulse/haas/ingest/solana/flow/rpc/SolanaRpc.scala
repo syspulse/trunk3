@@ -100,14 +100,26 @@ case class RpcStatus(
   `Err`: Option[String]
 )
 
+// case class RpcInstruction(
+//   accounts: Array[Long],
+//   data:String,
+//   programIdIndex: Int,
+//   stackHeight: Int
+// )
+
+case class RpcInnerInstruction(
+  index: Int,
+  instructions: Array[RpcInstruction]
+)
+
 case class RpcMeta(
   computeUnitsConsumed: Long,
   err: Option[String],
   fee: Long,
-  innerInstructions: Array[String],
+  innerInstructions: Array[RpcInnerInstruction],
   loadedAddresses: RpcLoadedAddresses,
   logMessages: Array[String],
-  postBalances: Array[String],
+  postBalances: Array[Long],
   postTokenBalances: Array[String],
   preTokenBalances: Array[String],
   rewards: Option[Array[RpcReward]],
@@ -120,8 +132,8 @@ case class RpcHeader(
   numRequiredSignatures: Int,
 )
 
-case class RpcInstructions(
-  acconts: Array[Long],
+case class RpcInstruction(
+  accounts: Array[Long],
   data: String,
   programIdIndex: Long,
   stackHeight: Option[Long],
@@ -131,7 +143,7 @@ case class RpcInstructions(
 case class RpcMessage(
   accountKeys: Array[String],
   header: RpcHeader,
-  instructions: Array[RpcInstructions],
+  instructions: Array[RpcInstruction],
   recentBlockhash: String
 )
 
@@ -144,7 +156,7 @@ case class RpcTransaction(
   meta: RpcMeta,
   transaction: RpcTransactionTx,
 
-  version: String
+  version: Any
 
   // block_number:Option[Long] = None, // NOT FROM RPC !!! used internally for streaming Block timestamp 
   // timestamp:Option[Long] = None // NOT FROM RPC !!! used internally for streaming Block timestamp 

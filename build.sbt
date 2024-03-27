@@ -394,6 +394,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
     trunk_vechain,
     trunk_stark,
     trunk_stellar,
+    trunk_solana,
 
     trunk_intercept
   )

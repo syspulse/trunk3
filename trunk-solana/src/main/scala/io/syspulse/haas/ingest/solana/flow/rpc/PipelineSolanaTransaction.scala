@@ -62,7 +62,7 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
         val t = Transaction(
           sig = sig, 
           acc = tx.transaction.message.accountKeys,
-          ver = tx.version,
+          ver = tx.version.toString,
       
           b = Some(block.blockHeight),           // block number
           ts = Some(block.blockTime),          // timestamp

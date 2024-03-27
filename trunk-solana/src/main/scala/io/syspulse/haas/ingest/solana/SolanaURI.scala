@@ -17,9 +17,9 @@ case class SolanaURI(rpcUri:String,apiSuffix:String="",apiToken:String="") {
   def parse(rpcUri:String):String = {
 
     rpcUri.trim.split("://|[/]").toList match {      
-      case "sol:dev" :: Nil => DEFAULT_HOST_DEV + rpcUrl(apiToken) + apiSuffix
-      case "sol:test" :: Nil => DEFAULT_HOST_TEST + rpcUrl(apiToken) + apiSuffix
-      case "sol" :: Nil => DEFAULT_HOST_PROD + rpcUrl(apiToken) + apiSuffix
+      case ("sol:dev" | "solana:dev") :: Nil => DEFAULT_HOST_DEV + rpcUrl(apiToken) + apiSuffix
+      case ("sol:test" | "solana:test") :: Nil => DEFAULT_HOST_TEST + rpcUrl(apiToken) + apiSuffix
+      case ("sol" | "solana") :: Nil => DEFAULT_HOST_PROD + rpcUrl(apiToken) + apiSuffix
       case "http" :: _ => rpcUri
       case "https" :: _ => rpcUri
       case _ => rpcUri
