@@ -4,11 +4,11 @@ import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
 case class Block(
-  s:Long,       // slot
-  s0:Long,      // parent block 
-
-  i:Long,       // block number
   ts:Long,      // timestamp
+  s:Long,       // slot
+  i:Long,       // block number
+  s0:Long,      // parent block  
+
   hash:String,  // block hash 
   phash:String, // parent hash  
 

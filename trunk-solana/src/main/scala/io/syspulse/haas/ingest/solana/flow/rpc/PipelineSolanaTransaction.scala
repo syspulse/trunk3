@@ -60,7 +60,7 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
     val txx = block.transactions.flatMap(tx => {
       tx.transaction.signatures.map( sig => {
         val t = Transaction(
-          ts = Some(block.blockTime),          
+          ts = Some(block.blockTime * 1000L),          
           s = Some(block.parentSlot - 1),        
           b = Some(block.blockHeight), 
           

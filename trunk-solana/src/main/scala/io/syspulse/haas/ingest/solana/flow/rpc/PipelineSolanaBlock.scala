@@ -61,11 +61,11 @@ class PipelineBlock(config:Config) extends PipelineSolanaBlock[Block](config) {
     val b = block
 
     val blk = Block(
+      ts = b.blockTime * 1000L,
       s = b.parentSlot + 1,
-      s0 = b.parentSlot,
-
       i = b.blockHeight,
-      ts = b.blockTime * 1000L,      
+      s0 = b.parentSlot,
+            
       hash = b.blockhash,            
       phash = b.previousBlockhash,
       
