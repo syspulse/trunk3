@@ -75,7 +75,7 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
     })    
 
     // commit cursor
-    cursor.commit(block.blockTime * 1000L)
+    cursor.commit(block.parentSlot + 1)
 
     txx
   }    
