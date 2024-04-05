@@ -4,7 +4,6 @@ import scala.jdk.CollectionConverters._
 
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
-import io.syspulse.haas.core.TokenBlockchain
 
 case class MempoolTx(
   ts:Long,
