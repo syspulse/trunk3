@@ -8,6 +8,6 @@ import spray.json.NullOptions
 
 // with NullOptions only for writing
 object MempoolJson extends JsonCommon {
-  implicit val jf_MempoolTx = jsonFormat14(MempoolTx)
+  implicit val jf_MempoolTx = jsonFormat18(MempoolTx)
 }
 

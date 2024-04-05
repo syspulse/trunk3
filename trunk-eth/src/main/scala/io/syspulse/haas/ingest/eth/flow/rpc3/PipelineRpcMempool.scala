@@ -1,4 +1,4 @@
-package io.syspulse.haas.ingest.eth.flow
+package io.syspulse.haas.ingest.eth.flow.rpc3
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
@@ -33,43 +33,27 @@ import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
 
 import io.syspulse.haas.ingest.eth._
-import io.syspulse.haas.ingest.eth.EvmTxPoolJson._
+import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 import io.syspulse.haas.ingest.eth.MempoolJson._
 import io.syspulse.haas.ingest.PipelineIngest
+import io.syspulse.haas.ingest.eth.flow.rpc3.RpcTxPoolResult
 
-abstract class PipelineEthMempool[E <: skel.Ingestable](config:Config)
+abstract class PipelineRpcMempool[E <: skel.Ingestable](config:Config)
                                                        (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
-  PipelineIngest[EvmTx,MempoolTx,E](config) {
+  PipelineMempoolRPC[MempoolTx,MempoolTx,E](config) {
   
   def apiSuffix():String = s"/mempool"
 
   // only json is supported !
-  override def parse(data:String):Seq[EvmTx] = Seq(
-    data.parseJson.convertTo[EvmTx]
-  )
+  override def parse(data:String):Seq[MempoolTx] = {
+    val pool = parseMempool(data,true)
+    pool
+  }
 
-  def convert(etx: EvmTx): MempoolTx = 
-    MempoolTx(
-      ts = etx.ts,
-      pool = (if(etx.pool == "pending") 0 else 1),
-      from = etx.from,
-      gas = etx.gas,
-      p = etx.gasPrice,
-      fee = etx.maxFeePerGas,
-      tip = etx.maxPriorityFeePerGas,
-      hash = etx.hash,
-      inp = etx.input,
-      non = etx.nonce,
-      to = etx.to,
-      v = etx.value,
-      typ = etx.`type`,
-      sig = s"${etx.r}:${etx.s}:${etx.v}"
-    )
-
+  def convert(mtx: MempoolTx): MempoolTx = mtx
 }
 
-class PipelineMempool(config:Config)
-  extends PipelineEthMempool[MempoolTx](config) {
+class PipelineMempool(config:Config) extends PipelineRpcMempool[MempoolTx](config) {
 
   def transform(tx: MempoolTx): Seq[MempoolTx] = Seq(tx)    
 }

@@ -8,6 +8,7 @@ import io.syspulse.skel.Ingestable
 
 import spray.json._
 import spray.json.{DefaultJsonProtocol,NullOptions}
+import io.syspulse.skel.util.Util
 
 // {
 //   "hash": "0xfc7d55e49b423d15634182a964a65a5583d8af34c484ea6727b8bddf6026e405",
@@ -74,6 +75,7 @@ case class RpcTx(
 
   timestamp:Option[Long] = None // NOT FROM RPC !!! used internally for streaming Block timestamp 
 )  extends Ingestable
+
 
 case class RpcUncle(
   hash:String
@@ -195,8 +197,98 @@ case class RpcBlockReceiptsResult(
 
 case class RpcTokenTransfer(data:String)
 
+
+// --- Mempool ---------------------------------------------------------------------------------------------------------------------------------------
+case class RpcAccessList(address:String,storageKeys:Array[String])
+// case class RpcTxMempool(
+//   ts:Long,
+//   pool:String, // queued, pending
+//   blockHash:Option[String],
+//   blockNumber:Option[Long],
+//   from: String,
+//   gas: Long,
+//   gasPrice: BigInt,
+//   maxFeePerGas: Option[BigInt],
+//   maxPriorityFeePerGas: Option[BigInt],
+//   hash: String,
+//   input: String,
+//   nonce: Long,
+//   to: Option[String],
+//   transactionIndex: Option[Int],
+//   value: BigInt,
+//   `type`: Byte,
+//   accessList: Option[Array[RpcAccessList]],
+//   chainId: Option[Int],
+//   v: Byte,
+//   r: String,
+//   s: String
+// ) extends Ingestable 
+
+case class RpcTxRaw(
+  blockHash:Option[String],
+  blockNumber:Option[Long],
+  from: String, 
+  gas: String,
+  gasPrice: String,
+  maxFeePerGas: Option[String],
+  maxPriorityFeePerGas: Option[String],
+  hash: String,
+  input: String,
+  nonce: String,
+  to: Option[String],
+  transactionIndex: Option[Int],
+  value: String,
+  `type`: String,
+  accessList: Option[Array[RpcAccessList]],
+  chainId: Option[String],
+  v: String,
+  r: String,
+  s: String
+
+) {
+  
+  // def unraw(ts:Long,pool:String):RpcTxMempool = RpcTxMempool(
+  //     ts,
+  //     pool,
+  //     this.blockHash,
+  //     this.blockNumber,
+  //     this.from: String,
+  //     java.lang.Long.parseLong(this.gas.drop(2),16),
+  //     BigInt(Util.unhex(gasPrice)),
+  //     maxFeePerGas.map(v => BigInt(Util.unhex(v))),
+  //     maxPriorityFeePerGas.map(v => BigInt(Util.unhex(v))),
+  //     this.hash,
+  //     this.input,
+  //     Integer.parseInt(nonce.drop(2),16),
+  //     this.to,
+  //     this.transactionIndex,
+  //     BigInt(Util.unhex(value)),
+  //     Integer.parseInt(`type`.drop(2),16).toByte,
+  //     this.accessList,
+  //     chainId.map(v => Integer.parseInt(v.drop(2),16)),
+  //     Integer.parseInt(v.drop(2),16).toByte,
+  //     this.r,
+  //     this.s
+  // )
+}
+
+case class RpcTxPool(pending:Map[String,Map[String,RpcTxRaw]],queued:Map[String,Map[String,RpcTxRaw]])
+
+case class RpcTxPoolResult(
+  jsonrpc:String,
+  id:Long,
+  result:RpcTxPool
+)
+
+
 object EthRpcJson extends JsonCommon {
   
+  implicit val jf_rpc_tx_al = jsonFormat2(RpcAccessList)
+  // implicit val jf_rpc_tx_mem = jsonFormat19(RpcTxMempool)
+  implicit val jf_rpc_tx_raw = jsonFormat19(RpcTxRaw)
+  implicit val jf_rpc_mem = jsonFormat2(RpcTxPool)
+  implicit val jf_rpc_mem_res = jsonFormat3(RpcTxPoolResult)
+
   implicit val jf_rpc_tx = jsonFormat19(RpcTx)
   implicit val jf_rpc_uncle = jsonFormat1(RpcUncle)
   implicit val jf_rpc_res = jsonFormat22(RpcBlockResult)

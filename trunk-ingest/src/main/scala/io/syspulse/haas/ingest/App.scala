@@ -21,6 +21,7 @@ import io.syspulse.haas.ingest.starknet
 import io.syspulse.haas.ingest.vechain
 import io.syspulse.haas.ingest.stellar
 import io.syspulse.haas.ingest.solana
+import eth.flow.rpc3.PipelineMempool
 
 object App extends skel.Server {
   
@@ -178,11 +179,7 @@ object App extends skel.Server {
             Some(new eth.flow.etl.PipelineLog(orf(config,config.feedLog,config.feed,config.outputLog,config.output)))
           case "tx.etl" =>
             Some(new eth.flow.etl.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
-
-          // mempool              
-          case "mempool" => 
-            Some(new eth.flow.PipelineMempool(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-
+          
           // Lake format
           case "block.lake" =>
             Some(new eth.flow.lake.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
@@ -247,6 +244,10 @@ object App extends skel.Server {
             Some(new solana.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
           case "transaction.solana" =>
             Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+
+          // Ethereum mempool
+          case "mempool" | "mempool.eth" => 
+            Some(new eth.flow.rpc3.PipelineMempool(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

@@ -7,7 +7,9 @@ import io.syspulse.skel.util.Util
 
 case class MempoolTx(
   ts:Long,
-  pool:Int, // pending - 0, queued - 1, 
+  pool:String,          // NOTE: CHANGE TO Byte: pending - 0, queued - 1,
+  bhash:Option[String],         // blockhash
+  b:Option[Long],               // blocknumber
   from: String,
   gas: Long,
   p: BigInt,
@@ -17,8 +19,10 @@ case class MempoolTx(
   inp: String,
   non: Long,
   to: Option[String],
+  i: Option[Int],              // transaction index
   v: BigInt,
   typ: Int,
+  ch: Option[Int],             // chainId
   sig: String
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
