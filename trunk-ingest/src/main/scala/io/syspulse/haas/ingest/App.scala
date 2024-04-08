@@ -84,7 +84,9 @@ object App extends skel.Server {
 
         ArgString('a', "alert.output",s"Output for alerts (def=${d.alertOutput})"),
         
-        ArgString('s', "script",s"Interceptor Script  (def=${d.script})"),        
+        ArgString('s', "script",s"Interceptor Script (def=${d.script})"),
+
+        ArgString('_', "rpc.url",s"RPC Url (optional) (def=${d.rpcUrl})"),        
 
         ArgLogging(),
         ArgParam("<params>",""),
@@ -149,9 +151,10 @@ object App extends skel.Server {
       alertOutput = c.getString("alert.output").getOrElse(d.alertOutput),
             
       script = c.getSmartString("script").getOrElse(d.script),
+
+      rpcUrl = c.getSmartString("rpc.url").getOrElse(d.rpcUrl),
       
-      cmd = c.getCmd().getOrElse(d.cmd),
-      
+      cmd = c.getCmd().getOrElse(d.cmd),      
       params = c.getParams(),
     )
 
@@ -248,6 +251,8 @@ object App extends skel.Server {
           // Ethereum mempool
           case "mempool" | "mempool.eth" => 
             Some(new eth.flow.rpc3.PipelineMempool(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+          case "mempool.ws" => 
+            Some(new eth.flow.rpc3.PipelineMempoolStream(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

@@ -10,6 +10,26 @@ import spray.json._
 import spray.json.{DefaultJsonProtocol,NullOptions}
 import io.syspulse.skel.util.Util
 
+// --- Mempool ----
+// {"jsonrpc":"2.0","method":"eth_subscription",
+// "params":{"subscription":"0x295c3b8e80401f6aeb147568b8fa6d32","result":"0x6f8860f533efb4dd529ea61a1defb3ab2d4e39854a03e3354c5a427342051cda"}}
+case class RpcMempoolSubscription(
+  subscription:String,
+  result:String
+)
+
+case class RpcWsMempoolResult(
+  jsonrpc:String, 
+  method: String,
+  params: RpcMempoolSubscription
+)
+
+case class RpcResult(
+  jsonrpc:String,  
+  result: Option[String] // possible response
+)
+
+
 // {
 //   "hash": "0xfc7d55e49b423d15634182a964a65a5583d8af34c484ea6727b8bddf6026e405",
 //   "nonce": "0x124",
@@ -299,4 +319,9 @@ object EthRpcJson extends JsonCommon {
   implicit val jf_rpc_rec = jsonFormat15(RpcReceipt)  
   implicit val jf_rpc_rec_res = jsonFormat3(RpcReceiptResultBatch)  
   implicit val jf_rpc_blk_rec = jsonFormat3(RpcBlockReceiptsResult)  
+
+  // websocket
+  implicit val jf_rpc_ws_mem_sub = jsonFormat2(RpcMempoolSubscription)  
+  implicit val jf_rpc_ws_mem = jsonFormat3(RpcWsMempoolResult)  
+  implicit val jf_rpc_ws_res = jsonFormat2(RpcResult)  
 }

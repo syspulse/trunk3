@@ -28,13 +28,16 @@ case class MempoolTx(
   override def getKey:Option[Any] = Some(hash)
 }
 
-
 case class MempoolBlock(
   ts:Long,
   `new`:Int,  // count of new Tx
   `old`:Int,  // count of old Tx 
   `out`:Int,  // count of disappeared Tx
-) extends Ingestable {
+) 
 
-  override def getKey:Option[Any] = Some(ts)
+case class MempoolTransaction(
+  ts:Long,
+  hash: String,  
+) extends Ingestable {
+  override def getKey:Option[Any] = Some(hash)
 }

@@ -187,4 +187,44 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         Seq()
     }
   }
+
+  def parseMempoolWS(data:String,delta:Boolean=true):Seq[RpcWsMempoolResult] = {
+    if(data.isEmpty()) return Seq()
+    try {
+      if(data.stripLeading().startsWith("{")) {
+        try {
+          val result = data.parseJson.convertTo[RpcWsMempoolResult]
+          Seq(result)          
+
+        } catch {
+          case e:Exception => 
+            // check if it is a result
+            try {
+              data.parseJson.convertTo[RpcResult]
+              // ignore subscription result
+              Seq()
+            } catch {
+              case e:Exception => 
+                log.error(s"failed to parse: '${data}'",e)
+                Seq()
+            }            
+        }
+      } else {
+        val m = data.split(",",-1).toList match {
+          case rpc :: id :: result :: Nil => 
+            log.error(s"not implemented: '${data}'")
+            None
+          case _ => {
+            log.error(s"failed to parse: '${data}'")
+            None
+          }
+        }
+        m.toSeq
+      }
+    } catch {
+      case e:Exception => 
+        log.error(s"failed to parse: '${data}'",e)
+        Seq()
+    }
+  }
 }

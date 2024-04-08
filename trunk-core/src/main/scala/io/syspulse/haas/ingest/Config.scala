@@ -70,6 +70,8 @@ case class Config(
   interceptorContract:String = "0x0000000000000000000000000000000000000007",
   script:String = "",
 
+  rpcUrl:String = "", // optional RPC url
+
   cmd:String = "stream",
   params: Seq[String] = Seq(),
   sinks:Seq[String] = Seq()
