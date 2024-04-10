@@ -83,7 +83,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
     log.info(s"Block(${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls},${toLong(b.size)})")
 
     if(receipts.size != b.transactions.size) {
-      log.error(s"transactions: ${b.transactions.size}, receipts: ${receipts.size}")
+      log.error(s"block=${block_number}: transactions=${b.transactions.size} != receipts=${receipts.size}")
       return Seq()
     }
 

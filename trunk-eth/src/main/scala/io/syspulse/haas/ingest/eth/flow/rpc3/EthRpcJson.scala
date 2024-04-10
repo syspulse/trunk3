@@ -83,9 +83,9 @@ case class RpcTx(
   gasPrice: String,
   gas: String,
   input: String,
-  r: String,
-  s: String,
-  v: String,
+  r: Option[String], // zkSync may not have signature
+  s: Option[String],
+  v: Option[String],
   chainId: Option[String],
   `type`: Option[String],
 
@@ -261,9 +261,9 @@ case class RpcTxRaw(
   `type`: String,
   accessList: Option[Array[RpcAccessList]],
   chainId: Option[String],
-  v: String,
-  r: String,
-  s: String
+  v: Option[String],
+  r: Option[String], // zkSync may not have signature
+  s: Option[String],  
 
 ) {
   

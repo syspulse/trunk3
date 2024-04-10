@@ -23,7 +23,7 @@ case class MempoolTx(
   v: BigInt,
   typ: Int,
   ch: Option[Int],             // chainId
-  sig: String
+  sig: Option[String]           // zkSync may not have signature
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
 }

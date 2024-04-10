@@ -127,7 +127,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       typ = Integer.parseInt(raw.`type`.drop(2),16).toByte,
       // this.accessList,
       ch = raw.chainId.map(v => Integer.parseInt(v.drop(2),16)),
-      s"${Integer.parseInt(raw.v.drop(2),16).toByte}:${raw.r}:${raw.s}"
+      sig = raw.v.map(_ => s"${Integer.parseInt(raw.v.get.drop(2),16).toByte}:${raw.r.get}:${raw.s.get}")
   )
 
   def parseMempool(data:String,delta:Boolean=true):Seq[MempoolTx] = {
