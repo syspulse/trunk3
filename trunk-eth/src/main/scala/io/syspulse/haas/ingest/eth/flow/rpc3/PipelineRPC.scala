@@ -368,7 +368,12 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
     receiptMap
   }
 
-  def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {
+  def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {    
+    if(config.receiptDelay > 0L) {
+      // ATTENTION: Sleep inside Akka stream Thread !
+      Thread.sleep(config.receiptDelay)
+    }
+
     config.receiptRequest match {
       case "block" => decodeReceiptsBlock(block)
       case "batch" => decodeReceiptsBatch(block)
