@@ -385,7 +385,6 @@ lazy val trunk_solana = (project in file("trunk-solana"))
         ),
     )
 
-
 lazy val trunk_ingest = (project in file("trunk-ingest"))
   .dependsOn(
     trunk_core,
@@ -427,7 +426,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
      
   )
 
-  lazy val trunk_intercept = (project in file("trunk-intercept"))
+lazy val trunk_intercept = (project in file("trunk-intercept"))
   //.dependsOn(trunk_core)
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings (
@@ -441,3 +440,26 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
           libScalaTest % "test"
         ),
     )
+
+lazy val trunk_stat = (project in file("trunk-stat"))
+  .dependsOn(
+    trunk_core,
+    trunk_eth,
+  )
+  .enablePlugins(JavaAppPackaging)
+  .settings (
+    sharedConfig,
+    sharedConfigAssembly,
+    sharedConfigDocker,
+    dockerBuildxSettings,
+
+    appDockerConfig("trunk-stat","io.syspulse.haas.stat.App"),
+    
+    libraryDependencies ++= 
+      Seq(
+        libSkelCore,         
+        libScalaTest % "test"
+      ),
+     
+  )
+
