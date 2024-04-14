@@ -46,7 +46,7 @@ abstract class PipelineStatTx[E <: skel.Ingestable](odometer:Option[OdoRoutes],c
   Pipeline[Tx,Stat,E](feed,output,throttle = 0L,config.delimiter,config.buffer,format=config.format)   
   with PipelineStat[E] {
   
-  def apiSuffix():String = s"/stat/tx"
+  def apiSuffix():String = s"/stat/${chain}/tx"
 
   var countTx:Long = 0
   var countBlock:Long = 0
@@ -74,8 +74,9 @@ abstract class PipelineStatTx[E <: skel.Ingestable](odometer:Option[OdoRoutes],c
     
   }).map(_ => {      
     
-    val stat = Stat(
+    val stat = Stat(      
       System.currentTimeMillis,
+      chain,
       countBlock,
       countTx,
       totalBlock,
@@ -91,11 +92,11 @@ abstract class PipelineStatTx[E <: skel.Ingestable](odometer:Option[OdoRoutes],c
   .buffer(1,OverflowStrategy.dropBuffer)
   .throttle(1,FiniteDuration(config.throttle,TimeUnit.MILLISECONDS))
   .map(stat => {
-    // send update to odometer 
-    // if(odometer.isDefined) {
-    //   odometer.get.update(OdoUpdateReq(s"${chain}:block",countBlock))
-    //   odometer.get.update(OdoUpdateReq(s"${chain}:tx",countTx))        
-    // }
+    //send update to odometer 
+    if(odometer.isDefined) {
+      odometer.get.update(OdoUpdateReq(s"${chain}:block",stat.countBlock))
+      odometer.get.update(OdoUpdateReq(s"${chain}:tx",stat.countTx))        
+    }
     stat
   })
 }

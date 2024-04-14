@@ -32,13 +32,11 @@ case class Config(
   output:Seq[String] = Seq(""),
 
   size:Long = Long.MaxValue,
-  limit:Long = Long.MaxValue,
-  freq: Long = 0L,
+  limit:Long = Long.MaxValue,  
   delimiter:String = "\n", // use "" for http call  
   // Exception in thread "main" akka.stream.scaladsl.Framing$FramingException: Read 1048858 bytes which is more than 1048576 without seeing a line terminator
   // It does not affect: akka.http.parsing.max-chunk-size = 1m
-  buffer:Int = 5 * 1024*1024, 
-  throttle:Long = 1000L,  
+  buffer:Int = 5 * 1024*1024,   
   format:String = "",
   
   entity:Seq[String] = Seq("ethereum:tx.extractor","arbitrum:tx.extractor"),
@@ -46,9 +44,10 @@ case class Config(
   datastore:String = "cache://", 
   cacheFlush:Long = 5000L,
   threadPool:Int = 16,
-  timeout:Long = 3000L,
-  timeoutIdle:Long = 30000L,
-
+  timeout:Long = 5000L,
+  timeoutIdle:Long = 60000L,// websocket idle timeout
+  throttle:Long = 3000L,    // throttle for stat aggregation
+  freq: Long = 3000L,       // Websocket freq update. Makes sense to be close to throttle
 
   cmd:String = "stream",
   params: Seq[String] = Seq(),
@@ -71,8 +70,10 @@ object App extends skel.Server {
         ArgString('h', "http.host",s"listen host (def: ${d.host})"),
         ArgInt('p', "http.port",s"listern port (def: ${d.port})"),
         ArgString('u', "http.uri",s"api uri (def: ${d.uri})"),
+
         ArgLong('_', "cache.flush",s"Cache flush interval, msec (def: ${d.cacheFlush})"),
         ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
+        ArgLong('_', "freq",s"Websocket Listeners update frequency, msec (def=${d.freq}"),
         
         ArgString('f', "feed",s"Input Feed (def: ${d.feed})"),
         
@@ -81,8 +82,7 @@ object App extends skel.Server {
         ArgString('e', "entity",s"Ingest entity: (block,transaction,tx,block-tx,transfer,log|event) def=${d.entity}"),
 
         ArgLong('_', "limit",s"Limit for entities to output (def=${d.limit})"),
-        ArgLong('_', "size",s"Size limit for output (def=${d.size})"),
-        ArgLong('_', "freq",s"Frequency (def=${d.freq}"),
+        ArgLong('_', "size",s"Size limit for output (def=${d.size})"),        
         ArgString('_', "delimiter","""Delimiter characteds (def: '\n'). Usage example: --delimiter=`echo -e $"\r"` """),
         ArgInt('_', "buffer",s"Frame buffer (Akka Framing) (def: ${d.buffer})"),
         ArgLong('_', "throttle",s"Throttle messages in msec (def: ${d.throttle})"),
@@ -181,7 +181,9 @@ object App extends skel.Server {
         val r1 = run( config.host, config.port,config.uri,c,
           Seq(
             (reg,"OdoRegistry",(r, ac) => {
-              val odometer = new OdoRoutes(r)(ac,io.syspulse.skel.odometer.Config(timeoutIdle = config.timeoutIdle),ex)
+              val odometer = new OdoRoutes(r)(ac,
+                io.syspulse.skel.odometer.Config(timeoutIdle = config.timeoutIdle,freq = config.freq)
+              ,ex)
               stream(Some(odometer))
               odometer
             })
