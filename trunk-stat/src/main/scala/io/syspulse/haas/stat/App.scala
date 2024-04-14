@@ -5,7 +5,8 @@ import scala.concurrent.duration.{Duration,FiniteDuration}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Awaitable
 import scala.concurrent.{Await, ExecutionContext, Future}
-import akka.actor.typed.scaladsl.Behaviors
+import io.syspulse.skel.FutureAwaitable._
+import java.util.concurrent.Executors
 
 import com.typesafe.scalalogging.Logger
 import io.jvm.uuid._
@@ -18,21 +19,18 @@ import io.syspulse.skel.config._
 import io.syspulse.haas.stat.flow._
 import io.syspulse.haas.ingest.eth
 
-case class Config(  
-  // host:String="0.0.0.0",
-  // port:Int=8080,
-  // uri:String = "/api/v1/trunk",
-  
-  feed:String = "",
-  output:String = "",
+import io.syspulse.skel.odometer._
+import io.syspulse.skel.odometer.store._
+import io.syspulse.skel.odometer.server.OdoRoutes
 
-  feedBlock:String = "",
-  feedTransaction:String = "",
-  feedTransfer:String = "",
-  feedLog:String = "",
-  feedMempool:String = "",
-  feedTx:String = "",
+case class Config(  
+  host:String="0.0.0.0",
+  port:Int=8080,
+  uri:String = "/api/v1/stat",
   
+  feed:Seq[String] = Seq(""),
+  output:Seq[String] = Seq(""),
+
   size:Long = Long.MaxValue,
   limit:Long = Long.MaxValue,
   freq: Long = 0L,
@@ -40,12 +38,17 @@ case class Config(
   // Exception in thread "main" akka.stream.scaladsl.Framing$FramingException: Read 1048858 bytes which is more than 1048576 without seeing a line terminator
   // It does not affect: akka.http.parsing.max-chunk-size = 1m
   buffer:Int = 5 * 1024*1024, 
-  throttle:Long = 0L,  
+  throttle:Long = 1000L,  
   format:String = "",
   
-  entity:Seq[String] = Seq("tx.extractor"),
+  entity:Seq[String] = Seq("ethereum:tx.extractor","arbitrum:tx.extractor"),
   
-  datastore:String = "", // store directory root
+  datastore:String = "cache://", 
+  cacheFlush:Long = 5000L,
+  threadPool:Int = 16,
+  timeout:Long = 3000L,
+  timeoutIdle:Long = 30000L,
+
 
   cmd:String = "stream",
   params: Seq[String] = Seq(),
@@ -65,17 +68,14 @@ object App extends skel.Server {
       new ConfigurationProp,
       new ConfigurationEnv, 
       new ConfigurationArgs(args,"trunk-stat","",
-        // ArgString('h', "http.host",s"listen host (def: ${d.host})"),
-        // ArgInt('p', "http.port",s"listern port (def: ${d.port})"),
-        // ArgString('u', "http.uri",s"api uri (def: ${d.uri})"),
+        ArgString('h', "http.host",s"listen host (def: ${d.host})"),
+        ArgInt('p', "http.port",s"listern port (def: ${d.port})"),
+        ArgString('u', "http.uri",s"api uri (def: ${d.uri})"),
+        ArgLong('_', "cache.flush",s"Cache flush interval, msec (def: ${d.cacheFlush})"),
+        ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
         
         ArgString('f', "feed",s"Input Feed (def: ${d.feed})"),
-        ArgString('_', "feed.tx",s"Tx Feed (def: ${d.feedTx})"),
-        ArgString('_', "feed.block",s"Block Feed (def: ${d.feedBlock})"),
-        ArgString('_', "feed.transfer",s"Token Transfer Feed (def: ${d.feedTransfer})"),
-        ArgString('_', "feed.log",s"EventLog Feed (def: ${d.feedLog})"),
-        ArgString('_', "feed.mempool",s"Mempool Feed (def: ${d.feedMempool})"),
-
+        
         ArgString('o', "output",s"output (def=${d.output})"),        
         
         ArgString('e', "entity",s"Ingest entity: (block,transaction,tx,block-tx,transfer,log|event) def=${d.entity}"),
@@ -93,28 +93,24 @@ object App extends skel.Server {
         ArgLogging(),
         ArgParam("<params>",""),
 
-        // ArgCmd("server",s"Server"),
+        ArgCmd("server",s"Odometer Server "),
         ArgCmd("stream",s"Stat pipeline (requires -e <entity>)"),        
         
       ).withExit(1)
     )).withLogging()
 
     val config = Config(
-      // host = c.getString("http.host").getOrElse(d.host),
-      // port = c.getInt("http.port").getOrElse(d.port),
-      // uri = c.getString("http.uri").getOrElse(d.uri),
+      host = c.getString("http.host").getOrElse(d.host),
+      port = c.getInt("http.port").getOrElse(d.port),
+      uri = c.getString("http.uri").getOrElse(d.uri),
+      cacheFlush = c.getLong("cache.flush").getOrElse(d.cacheFlush),
+      threadPool = c.getInt("thread.pool").getOrElse(d.threadPool),
+
       
-      feed = c.getString("feed").getOrElse(d.feed),
-      output = c.getString("output").getOrElse(d.output),
+      feed = c.getListString("feed",d.feed),
+      output = c.getListString("output",d.output),
       entity = c.getListString("entity",d.entity),
-      
-      feedBlock = c.getString("feed.block").getOrElse(d.feedBlock),
-      feedTransaction = c.getString("feed.transction").getOrElse(d.feedTransaction),
-      feedTransfer = c.getString("feed.transfer").getOrElse(d.feedTransfer),
-      feedLog = c.getString("feed.log").getOrElse(d.feedLog),
-      feedMempool = c.getString("feed.mempool").getOrElse(d.feedMempool),
-      feedTx = c.getString("feed.tx").getOrElse(d.feedTx),
-      
+            
       limit = c.getLong("limit").getOrElse(d.limit),
       size = c.getLong("size").getOrElse(d.size),
       freq = c.getLong("freq").getOrElse(d.freq),
@@ -131,24 +127,71 @@ object App extends skel.Server {
 
     Console.err.println(s"${config}")
     
-    val (r,pp) = config.cmd match {
-      case "stream" => {
-        val pp:Seq[Pipeline[_,_,_]] = config.entity.map( e => e match {
-
-          case "tx.extractor" =>
-            new PipelineTx(config)
-          
+    def stream(odometer:Option[OdoRoutes]) = {
+      val pp:Seq[Pipeline[_,_,_]] = config.entity.zipWithIndex.map{ case(e,i) => 
+        e.split(":").toList match {
+          case chain :: "tx.extractor" :: Nil =>
+            new PipelineTx(odometer,chain,config.feed.lift(i).getOrElse(""),config.output.lift(i).getOrElse(""),config)
+          case "tx.extractor" :: Nil =>
+            new PipelineTx(odometer,"ethereum",config.feed.lift(i).getOrElse(""),config.output.lift(i).getOrElse(""),config)
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");
             sys.exit(1)            
-        })
+        }
+      }
 
-        // start all pipelines
-        val ppr = pp.map( _.run())
+      // start all pipelines
+      val ppr = pp.map( _.run())
 
-        (ppr.head,Some(pp.head))
-                
-      }       
+      (ppr.head,Some(pp.head))
+    }
+
+    val (r,pp) = config.cmd match {
+      case "stream" => 
+        stream(None)
+
+      case "server" => 
+        val store = config.datastore.split("://").toList match {
+          case "mysql" :: db :: Nil => new OdoStoreDB(c,s"mysql://${db}")
+          case "postgres" :: db :: Nil => new OdoStoreDB(c,s"postgres://${db}")
+          case "mysql" :: Nil => new OdoStoreDB(c,"mysql://mysql")
+          case "postgres" :: Nil => new OdoStoreDB(c,"postgres://postgres")
+          case "jdbc" :: Nil => new OdoStoreDB(c,"mysql://mysql")
+
+          case "redis" :: uri :: Nil => new OdoStoreRedis(uri)
+          case "redis" :: Nil => new OdoStoreRedis("redis://localhost:6379/0")
+
+          case "dir" :: dir ::  _ => new OdoStoreDir(dir)
+          case "mem" :: Nil | "cache" :: Nil => new OdoStoreMem()
+          
+          case _ => {
+            Console.err.println(s"Unknown datastore: '${config.datastore}'")
+            sys.exit(1)
+          }
+        }
+
+        // redis does not actually need a cache
+        val cache = new OdoStoreCache(store, freq = config.cacheFlush)
+
+        val reg = OdoRegistry(cache)
+
+        // Execution context
+        implicit val ex: ExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(config.threadPool))
+        
+        val r1 = run( config.host, config.port,config.uri,c,
+          Seq(
+            (reg,"OdoRegistry",(r, ac) => {
+              val odometer = new OdoRoutes(r)(ac,io.syspulse.skel.odometer.Config(timeoutIdle = config.timeoutIdle),ex)
+              stream(Some(odometer))
+              odometer
+            })
+          )
+        )
+        
+        (r1,r1)
+      case _ => 
+        Console.err.println(s"Unknown command: ${config.cmd}")    
+        sys.exit(2)
     }
     
     Console.err.println(s"r=${r}")
@@ -158,9 +201,10 @@ object App extends skel.Server {
         Console.err.println(s"rr: ${rr}")
       }
       case akka.NotUsed => 
+      case _ =>
     }
 
-    Console.err.println(s"Result: ${pp.map(_.countObj)}")
+    Console.err.println(s"Result: ${r}")
     // sys.exit(0)
   }
 }

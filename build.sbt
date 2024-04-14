@@ -458,6 +458,7 @@ lazy val trunk_stat = (project in file("trunk-stat"))
     libraryDependencies ++= 
       Seq(
         libSkelCore,         
+        libSkelOdometer,
         libScalaTest % "test"
       ),
      

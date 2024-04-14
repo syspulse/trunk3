@@ -4,7 +4,9 @@ import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
 case class Stat(
-  ts:Long,  
+  ts:Long,
+  countBlock:Long,
+  countTx:Long,  
   block:Long,
   tx:Long,
 

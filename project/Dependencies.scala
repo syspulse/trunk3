@@ -201,6 +201,7 @@ object Dependencies {
     val libSkelNotifyCore =   "io.syspulse"                     %% "notify-core"                    % skelVersion
     val libSkelCli =          "io.syspulse"                     %% "skel-cli"                       % skelVersion
     val libSkelSerde =        "io.syspulse"                     %% "skel-serde"                     % skelVersion
+    val libSkelOdometer =     "io.syspulse"                     %% "skel-odometer"                  % skelVersion
     
     val libSkelSyslogCore =   "io.syspulse"                     %% "syslog-core"                    % skelVersion
     val libSkelJobCore =      "io.syspulse"                     %% "job-core"                       % skelVersion
