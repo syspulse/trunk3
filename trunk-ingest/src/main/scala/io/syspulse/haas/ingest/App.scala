@@ -75,6 +75,7 @@ object App extends skel.Server {
         ArgInt('l', "lag",s"Blocks lag (def: ${d.blockLag})"),
         ArgInt('b', "batch",s"Blocks Batch (def: ${d.blockBatch})"),
         ArgInt('_', "reorg",s"Blocks Reorg depth (def: ${d.blockReorg})"),
+        ArgInt('_', "block.limit",s"Block batch limit (def: ${d.blockLimit}))"),
 
         ArgInt('_', "receipt.batch",s"Receipt Batch size (def: ${d.receiptBatch})"),
         ArgLong('_', "receipt.throttle",s"Throttle between receipt batches in msec (def: ${d.receiptThrottle})"),
@@ -142,6 +143,7 @@ object App extends skel.Server {
       blockLag = c.getInt("lag").getOrElse(d.blockLag),
       blockBatch = c.getInt("batch").getOrElse(d.blockBatch),
       blockReorg = c.getInt("reorg").getOrElse(d.blockReorg),
+      blockLimit = c.getInt("block.limit").getOrElse(d.blockLimit),
       
       receiptBatch = c.getInt("receipt.batch").getOrElse(d.receiptBatch),
       receiptThrottle = c.getLong("receipt.throttle").getOrElse(d.receiptThrottle),

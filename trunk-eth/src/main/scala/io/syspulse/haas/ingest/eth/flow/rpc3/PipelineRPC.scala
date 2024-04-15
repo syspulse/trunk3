@@ -236,7 +236,8 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           .map(blocks => {
             log.info(s"--> ${blocks}")
             
-            val blocksReq = blocks.map(block => {
+            // don't forge to limit if required
+            val blocksReq = blocks.take(config.blockLimit).map(block => {
               val blockHex = s"0x${block.toHexString}"
               s"""{
                   "jsonrpc":"2.0","method":"eth_getBlockByNumber",
