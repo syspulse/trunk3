@@ -236,15 +236,16 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           .map(blocks => {
             log.info(s"--> ${blocks}")
             
-            // don't forge to limit if required
-            val blocksReq = blocks.take(config.blockLimit).map(block => {
-              val blockHex = s"0x${block.toHexString}"
-              s"""{
-                  "jsonrpc":"2.0","method":"eth_getBlockByNumber",
-                  "params":["${blockHex}",true],
-                  "id":0
-                }""".trim.replaceAll("\\s+","")  
-            })
+            // if limit is specified, take the last limit
+            val blocksReq = (if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks)
+              .map(block => {
+                val blockHex = s"0x${block.toHexString}"
+                s"""{
+                    "jsonrpc":"2.0","method":"eth_getBlockByNumber",
+                    "params":["${blockHex}",true],
+                    "id":0
+                  }""".trim.replaceAll("\\s+","")  
+              })
                         
             val json = s"""[${blocksReq.mkString(",")}]"""
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
