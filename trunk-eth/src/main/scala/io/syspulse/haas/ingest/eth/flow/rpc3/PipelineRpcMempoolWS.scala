@@ -35,6 +35,7 @@ import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 import io.syspulse.haas.ingest.eth.MempoolJson._
+import io.syspulse.haas.ingest.eth.CallTraceJson._
 import io.syspulse.haas.ingest.PipelineIngest
 import io.syspulse.haas.ingest.eth.flow.rpc3.RpcTxPoolResult
 
@@ -55,17 +56,65 @@ abstract class PipelineRpcMempoolWS[E <: skel.Ingestable](config:Config)
     })
   }
 
-  def convert(mtx: MempoolTransaction): MempoolTransaction = {    
-    val json = s"""{"jsonrpc":"2.0","method":"debug_traceTransaction","params":["${mtx.hash}",{"tracer":"callTracer"}],"id": ${mtx.ts}}"""
+  def convert(tx: MempoolTransaction): MempoolTransaction = tx
+    
+
+}
+
+class PipelineMempoolStream(config:Config) extends PipelineRpcMempoolWS[CallTrace](config) {
+
+  def transform(mtx: MempoolTransaction): Seq[CallTrace] = {
+    // val json = s"""{"jsonrpc":"2.0","method":"debug_traceTransaction","params":["${mtx.hash}",{"tracer":"callTracer"}],"id": ${mtx.ts}}"""
+    // val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+    // val body = rsp.text()
+    // log.info(s"body=${body}")
+    
+    val tx = {
+      val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${mtx.hash}"],"id": ${mtx.ts}}"""
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val body = rsp.text()    
+      //log.debug(s"body=${body}")
+      val r = body.parseJson.convertTo[RpcMempoolTransactionResult]
+      if(! r.result.isDefined)
+        return Seq()
+
+      r.result.get
+    }
+        
+    val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
+      "params":[
+        {
+          "from":"${tx.from}",
+          "to":${if(tx.to.isDefined) "\""+tx.to.get+"\"" else "null"},
+          "gas":"${tx.gas}",
+          "gasPrice":"${tx.gasPrice}",
+          "value":${if(tx.value.isDefined) "\""+tx.value.get+"\"" else "null"},
+          "data":${if(tx.input.isDefined) "\""+tx.input.get+"\"" else "null"}
+        },
+        "latest",
+        {
+          "tracer":"prestateTracer",
+          "tracerConfig":{
+            "diffMode":true
+          }
+        }
+      ],
+      "id": 0}
+      """.trim.replaceAll("\\s+","")
+
+    //log.debug(s"${json}")
 
     val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
     val body = rsp.text()
-    log.info(s"body=${body}")
-    mtx
+    log.debug(s"body=${body}")
+
+    if(body.contains(""""code":-32000""")) {
+      log.warn(s"${body}")
+    }
+    
+    Seq(
+      CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, r = body)
+    )
+  
   }
-}
-
-class PipelineMempoolStream(config:Config) extends PipelineRpcMempoolWS[MempoolTransaction](config) {
-
-  def transform(tx: MempoolTransaction): Seq[MempoolTransaction] = Seq(tx)    
 }

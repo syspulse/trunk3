@@ -10,8 +10,6 @@ import io.syspulse.skel.config._
 import io.syspulse.skel.util.Util
 import io.syspulse.skel.config._
 
-import io.syspulse.skel.ingest._
-
 import spray.json._
 import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit

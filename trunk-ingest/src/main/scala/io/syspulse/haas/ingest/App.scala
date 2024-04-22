@@ -35,9 +35,9 @@ object App extends skel.Server {
       new ConfigurationProp,
       new ConfigurationEnv, 
       new ConfigurationArgs(args,"trunk-ingest","",
-        // ArgString('h', "http.host",s"listen host (def: ${d.host})"),
-        // ArgInt('p', "http.port",s"listern port (def: ${d.port})"),
-        // ArgString('u', "http.uri",s"api uri (def: ${d.uri})"),
+        ArgString('h', "http.host",s"listen host (def: ${d.host})"),
+        ArgInt('p', "http.port",s"listern port (def: ${d.port})"),
+        ArgString('u', "http.uri",s"api uri (def: ${d.uri})"),
         
         ArgString('f', "feed",s"Input Feed (def: ${d.feed})"),
         ArgString('_', "feed.tx",s"Tx Feed (def: ${d.feedTx})"),
@@ -62,13 +62,12 @@ object App extends skel.Server {
         ArgInt('_', "buffer",s"Frame buffer (Akka Framing) (def: ${d.buffer})"),
         ArgLong('_', "throttle",s"Throttle messages in msec (def: ${d.throttle})"),
         ArgString('_', "format",s"Format output (json,csv,log) (def=${d.format})"),
-
         ArgString('t', "filter",s"Filter (def='${d.filter}')"),
         
-        ArgString('d', "datastore",s"datastore dir (def: ${d.datastore})"),
-        ArgString('_', "abi",s"directory with ABI jsons (format: NAME-0xaddress.json) (def=${d.abi}"),
+        // ArgString('_', "abi",s"directory with ABI jsons (format: NAME-0xaddress.json) (def=${d.abi}"),
 
-        ArgString('_', "ingest.cron",s"Ingest load cron (currently only seconds interval Tick supported) (def: ${d.ingestCron})"),
+        ArgString('d', "datastore",s"datastore dir (def: ${d.datastore})"),        
+
         ArgLong('_', "block.throttle",s"Throttle between block batches (e.g. (def: ${d.blockThrottle}))"),
         ArgString('_', "block",s"Ingest from this block (def: ${d.block})"),
         ArgString('_', "block.end",s"Ingest until this block (def: ${d.blockEnd})"),
@@ -88,21 +87,23 @@ object App extends skel.Server {
         
         ArgString('s', "script",s"Interceptor Script (def=${d.script})"),
 
-        ArgString('_', "rpc.url",s"RPC Url (optional) (def=${d.rpcUrl})"),        
+        ArgString('_', "rpc.url",s"RPC Url (optional) (def=${d.rpcUrl})"),
+
+        ArgLong('_', "timeout.idle",s"Idle timeout in msec (def: ${d.timeoutIdle})"),
 
         ArgLogging(),
         ArgParam("<params>",""),
 
-        // ArgCmd("server",s"Server"),
+        ArgCmd("server",s"Server"),
         ArgCmd("stream",s"Ingest pipeline (requires -e <entity>)"),        
         
       ).withExit(1)
     )).withLogging()
 
     val config = Config(
-      // host = c.getString("http.host").getOrElse(d.host),
-      // port = c.getInt("http.port").getOrElse(d.port),
-      // uri = c.getString("http.uri").getOrElse(d.uri),
+      host = c.getString("http.host").getOrElse(d.host),
+      port = c.getInt("http.port").getOrElse(d.port),
+      uri = c.getString("http.uri").getOrElse(d.uri),
       
       feed = c.getString("feed").getOrElse(d.feed),
       output = c.getString("output").getOrElse(d.output),
@@ -130,13 +131,10 @@ object App extends skel.Server {
       format = c.getString("format").getOrElse(d.format),
 
       filter = c.getListString("filter",d.filter),
-      
+      //abi = c.getString("abi").getOrElse(d.abi),
+
       datastore = c.getString("datastore").getOrElse(d.datastore),
-      
-      abi = c.getString("abi").getOrElse(d.abi),
-
-      ingestCron = c.getString("ingest.cron").getOrElse(d.ingestCron),
-
+                  
       blockThrottle = c.getLong("block.throttle").getOrElse(d.blockThrottle),      
       block = c.getString("block").getOrElse(d.block),
       blockEnd = c.getString("block.end").getOrElse(d.blockEnd),
@@ -157,6 +155,8 @@ object App extends skel.Server {
       script = c.getSmartString("script").getOrElse(d.script),
 
       rpcUrl = c.getSmartString("rpc.url").getOrElse(d.rpcUrl),
+
+      timeoutIdle = c.getLong("timeout.idle").getOrElse(d.timeoutIdle),
       
       cmd = c.getCmd().getOrElse(d.cmd),      
       params = c.getParams(),

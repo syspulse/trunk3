@@ -300,6 +300,34 @@ case class RpcTxPoolResult(
   result:RpcTxPool
 )
 
+case class RpcMempoolTransaction (
+  blockHash:Option[String],
+  blockNumber:Option[String],
+  from:String,
+  gas:String,
+  gasPrice:String,
+  maxFeePerGas:Option[String],
+  maxPriorityFeePerGas:Option[String],
+  hash:String,
+  input:Option[String],
+  nonce:String,
+  to:Option[String],
+  transactionIndex:Option[String],
+  value:Option[String],
+  `type`:Option[String],
+  accessList:Option[Array[String]],
+  chainId:Option[String],
+  v:String,
+  r:String,
+  s:String,
+  yParity:Option[String]
+)
+
+case class RpcMempoolTransactionResult(
+  jsonrpc:String,
+  id:Long,
+  result:Option[RpcMempoolTransaction]
+)
 
 object EthRpcJson extends JsonCommon {
   
@@ -323,5 +351,8 @@ object EthRpcJson extends JsonCommon {
   // websocket
   implicit val jf_rpc_ws_mem_sub = jsonFormat2(RpcMempoolSubscription)  
   implicit val jf_rpc_ws_mem = jsonFormat3(RpcWsMempoolResult)  
-  implicit val jf_rpc_ws_res = jsonFormat2(RpcResult)  
+  implicit val jf_rpc_ws_res = jsonFormat2(RpcResult)
+  
+  implicit val jf_rpc_mem_tx = jsonFormat20(RpcMempoolTransaction)  
+  implicit val jf_rpc_mem_tx_res = jsonFormat3(RpcMempoolTransactionResult)  
 }

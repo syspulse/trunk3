@@ -143,7 +143,6 @@ case class EthLog(
   block_timestamp:Long, 
   block_hash:String) extends Ingestable
 
-
 // ATTENTION: This is format of ethereum-etl but converges into our internal format !
 
 object EthEtlJson extends JsonCommon with NullOptions with ProductFormatsInstances {
@@ -164,5 +163,5 @@ object EthEtlJson extends JsonCommon with NullOptions with ProductFormatsInstanc
     "nonce","max_fee_per_gas","max_priority_fee_per_gas","transaction_type","cumulative_gas_used","gas_used",
     "contract_address","root","status","effective_gas_price","block","logs"
   )    
-  
+
 }

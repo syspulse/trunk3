@@ -228,19 +228,28 @@ def appAssemblyConfig(appName:String,appMainClass:String) =
 
 lazy val root = (project in file("."))
   .aggregate(
-    trunk_core, 
-    trunk_eth,
-    trunk_ingest      
-  )
-  .dependsOn(
-    trunk_core, 
+    trunk_core,
+    trunk_pipe,
     trunk_eth,
     trunk_icp,
     trunk_vechain,
     trunk_stellar,
     trunk_stark,
     trunk_solana,
+    trunk_intercept,
     trunk_ingest,
+  )
+  .dependsOn(
+    trunk_core,
+    trunk_pipe,
+    trunk_eth,
+    trunk_icp,
+    trunk_vechain,
+    trunk_stellar,
+    trunk_stark,
+    trunk_solana,
+    trunk_intercept,
+    trunk_ingest,    
   )
   .disablePlugins(sbtassembly.AssemblyPlugin) // this is needed to prevent generating useless assembly and merge error
   .settings(
@@ -251,26 +260,39 @@ lazy val root = (project in file("."))
   )
 
 lazy val trunk_core = (project in file("trunk-core"))
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-  .dependsOn(trunk_intercept)
+  .disablePlugins(sbtassembly.AssemblyPlugin)  
   .settings (
       sharedConfig,
       name := "trunk-core",
       libraryDependencies ++= 
         Seq(
-          libSkelCore,
+          libSkelCore,          
+          // libExtCore,          
+          libUUID, 
+          libScalaTest % "test"
+        ),
+    )
+
+lazy val trunk_pipe = (project in file("trunk-pipe"))
+  .dependsOn(trunk_core)
+  .disablePlugins(sbtassembly.AssemblyPlugin)  
+  .settings (
+      sharedConfig,
+      name := "trunk-pipe",
+      libraryDependencies ++= 
+        Seq(
           libSkelCore,
           libSkelIngest,
-
+          libSkelDSL,          
           libExtCore,
-          
+
           libUUID, 
           libScalaTest % "test"
         ),
     )
 
 lazy val trunk_eth = (project in file("trunk-eth"))
-  .dependsOn(trunk_core)
+  .dependsOn(trunk_core, trunk_pipe)
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings (
       sharedConfig,
@@ -289,7 +311,7 @@ lazy val trunk_eth = (project in file("trunk-eth"))
     )
 
 lazy val trunk_icp = (project in file("trunk-icp"))
-  .dependsOn(trunk_core)
+  .dependsOn(trunk_core, trunk_pipe)
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings (
       sharedConfig,
@@ -308,7 +330,7 @@ lazy val trunk_icp = (project in file("trunk-icp"))
     )
 
 lazy val trunk_vechain = (project in file("trunk-vechain"))
-  .dependsOn(trunk_core)
+  .dependsOn(trunk_core, trunk_pipe)
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings (
       sharedConfig,
@@ -327,7 +349,7 @@ lazy val trunk_vechain = (project in file("trunk-vechain"))
     )
 
 lazy val trunk_stark = (project in file("trunk-stark"))
-  .dependsOn(trunk_core)
+  .dependsOn(trunk_core, trunk_pipe)
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings (
       sharedConfig,
@@ -346,7 +368,7 @@ lazy val trunk_stark = (project in file("trunk-stark"))
     )
 
 lazy val trunk_stellar = (project in file("trunk-stellar"))
-  .dependsOn(trunk_core)
+  .dependsOn(trunk_core, trunk_pipe)
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings (
       sharedConfig,
@@ -367,7 +389,7 @@ lazy val trunk_stellar = (project in file("trunk-stellar"))
     )
 
 lazy val trunk_solana = (project in file("trunk-solana"))
-  .dependsOn(trunk_core)
+  .dependsOn(trunk_core, trunk_pipe)
   .disablePlugins(sbtassembly.AssemblyPlugin)
   .settings (
       sharedConfig,
@@ -385,9 +407,36 @@ lazy val trunk_solana = (project in file("trunk-solana"))
         ),
     )
 
+lazy val trunk_intercept = (project in file("trunk-intercept"))
+  .dependsOn(
+    trunk_core,
+    trunk_pipe,
+  )
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+  //.enablePlugins(JavaAppPackaging)
+  .settings (
+      sharedConfig,
+      // sharedConfigAssembly,
+      // sharedConfigDocker,
+      // dockerBuildxSettings,
+      // appDockerConfig("trunk3","io.syspulse.haas.intercept.App"),
+      
+      name := "trunk-intercept",
+    
+      libraryDependencies ++= 
+        Seq(
+          libSkelCore,
+          libSkelAuthCore,
+          //libSkelDSL,
+          
+          libScalaTest % "test"
+        ),
+    )
+
 lazy val trunk_ingest = (project in file("trunk-ingest"))
   .dependsOn(
     trunk_core,
+    trunk_pipe,
     trunk_eth,
     trunk_icp,
     trunk_vechain,
@@ -426,24 +475,10 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
      
   )
 
-lazy val trunk_intercept = (project in file("trunk-intercept"))
-  //.dependsOn(trunk_core)
-  .disablePlugins(sbtassembly.AssemblyPlugin)
-  .settings (
-      sharedConfig,
-      name := "trunk-intercept",
-      libraryDependencies ++= 
-        Seq(
-          libSkelCore,              
-          libSkelDSL,
-          
-          libScalaTest % "test"
-        ),
-    )
-
 lazy val trunk_stat = (project in file("trunk-stat"))
   .dependsOn(
     trunk_core,
+    trunk_pipe,
     trunk_eth,
   )
   .enablePlugins(JavaAppPackaging)

@@ -76,15 +76,13 @@ abstract class PipelineMempoolWS[T,O <: Ingestable,E <: Ingestable](config:Confi
     feed.split("://").toList match {
       case "ws" :: _ | "wss" :: _  =>         
         
-        val s0 = Flows.fromWebsocket(uri.uri, 
+        val s0 = Flows.fromWebsocket(
+          uri.uri, 
           helloMsg = Some("""{"jsonrpc":"2.0","id":1,"method":"eth_subscribe","params":["newPendingTransactions"]}""")
         )
-
-        // val a = s0.getAttributes.getAttribute(classOf[AttributeActor])
-        // log.info(s"Websocket Actor: ${a}")        
-
-        // ------- Flow ------------------------------------------------------------------------------------
+        
         val sourceFlow = s0
+          .throttle(1,FiniteDuration(config.throttle,TimeUnit.MILLISECONDS))
           .map(b => ByteString(b))
       
         // val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>

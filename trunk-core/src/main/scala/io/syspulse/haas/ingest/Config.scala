@@ -3,9 +3,9 @@ package io.syspulse.haas.ingest
 import com.typesafe.scalalogging.Logger
 
 case class Config(  
-  // host:String="0.0.0.0",
-  // port:Int=8080,
-  // uri:String = "/api/v1/trunk",
+  host:String="0.0.0.0",
+  port:Int=8080,
+  uri:String = "/api/v1/trunk",
   
   feed:String = "",
   output:String = "",
@@ -23,10 +23,7 @@ case class Config(
   outputLog:String = "",
   outputMempool:String = "",
   outputTx:String = "",
-  
-  abi:String = "abi/",
-  source:String="",
-  
+    
   size:Long = Long.MaxValue,
   limit:Long = Long.MaxValue,
   freq: Long = 0L,
@@ -36,17 +33,12 @@ case class Config(
   buffer:Int = 5 * 1024*1024, 
   throttle:Long = 5000L,  
   format:String = "",
+  filter:Seq[String] = Seq(),
   
   entity:Seq[String] = Seq("block"),
-  
-  expr:String = "",
-  
+    
   datastore:String = "", // store directory root
-
-  filter:Seq[String] = Seq(),
-
-  ingestCron:String = "12", // 12 seconds
-
+  
   block:String = "latest", // which block to use (only for http:// RPC source)
   blockEnd:String = "",    // empty is infinite
   blockBatch:Int = 10,     // batch size (how many blocks to ask)
@@ -74,7 +66,9 @@ case class Config(
 
   rpcUrl:String = "", // optional RPC url
 
+  timeoutIdle:Long = 10000L,
+
   cmd:String = "stream",
   params: Seq[String] = Seq(),
-  sinks:Seq[String] = Seq()
+  c:Seq[String] = Seq()
 )

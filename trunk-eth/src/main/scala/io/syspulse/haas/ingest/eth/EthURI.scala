@@ -17,6 +17,7 @@ case class EthURI(ethUri:String,apiSuffix:String="",apiToken:String="") {
       case "eth" :: Nil => default + "/" + ethUrl(apiToken) + apiSuffix
       case "http" :: _ => ethUri
       case "https" :: _ => ethUri
+      case ("ws" | "wss" ) :: _ => ethUri
       case _ => ethUri
     }
   }

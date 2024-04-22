@@ -26,6 +26,7 @@ import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
 
 import io.syspulse.haas.ingest.Decoder
 import io.syspulse.skel.util.DiffSet
+import io.syspulse.haas.ingest.Config
 
 trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,RpcTx] {
 
@@ -226,5 +227,38 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         log.error(s"failed to parse: '${data}'",e)
         Seq()
     }
+  }
+
+  def traceMempoolTx(tx: MempoolTx)(implicit config:Config): String = {    
+    val block = tx.b match {
+      case Some(n) => s"0x${n.toHexString}"
+      case None => "latest"
+    }
+
+    val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
+      "params":[
+        {
+          "from":"${tx.from}",
+          "to":"${tx.to.getOrElse("")}",
+          "gas":"0x${tx.gas.toHexString}",
+          "gasPrice":"0x${tx.fee.getOrElse(BigInt(0)).bigInteger.toString(16)}",
+          "value":"${tx.v}",
+          "data":"${tx.inp}"
+        }, 
+        "${block.toString}",
+        {
+          "tracer":"prestateTracer",
+          "tracerConfig":{
+            "diffMode":true
+          }
+        }
+      ],
+      "id": ${tx.ts}}
+      """.trim.replaceAll("\\s+","")
+
+    val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+    val body = rsp.text()
+    log.info(s"body=${body}")
+    body
   }
 }
