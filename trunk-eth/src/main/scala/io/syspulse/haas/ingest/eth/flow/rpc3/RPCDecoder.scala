@@ -229,36 +229,125 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     }
   }
 
-  def traceMempoolTx(tx: MempoolTx)(implicit config:Config): String = {    
-    val block = tx.b match {
-      case Some(n) => s"0x${n.toHexString}"
-      case None => "latest"
+  def traceMempoolTx(mtx: MempoolTx)(implicit config:Config): Seq[CallTrace] = {    
+  //   val block = tx.b match {
+  //     case Some(n) => s"0x${n.toHexString}"
+  //     case None => "latest"
+  //   }
+
+  //   val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
+  //     "params":[
+  //       {
+  //         "from":"${tx.from}",
+  //         "to":"${tx.to.getOrElse("")}",
+  //         "gas":"0x${tx.gas.toHexString}",
+  //         "gasPrice":"0x${tx.fee.getOrElse(BigInt(0)).bigInteger.toString(16)}",
+  //         "value":"${tx.v}",
+  //         "data":"${tx.inp}"
+  //       }, 
+  //       "${block.toString}",
+  //       {
+  //         "tracer":"prestateTracer",
+  //         "tracerConfig":{
+  //           "diffMode":true
+  //         }
+  //       }
+  //     ],
+  //     "id": ${tx.ts}}
+  //     """.trim.replaceAll("\\s+","")
+
+  //   val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+  //   val body = rsp.text()
+  //   log.info(s"body=${body}")
+  //   body
+  // }
+
+    val tx = {
+      val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${mtx.hash}"],"id": ${mtx.ts}}"""
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val body = rsp.text()    
+      //log.debug(s"body=${body}")
+      val r = body.parseJson.convertTo[RpcMempoolTransactionResult]
+      if(! r.result.isDefined)
+        return Seq()
+
+      r.result.get
     }
 
-    val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
-      "params":[
-        {
-          "from":"${tx.from}",
-          "to":"${tx.to.getOrElse("")}",
-          "gas":"0x${tx.gas.toHexString}",
-          "gasPrice":"0x${tx.fee.getOrElse(BigInt(0)).bigInteger.toString(16)}",
-          "value":"${tx.v}",
-          "data":"${tx.inp}"
-        }, 
-        "${block.toString}",
-        {
-          "tracer":"prestateTracer",
-          "tracerConfig":{
-            "diffMode":true
+    // collect States
+    val state = {
+      val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
+        "params":[
+          {
+            "from":"${tx.from}",
+            "to":${if(tx.to.isDefined) "\""+tx.to.get+"\"" else "null"},
+            "gas":"${tx.gas}",
+            "gasPrice":"${tx.gasPrice}",
+            "value":${if(tx.value.isDefined) "\""+tx.value.get+"\"" else "null"},
+            "data":${if(tx.input.isDefined) "\""+tx.input.get+"\"" else "null"}
+          },
+          "latest",
+          {
+            "tracer":"prestateTracer",
+            "tracerConfig":{
+              "diffMode":true
+            }
           }
-        }
-      ],
-      "id": ${tx.ts}}
-      """.trim.replaceAll("\\s+","")
+        ],
+        "id": ${System.currentTimeMillis}}
+        """.trim.replaceAll("\\s+","")
 
-    val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
-    val body = rsp.text()
-    log.info(s"body=${body}")
-    body
+      //log.debug(s"${json}")
+
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val body = rsp.text()
+      log.debug(s"body=${body}")
+
+      if(body.contains(""""code":-32000""")) {
+        //log.warn(s"state: ${body}")
+      }
+
+      body.trim
+    }
+
+    // collect States
+    val calls = {
+      val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
+        "params":[
+          {
+            "from":"${tx.from}",
+            "to":${if(tx.to.isDefined) "\""+tx.to.get+"\"" else "null"},
+            "gas":"${tx.gas}",
+            "gasPrice":"${tx.gasPrice}",
+            "value":${if(tx.value.isDefined) "\""+tx.value.get+"\"" else "null"},
+            "data":${if(tx.input.isDefined) "\""+tx.input.get+"\"" else "null"}
+          },
+          "latest",
+          {
+            "tracer":"callTracer",
+            "tracerConfig":{
+              "withLogs":true
+            }
+          }
+        ],
+        "id": ${System.currentTimeMillis}}
+        """.trim.replaceAll("\\s+","")
+
+      //log.debug(s"${json}")
+
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val body = rsp.text()
+      log.debug(s"body=${body}")
+
+      if(body.contains(""""code":-32000""")) {
+        //log.warn(s"calls: ${body}")
+      }
+
+      body.trim
+    }
+    
+    Seq(
+      CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, state = state, calls = calls)
+    )
   }
 }

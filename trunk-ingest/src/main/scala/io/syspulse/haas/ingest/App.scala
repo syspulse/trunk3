@@ -257,6 +257,8 @@ object App extends skel.Server {
             Some(new eth.flow.rpc3.PipelineMempool(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
           case "mempool.ws" => 
             Some(new eth.flow.rpc3.PipelineMempoolStream(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+          case "trace" | "mempool.trace" => 
+            Some(new eth.flow.rpc3.PipelineMempoolTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

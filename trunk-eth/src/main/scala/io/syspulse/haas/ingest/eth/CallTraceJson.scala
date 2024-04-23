@@ -11,5 +11,5 @@ import io.syspulse.haas.ingest.eth.BlockJson
 import io.syspulse.haas.ingest.eth.EventJson
 
 object CallTraceJson extends DefaultJsonProtocol {
-  implicit val jf_call_trc = jsonFormat3(CallTrace.apply _)  
+  implicit val jf_call_trc = jsonFormat4(CallTrace.apply _)  
 }

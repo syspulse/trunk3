@@ -6,7 +6,8 @@ import io.syspulse.skel.util.Util
 case class CallTrace(
   ts:Long,
   hash:String,
-  r:String,
+  state:String,
+  calls:String,
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
 

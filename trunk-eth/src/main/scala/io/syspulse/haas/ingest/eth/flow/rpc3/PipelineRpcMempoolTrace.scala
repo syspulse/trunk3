@@ -41,7 +41,7 @@ import io.syspulse.haas.ingest.eth.flow.rpc3.RpcTxPoolResult
 
 abstract class PipelineRpcMempoolTrace[E <: skel.Ingestable](config:Config)
                                                        (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
-  PipelineMempoolRPC[MempoolTx,CallTrace,E](config) {
+  PipelineMempoolRPC[MempoolTx,MempoolTx,E](config) {
   
   def apiSuffix():String = s"/trace"
 
@@ -51,13 +51,12 @@ abstract class PipelineRpcMempoolTrace[E <: skel.Ingestable](config:Config)
     pool
   }
 
-  def convert(tx: MempoolTx): CallTrace = {
-    val r = traceMempoolTx(tx)(config)
-    CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, r = r)
-  }
+  def convert(mtx: MempoolTx): MempoolTx = mtx
 }
 
 class PipelineMempoolTrace(config:Config) extends PipelineRpcMempoolTrace[CallTrace](config) {
 
-  def transform(c: CallTrace): Seq[CallTrace] = Seq(c)
+  def transform(mtx: MempoolTx): Seq[CallTrace] = {
+    traceMempoolTx(mtx)(config)    
+  }
 }
