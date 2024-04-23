@@ -57,6 +57,6 @@ abstract class PipelineRpcMempoolTrace[E <: skel.Ingestable](config:Config)
 class PipelineMempoolTrace(config:Config) extends PipelineRpcMempoolTrace[CallTrace](config) {
 
   def transform(mtx: MempoolTx): Seq[CallTrace] = {
-    traceMempoolTx(mtx)(config)    
+    traceMempoolTx(mtx.hash)(config)    
   }
 }

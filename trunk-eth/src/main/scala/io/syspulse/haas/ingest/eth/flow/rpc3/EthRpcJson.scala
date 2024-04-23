@@ -315,7 +315,7 @@ case class RpcMempoolTransaction (
   transactionIndex:Option[String],
   value:Option[String],
   `type`:Option[String],
-  accessList:Option[Array[String]],
+  accessList: Option[Array[RpcAccessList]],
   chainId:Option[String],
   v:String,
   r:String,

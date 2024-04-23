@@ -229,7 +229,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     }
   }
 
-  def traceMempoolTx(mtx: MempoolTx)(implicit config:Config): Seq[CallTrace] = {    
+  def traceMempoolTx(txHash: String)(implicit config:Config): Seq[CallTrace] = {    
   //   val block = tx.b match {
   //     case Some(n) => s"0x${n.toHexString}"
   //     case None => "latest"
@@ -262,14 +262,23 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
   //   body
   // }
 
+    var err = false
+
     val tx = {
-      val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${mtx.hash}"],"id": ${mtx.ts}}"""
+      val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${txHash}"],"id": ${System.currentTimeMillis}}"""
       val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
       val body = rsp.text()    
       //log.debug(s"body=${body}")
-      val r = body.parseJson.convertTo[RpcMempoolTransactionResult]
+      val r = try {
+        body.parseJson.convertTo[RpcMempoolTransactionResult]
+      } catch {
+        case e:Exception => 
+          err = true
+          log.error(s"failed to parse: '${body}'",e)
+          return Seq.empty
+      }
       if(! r.result.isDefined)
-        return Seq()
+        return Seq.empty
 
       r.result.get
     }
@@ -296,15 +305,14 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         ],
         "id": ${System.currentTimeMillis}}
         """.trim.replaceAll("\\s+","")
-
-      //log.debug(s"${json}")
-
+      
       val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
       val body = rsp.text()
       log.debug(s"body=${body}")
 
       if(body.contains(""""code":-32000""")) {
-        //log.warn(s"state: ${body}")
+        err = true
+        log.debug(s"state: ${body}")
       }
 
       body.trim
@@ -340,10 +348,15 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       log.debug(s"body=${body}")
 
       if(body.contains(""""code":-32000""")) {
-        //log.warn(s"calls: ${body}")
+        err = true
+        log.debug(s"calls: ${body}")
       }
 
       body.trim
+    }
+
+    if(err) {
+      return Seq.empty
     }
     
     Seq(
