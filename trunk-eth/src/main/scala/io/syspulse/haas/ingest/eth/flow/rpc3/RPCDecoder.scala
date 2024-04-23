@@ -121,7 +121,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       raw.maxPriorityFeePerGas.map(v => BigInt(Util.unhex(v))),
       raw.hash,
       raw.input,
-      Integer.parseInt(raw.nonce.drop(2),16),
+      java.lang.Long.parseLong(raw.nonce.drop(2),16),
       raw.to,
       i = raw.transactionIndex,
       v = BigInt(Util.unhex(raw.value)),
