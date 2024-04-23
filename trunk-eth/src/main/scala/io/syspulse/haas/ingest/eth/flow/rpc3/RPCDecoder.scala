@@ -313,9 +313,22 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       if(body.contains(""""code":-32000""")) {
         err = true
         log.debug(s"state: ${body}")
+        return Seq.empty
       }
 
-      body.trim
+      val r = try {
+        body.parseJson.convertTo[RpcTraceStateResult]
+      } catch {
+        case e:Exception => 
+          err = true
+          log.error(s"failed to parse: '${body}'",e)
+          return Seq.empty
+      }
+
+      if(! r.result.isDefined)
+        return Seq.empty
+
+      r.result.get.toString
     }
 
     // collect States
@@ -350,9 +363,22 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       if(body.contains(""""code":-32000""")) {
         err = true
         log.debug(s"calls: ${body}")
+        return Seq.empty
       }
 
-      body.trim
+      val r = try {
+        body.parseJson.convertTo[RpcTraceCallResult]
+      } catch {
+        case e:Exception => 
+          err = true
+          log.error(s"failed to parse: '${body}'",e)
+          return Seq.empty
+      }
+
+      if(! r.result.isDefined)
+        return Seq.empty
+
+      r.result.get.toString
     }
 
     if(err) {

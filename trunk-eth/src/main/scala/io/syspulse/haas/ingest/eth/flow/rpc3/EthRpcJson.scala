@@ -329,6 +329,43 @@ case class RpcMempoolTransactionResult(
   result:Option[RpcMempoolTransaction]
 )
 
+// --- state ---------------------------------
+// {
+//   "post":
+//   {
+//     "0x264bd8291fae1d75db2c5f573b07faa6715997b5":{"balance":"0x18fc211544b2d4c4262","nonce":823700},
+//     "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97":{"balance":"0x862e268b9c6dfb7f"},
+//     "0xf77c3c4ae233d4433a6bc32ac1e15909739d8aa4":{"balance":"0x160093701509db5"}
+//   },
+//   "pre":
+//   {
+//     "0x264bd8291fae1d75db2c5f573b07faa6715997b5":{"balance":"0x18fc280dd3a6996bc92","nonce":823699},
+//     "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97":{"balance":"0x862e1b97de52062f","nonce":287449},
+//     "0xf77c3c4ae233d4433a6bc32ac1e15909739d8aa4":{"balance":"0xf1a24ff31bb1b5","nonce":135}
+//   }
+// }
+
+case class RpcTraceStateResult(
+  jsonrpc:String,
+  id:Long,
+  result:Option[JsValue]
+)
+// --- call ---------------------------------------
+// {
+//   "from":"0x264bd8291fae1d75db2c5f573b07faa6715997b5",
+//   "gas":"0x7a120",
+//   "gasUsed":"0x5208",
+//   "to":"0xf77c3c4ae233d4433a6bc32ac1e15909739d8aa4",
+//   "input":"0x",
+//   "value":"0x6e66e70e34ec00",
+//   "type":"CALL"}
+// }
+case class RpcTraceCallResult(
+  jsonrpc:String,
+  id:Long,
+  result:Option[JsValue]
+)
+
 object EthRpcJson extends JsonCommon {
   
   implicit val jf_rpc_tx_al = jsonFormat2(RpcAccessList)
@@ -355,4 +392,7 @@ object EthRpcJson extends JsonCommon {
   
   implicit val jf_rpc_mem_tx = jsonFormat20(RpcMempoolTransaction)  
   implicit val jf_rpc_mem_tx_res = jsonFormat3(RpcMempoolTransactionResult)  
+
+  implicit val jf_rpc_state_res = jsonFormat3(RpcTraceStateResult)
+  implicit val jf_rpc_call_res = jsonFormat3(RpcTraceCallResult)  
 }
