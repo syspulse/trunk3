@@ -39,97 +39,83 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import io.syspulse.haas.ingest.Config
 import io.jvm.uuid._
-import io.syspulse.haas.intercept.Interceptor
 
-case class Output(data:String) extends skel.Ingestable
+import io.syspulse.ext.core.ExtractorJson._
 
-object OutputJson extends DefaultJsonProtocol {  
-  implicit val jf_output = jsonFormat1(Output)  
-}
-import OutputJson._
-
-// class PipelineIntercept[O <: skel.Ingestable](config:Config)
-//                                                                        (implicit val fmt:JsonFormat[Output],parqEncoders:ParquetRecordEncoder[Output],parsResolver:ParquetSchemaResolver[Output])
-//   extends Pipeline[O,O,Output](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
-  
-//   def process:Flow[O,O,_] = Flow[O].map(o => {
-//     o
-//   })
-
-//   def transform(o: O) = Seq(Output(s"data=${o.toString.size}"))
-// }
-
+import io.syspulse.haas.intercept.ScriptInterceptor
+import io.syspulse.haas.intercept.InterceptResult
 
 abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
-                                                                       (implicit val fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
-  extends Pipeline[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
+  (implicit val fmt:JsonFormat[E],
+    parqEncoders0:ParquetRecordEncoder[E],parsResolver0:ParquetSchemaResolver[E]
+  )
+  extends PipelineIngestable[T,O,E,io.syspulse.ext.core.Events](config) {
   
   private val log = Logger(s"${this}")
-  
-  var latestTs:AtomicLong = new AtomicLong(0)
 
-  val interceptor = if(config.script.isEmpty()) None else Some(new Interceptor(config.script))
+  // interceptor can be changed in runtime
+  @volatile
+  var interceptor = if(config.script.isEmpty()) None else Some(new ScriptInterceptor(config.script))
 
-  override def getRotator():Flows.Rotator = 
-    new Flows.RotatorTimestamp(() => {
-      latestTs.get()
-    })
+  // Dirty workaround to quick configure additiona callback for Default Interception Classes
+  // configurable callback  
+  @volatile
+  var interceptCallaback: Option[(InterceptResult) => Unit] = None
+  def setInterceptCallack(callback:(InterceptResult) => Unit) = {
+    interceptCallaback = Some(callback)
+  }
 
-  override def getFileLimit():Long = config.limit
-  override def getFileSize():Long = config.size
+  // default is Ext interceptor
+  def interception(e:E) = interceptionExt(e)
 
-  def filter():Seq[String] = config.filter
-  def apiSuffix():String
+  def interceptionExt(e:E):Option[io.syspulse.ext.core.Events] = {
+    interceptor match {
+      case Some(interceptor) => 
+        
+        // run intercept    
+        val r = interceptor.scan[E](e)
+        
+        if(interceptCallaback.isDefined) {
+          r.foreach{ r => 
+            // call callback
+            (interceptCallaback.get)(r) 
+        }}
 
-  def convert(t:T):O
+        r.map(r => { 
+          val event = io.syspulse.ext.core.Event(
+            did = config.interceptorName,
+            eid = UUID.random.toString,
+            sid = config.interceptorSid,
+            category = config.interceptorCat,
+            `type` = config.interceptorType,
+            severity = config.interceptorSeverity,
+            ts = System.currentTimeMillis(),
+            blockchain = io.syspulse.ext.core.Blockchain(config.interceptorBlockchain),
+            metadata = Map(
+              "tx_hash" -> r.txHash,
+              "monitored_contract" -> config.interceptorContract,
+            ) ++ r.data
+          )
 
-  //def transform(o: O) = Seq(o)
-
-  def process:Flow[T,O,_] = Flow[T].map(t => {
-    val o = convert(t)
-    o
-  })
+          io.syspulse.ext.core.Events(events = Seq(event))
+        })
+      
+      case None => 
+        None
+    }
+  }
 
   // Additional sink where data is piped
-  override def sink0() = {    
-    import io.syspulse.ext.core.ExtractorJson._
-    import io.syspulse.ext.core.Blockchain
+  // override def sink0() = {    
+  //   import io.syspulse.ext.core.ExtractorJson._
+  //   import io.syspulse.ext.core.Blockchain
         
-    val f = Flow[E].mapConcat( e => {
-            
-      interceptor match {
-        case Some(interceptor) => 
-          
-          // run intercept    
-          val r = interceptor.scan[E](e)
+  //   val f = Flow[E].mapConcat( e => {
+  //     interception[io.syspulse.ext.core.Events](e)
+  //   })
 
-          r.map(r => {          
-            val event = io.syspulse.ext.core.Event(
-              did = config.interceptorName,
-              eid = UUID.random.toString,
-              sid = config.interceptorSid,
-              category = config.interceptorCat,
-              `type` = config.interceptorType,
-              severity = config.interceptorSeverity,
-              ts = System.currentTimeMillis(),
-              blockchain = io.syspulse.ext.core.Blockchain(config.interceptorBlockchain),
-              metadata = Map(
-                "tx_hash" -> r.txHash,
-                "monitored_contract" -> config.interceptorContract,
-              ) ++ r.data
-            )
-
-            io.syspulse.ext.core.Events(events = Seq(event))
-          })
-        
-        case None => 
-          None
-      } 
-      
-    })
-
-    val s0 = sinking[io.syspulse.ext.core.Events](config.alertOutput)
-    f.to(s0)    
-  }
+  //   val s0 = sinking[io.syspulse.ext.core.Events](config.alertOutput)
+  //   f.to(s0)    
+  // }
 
 }

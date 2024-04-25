@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.Awaitable
 import scala.concurrent.{Await, ExecutionContext, Future}
 import akka.actor.typed.scaladsl.Behaviors
+import java.util.concurrent.Executors
 
 import com.typesafe.scalalogging.Logger
 import io.jvm.uuid._
@@ -21,7 +22,9 @@ import io.syspulse.haas.ingest.starknet
 import io.syspulse.haas.ingest.vechain
 import io.syspulse.haas.ingest.stellar
 import io.syspulse.haas.ingest.solana
-import eth.flow.rpc3.PipelineMempool
+
+import io.syspulse.haas.intercept.store._
+import io.syspulse.haas.intercept.server.InterceptRoutes
 
 object App extends skel.Server {
   
@@ -66,7 +69,8 @@ object App extends skel.Server {
         
         // ArgString('_', "abi",s"directory with ABI jsons (format: NAME-0xaddress.json) (def=${d.abi}"),
 
-        ArgString('d', "datastore",s"datastore dir (def: ${d.datastore})"),        
+        ArgString('d', "datastore",s"datastore dir (def: ${d.datastore})"),
+        ArgString('d', "datastore.intercept",s"Intercept datastore dir (def: ${d.datastoreIntercept})"),
 
         ArgLong('_', "block.throttle",s"Throttle between block batches (e.g. (def: ${d.blockThrottle}))"),
         ArgString('_', "block",s"Ingest from this block (def: ${d.block})"),
@@ -90,6 +94,7 @@ object App extends skel.Server {
         ArgString('_', "rpc.url",s"RPC Url (optional) (def=${d.rpcUrl})"),
 
         ArgLong('_', "timeout.idle",s"Idle timeout in msec (def: ${d.timeoutIdle})"),
+        ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
 
         ArgLogging(),
         ArgParam("<params>",""),
@@ -134,6 +139,7 @@ object App extends skel.Server {
       //abi = c.getString("abi").getOrElse(d.abi),
 
       datastore = c.getString("datastore").getOrElse(d.datastore),
+      datastoreIntercept = c.getString("datastore.intercept").getOrElse(d.datastoreIntercept),
                   
       blockThrottle = c.getLong("block.throttle").getOrElse(d.blockThrottle),      
       block = c.getString("block").getOrElse(d.block),
@@ -157,6 +163,7 @@ object App extends skel.Server {
       rpcUrl = c.getSmartString("rpc.url").getOrElse(d.rpcUrl),
 
       timeoutIdle = c.getLong("timeout.idle").getOrElse(d.timeoutIdle),
+      threadPool = c.getInt("thread.pool").getOrElse(d.threadPool),
       
       cmd = c.getCmd().getOrElse(d.cmd),      
       params = c.getParams(),
@@ -172,7 +179,36 @@ object App extends skel.Server {
     }
     
     val (r,pp) = config.cmd match {
-      case "stream" => {
+      case "server" => 
+        val store = config.datastoreIntercept.split("://").toList match {
+          case "mem" :: Nil | "cache" :: Nil => new ScriptStoreMem()
+          
+          case _ => {
+            Console.err.println(s"Unknown datastore: '${config.datastoreIntercept}'")
+            sys.exit(1)
+          }
+        }
+
+        //val p = new eth.flow.rpc3.PipelineTxETL(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output))
+        val p = new eth.flow.rpc3.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output))
+
+        // Execution context for Websocket
+        val ex: ExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(config.threadPool))
+        val r1 = run( config.host, config.port,config.uri,c,
+          Seq(
+            (InterceptRegistry(store),"InterceptRegistry",(r, ac) => {
+              val intercept = new InterceptRoutes(r,p)(ac,config,ex)
+              intercept
+            })
+          )
+        )
+        
+        // start pipeline
+        p.run()
+
+        (r1,None)
+
+      case "stream" => 
         val pp:Seq[PipelineIngest[_,_,_]] = config.entity.flatMap( e => e match {
 
           // ethereum_etl compatible input !
@@ -270,8 +306,7 @@ object App extends skel.Server {
         val ppr = pp.map( _.run())
 
         (ppr.head,Some(pp.head))
-                
-      }       
+                      
     }
     
     Console.err.println(s"r=${r}")
@@ -281,6 +316,8 @@ object App extends skel.Server {
         Console.err.println(s"rr: ${rr}")
       }
       case akka.NotUsed => 
+      case _ => 
+        
     }
 
     Console.err.println(s"Result: ${pp.map(_.countObj)}")

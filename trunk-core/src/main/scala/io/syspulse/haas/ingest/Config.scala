@@ -38,6 +38,7 @@ case class Config(
   entity:Seq[String] = Seq("block"),
     
   datastore:String = "", // store directory root
+  datastoreIntercept:String = "mem://",
   
   block:String = "latest", // which block to use (only for http:// RPC source)
   blockEnd:String = "",    // empty is infinite
@@ -67,6 +68,8 @@ case class Config(
   rpcUrl:String = "", // optional RPC url
 
   timeoutIdle:Long = 10000L,
+
+  threadPool:Int = 16,
 
   cmd:String = "stream",
   params: Seq[String] = Seq(),

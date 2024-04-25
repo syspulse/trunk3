@@ -7,7 +7,7 @@ import spray.json.{DefaultJsonProtocol, DeserializationException, JsString, JsVa
 import io.syspulse.skel.service.JsonCommon
 import io.syspulse.haas.intercept.Script
 
-object InterceptJson extends JsonCommon {
+object ScriptJson extends JsonCommon {
   
   import DefaultJsonProtocol._
 

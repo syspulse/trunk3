@@ -11,7 +11,7 @@ import io.syspulse.haas.intercept.script._
 
 case class InterceptResult(txHash:String,data:Map[String,String])
 
-class Interceptor(scriptSrc:String) {
+class ScriptInterceptor(scriptSrc:String) {
   protected val log = Logger(this.getClass)
   
   val script = Script(

@@ -180,7 +180,7 @@ object App extends skel.Server {
         
         val r1 = run( config.host, config.port,config.uri,c,
           Seq(
-            (reg,"OdoRegistry",(r, ac) => {
+            (reg,"StatRegistry",(r, ac) => {
               val odometer = new OdoRoutes(r)(ac,
                 io.syspulse.skel.odometer.Config(timeoutIdle = config.timeoutIdle,freq = config.freq)
               ,ex)

@@ -110,7 +110,7 @@ val sharedConfigDockerSpark = sharedConfigDocker ++ Seq(
 val sharedConfig = Seq(
     //retrieveManaged := true,  
     organization    := "io.syspulse",
-    scalaVersion    := "2.13.9",
+    scalaVersion    := "2.13.13",
     name            := "trunk3",
     version         := appVersion,
 

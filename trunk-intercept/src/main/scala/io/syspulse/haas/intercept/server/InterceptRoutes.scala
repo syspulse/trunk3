@@ -54,7 +54,7 @@ import io.syspulse.skel.auth.RouteAuthorizers
 import io.syspulse.haas.intercept._
 import io.syspulse.haas.intercept.store.InterceptRegistry
 import io.syspulse.haas.intercept.store.InterceptRegistryProto
-import io.syspulse.haas.intercept.server.InterceptJson
+import io.syspulse.haas.intercept.server.ScriptJson
 import io.syspulse.skel.service.telemetry.TelemetryRegistry
 import io.syspulse.skel.service.ws.WebSocket
 import scala.concurrent.ExecutionContext
@@ -63,21 +63,35 @@ import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.ingest.Config
+import io.syspulse.haas.ingest.PipelineIngest
 
 @Path("/")
-class InterceptRoutes(registry: ActorRef[Command])(implicit context: ActorContext[_],config:Config,ex:ExecutionContext) 
-  extends WebSocket(config.timeoutIdle)(ex) with CommonRoutes with Routeable with RouteAuthorizers {
+class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_])
+  (implicit context: ActorContext[_],config:Config,ex:ExecutionContext) 
+  extends WebSocket(config.timeoutIdle)(ex) 
+  with CommonRoutes 
+  with Routeable 
+  with RouteAuthorizers {
   
   override val log = Logger(s"${this}")
 
   implicit val system: ActorSystem[_] = context.system    
   implicit val permissions = Permissions()
-
-
+  
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import spray.json._  
   import InterceptJson._
-  import InterceptRegistryProto._
+  import ScriptJson._
+  import InterceptRegistryProto._  
+
+  // interception Callback
+  def interceptCallback(ix: InterceptResult) = {
+    val json = ix.toJson.compactPrint
+    broadcastText(s"${json}")
+  }
+  // set callback
+  pipeline.setInterceptCallack(interceptCallback)
+
 
   // quick flag to trigger Websocket update
   @volatile var updated = false
