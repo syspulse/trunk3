@@ -19,7 +19,7 @@ object Dependencies {
 
     lazy val skelVersion = "0.0.8"
     lazy val extVersion = "0.0.3"
-    lazy val appVersion = "0.7.2"
+    lazy val appVersion = "0.8.0"
     lazy val jarPrefix = ""
     
     lazy val appDockerRoot = "/app"
