@@ -8,7 +8,7 @@ var user_params = {
    //to: "0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097".toLowerCase(),
    to: "".toLowerCase(),
    
-   value: "0.05",
+   value: "10.05",
    //value: "",
 };
 

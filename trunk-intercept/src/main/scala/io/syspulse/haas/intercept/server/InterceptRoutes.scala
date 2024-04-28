@@ -150,8 +150,11 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
     entity(as[ScriptCreateReq]) { req =>
       onSuccess(createScript(req)) { r =>
         // update subscribers
-        if(r.isSuccess && config.freq == 0L) 
-          broadcastText(r.get.toJson.compactPrint) 
+        if(r.isSuccess && config.freq == 0L) {
+          pipeline.setInterceptor(req.src)
+
+          //broadcastText(r.get.toJson.compactPrint) 
+        }
         else
           updated = true
         complete(StatusCodes.Created, r)
@@ -167,13 +170,18 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   )
   def updateScriptRoute(id:String) = put {
     entity(as[ScriptUpdateReq]) { req =>
-      onSuccess(updateScript(req.copy(id = id))) { r =>
-        if(r.isSuccess && config.freq == 0L) 
-          broadcastText(r.get.toJson.compactPrint)
+      onSuccess(updateScript(req.copy(id = id))) { r => {
+                
+        if(r.isSuccess && config.freq == 0L) {
+          pipeline.setInterceptor(req.src)
+
+          //broadcastText(r.get.toJson.compactPrint)
+        }
         else
           updated = true
+
         complete(StatusCodes.OK, r)
-      }
+      }}
     }
   }
 
@@ -243,10 +251,11 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
         pathPrefix(Segment) { id => 
           pathEndOrSingleSlash {
             authenticate()(authn => {
-              // authorize(Permissions.isAdmin(authn) || Permissions.isService(authn)) {}
-              updateScriptRoute(id) ~
-              getScriptRoute(id) ~
-              deleteScriptRoute(id)
+              //authorize(Permissions.isAdmin(authn) || Permissions.isService(authn)) {
+                updateScriptRoute(id) ~
+                getScriptRoute(id) ~
+                deleteScriptRoute(id)
+              
             }) 
           }
         },        

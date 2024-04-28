@@ -65,6 +65,10 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     interceptCallaback = Some(callback)
   }
 
+  def setInterceptor(script:String) = {
+    interceptor = Some(new ScriptInterceptor(script))
+  }
+
   // default is Ext interceptor
   def interception(e:E) = interceptionExt(e)
 
