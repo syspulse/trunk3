@@ -39,7 +39,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import jakarta.ws.rs.{Consumes, POST, PUT, GET, DELETE, Path, Produces}
 import jakarta.ws.rs.core.MediaType
 
-
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
 
@@ -54,7 +53,7 @@ import io.syspulse.skel.auth.RouteAuthorizers
 import io.syspulse.haas.intercept._
 import io.syspulse.haas.intercept.store.InterceptRegistry
 import io.syspulse.haas.intercept.store.InterceptRegistryProto
-import io.syspulse.haas.intercept.server.ScriptJson
+import io.syspulse.haas.intercept.server.InterceptJson
 import io.syspulse.skel.service.telemetry.TelemetryRegistry
 import io.syspulse.skel.service.ws.WebSocket
 import scala.concurrent.ExecutionContext
@@ -80,9 +79,10 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import spray.json._  
-  import InterceptJson._
+  
   import ScriptJson._
-  import InterceptRegistryProto._  
+  import InterceptRegistryProto._ 
+  import InterceptJson._
 
   // interception Callback
   def interceptCallback(ix: InterceptResult) = {
@@ -91,7 +91,6 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   }
   // set callback
   pipeline.setInterceptCallack(interceptCallback)
-
 
   // quick flag to trigger Websocket update
   @volatile var updated = false
@@ -103,7 +102,6 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   def updateScript(req: ScriptUpdateReq): Future[Try[Scripts]] = registry.ask(UpdateScript(req, _))
   def deleteScript(id: String): Future[Try[String]] = registry.ask(DeleteScript(id, _))
   
-
   @GET @Path("/{id}") @Produces(Array(MediaType.APPLICATION_JSON))
   @Operation(tags = Array("intercept"),summary = "Return Script by id",
     parameters = Array(new Parameter(name = "id", in = ParameterIn.PATH, description = "Script id (uuid)")),
@@ -116,7 +114,6 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
       }
     }
   }
-
   
   @GET @Path("/") @Produces(Array(MediaType.APPLICATION_JSON))
   @Operation(tags = Array("intercept"), summary = "Return all Scripts",
@@ -149,11 +146,10 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   def createScriptRoute = post {
     entity(as[ScriptCreateReq]) { req =>
       onSuccess(createScript(req)) { r =>
-        // update subscribers
+        
         if(r.isSuccess && config.freq == 0L) {
           pipeline.setInterceptor(req.src)
 
-          //broadcastText(r.get.toJson.compactPrint) 
         }
         else
           updated = true
@@ -175,7 +171,6 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
         if(r.isSuccess && config.freq == 0L) {
           pipeline.setInterceptor(req.src)
 
-          //broadcastText(r.get.toJson.compactPrint)
         }
         else
           updated = true
@@ -213,7 +208,6 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   //   delay = config.freq
   // ).start()
 
-    
   val corsAllow = CorsSettings(system.classicSystem)
     .withAllowCredentials(true)
     .withAllowedMethods(Seq(HttpMethods.OPTIONS,HttpMethods.GET,HttpMethods.POST,HttpMethods.PUT,HttpMethods.DELETE,HttpMethods.HEAD))

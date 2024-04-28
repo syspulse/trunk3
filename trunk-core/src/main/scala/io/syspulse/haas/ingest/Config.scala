@@ -67,7 +67,7 @@ case class Config(
 
   rpcUrl:String = "", // optional RPC url
 
-  timeoutIdle:Long = 10000L,
+  timeoutIdle:Long = 60000L,
 
   threadPool:Int = 16,
 

@@ -23,7 +23,7 @@ trait ScriptStore extends Store[Script,String] {
 
   protected def modify(o:Script,src:String):Script = {    
     (for {
-      o1 <- Some(o.copy(ts = System.currentTimeMillis,src = src))
+      o1 <- Some(o.copy(ts = System.currentTimeMillis,src = src,ts0 = o.ts0))
     } yield o1).get    
   }
   

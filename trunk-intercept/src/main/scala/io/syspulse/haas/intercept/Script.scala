@@ -7,6 +7,7 @@ import io.jvm.uuid._
 final case class Script(  
   id:String,
   src:String,
-  ts0:Long = System.currentTimeMillis(),
+  ref:String = "src://",        // reference to source (src://, file://, ref://)
+  ts0:Long,
   ts:Long = System.currentTimeMillis()
 )

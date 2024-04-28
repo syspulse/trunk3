@@ -71,7 +71,7 @@ object InterceptRegistry {
               replyTo ! Failure(new Exception(s"already exists: ${req.id}"))
               Success(store)
             case _ =>  
-              val o = Script(req.id, src = req.src)
+              val o = Script(req.id, ts0 = System.currentTimeMillis, src = req.src)
               val store1 = store.+(o)
               replyTo ! store1.map(_ => Scripts(Seq(o),total=Some(1))) 
           }
@@ -85,7 +85,7 @@ object InterceptRegistry {
           case Success(o) => Success(Scripts(Seq(o),total=Some(1)))
           case Failure(e) => 
             // try to create
-            val o = Script(req.id, src = req.src)
+            val o = Script(req.id, ts0 = System.currentTimeMillis, src = req.src)
             store.+(o).map(o => Scripts(Seq(o),total=Some(1)))
         }
         replyTo ! r
