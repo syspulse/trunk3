@@ -42,6 +42,7 @@ import io.jvm.uuid._
 
 import io.syspulse.ext.core.ExtractorJson._
 
+import io.syspulse.haas.intercept.Script
 import io.syspulse.haas.intercept.ScriptInterceptor
 import io.syspulse.haas.intercept.InterceptResult
 
@@ -55,7 +56,10 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
   // interceptor can be changed in runtime
   @volatile
-  var interceptor = if(config.script.isEmpty()) None else Some(new ScriptInterceptor(config.script))
+  var interceptor = if(config.script.isEmpty()) 
+    None 
+  else 
+    Some(new ScriptInterceptor(Seq(Script("0",src = config.script,ts0 = System.currentTimeMillis))))
 
   // Dirty workaround to quick configure additiona callback for Default Interception Classes
   // configurable callback  
@@ -65,14 +69,16 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     interceptCallaback = Some(callback)
   }
 
-  def setInterceptor(script:String) = {
-    interceptor = Some(new ScriptInterceptor(script))
+  def setInterceptor(id:String,script:String) = {
+    interceptor = Some(new ScriptInterceptor(
+      Seq(Script(id,src = script,ts0 = System.currentTimeMillis))
+    ))
   }
 
   // default is Ext interceptor
   def interception(e:E) = interceptionExt(e)
 
-  def interceptionExt(e:E):Option[io.syspulse.ext.core.Events] = {
+  def interceptionExt(e:E):Seq[io.syspulse.ext.core.Events] = {
     interceptor match {
       case Some(interceptor) => 
         
@@ -105,7 +111,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
         })
       
       case None => 
-        None
+        Seq()
     }
   }
 

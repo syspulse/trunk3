@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ID=${1:-1}
+ID=${1:-0}
 SCRIPT_FILE=${2:-scripts/script-eth-tx2.js}
 
 ACCESS_TOKEN=${ACCESS_TOKEN-`cat ACCESS_TOKEN`}

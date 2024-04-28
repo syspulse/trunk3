@@ -22,5 +22,5 @@ object InterceptJson extends JsonCommon {
   implicit val jf_scrpt_UpdateReq = jsonFormat2(ScriptUpdateReq)
 
   implicit val jf_ix_1 = jsonFormat2(Intercept.apply _)
-  implicit val jf_ix_res_1 = jsonFormat2(InterceptResult.apply _)
+  implicit val jf_ix_res_1 = jsonFormat3(InterceptResult.apply _)
 }

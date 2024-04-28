@@ -87,7 +87,7 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   // interception Callback
   def interceptCallback(ix: InterceptResult) = {
     val json = ix.toJson.compactPrint
-    broadcastText(s"${json}")
+    broadcastText(s"${json}",topic = ix.sid)
   }
   // set callback
   pipeline.setInterceptCallack(interceptCallback)
@@ -148,7 +148,7 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
       onSuccess(createScript(req)) { r =>
         
         if(r.isSuccess && config.freq == 0L) {
-          pipeline.setInterceptor(req.src)
+          pipeline.setInterceptor(req.id,req.src)
 
         }
         else
@@ -169,7 +169,7 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
       onSuccess(updateScript(req.copy(id = id))) { r => {
                 
         if(r.isSuccess && config.freq == 0L) {
-          pipeline.setInterceptor(req.src)
+          pipeline.setInterceptor(id,req.src)
 
         }
         else
@@ -184,8 +184,9 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
   def update(req:ScriptUpdateReq) = {
     updateScript(req).map{ r => {
       log.debug(s"update: ${r}")
-      if(r.isSuccess && config.freq == 0L) 
-        broadcastText(r.get.toJson.compactPrint)
+      if(r.isSuccess && config.freq == 0L) {
+        //broadcastText(r.get.toJson.compactPrint)
+      }
       else
         updated = true
     }}

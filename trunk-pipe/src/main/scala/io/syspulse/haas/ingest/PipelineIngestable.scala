@@ -71,7 +71,7 @@ abstract class PipelineIngestable[T,O <: skel.Ingestable,E <: skel.Ingestable,W 
     o
   })
 
-  def interception(e:E):Option[W]
+  def interception(e:E):Seq[W]
   
   // Additional sink where data is piped
   override def sink0() = {          

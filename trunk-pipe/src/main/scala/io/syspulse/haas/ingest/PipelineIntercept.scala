@@ -40,6 +40,7 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 import io.syspulse.haas.ingest.Config
 import io.jvm.uuid._
 
+import io.syspulse.haas.intercept.Script
 import io.syspulse.haas.intercept.ScriptInterceptor
 
 case class InterceptOutput(data:Map[String,String]) extends skel.Ingestable
@@ -58,11 +59,14 @@ abstract class PipelineIntercept[T,O <: skel.Ingestable,E <: skel.Ingestable]
   
   private val log = Logger(s"${this}")
 
-  val interceptor = if(config.script.isEmpty()) None else Some(new ScriptInterceptor(config.script))
+  var interceptor = if(config.script.isEmpty()) 
+    None 
+  else 
+    Some(new ScriptInterceptor(Seq(Script("0",src = config.script,ts0 = System.currentTimeMillis))))
 
   def onIntercept(io: InterceptOutput):Unit
     
-  def interception(e:E):Option[InterceptOutput] = {
+  def interception(e:E):Seq[InterceptOutput] = {
     interceptor match {
       case Some(interceptor) => 
         
@@ -74,7 +78,7 @@ abstract class PipelineIntercept[T,O <: skel.Ingestable,E <: skel.Ingestable]
         })
       
       case None => 
-        None
+        Seq()
     }
   }
 
