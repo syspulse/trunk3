@@ -9,7 +9,10 @@ import spray.json.{DefaultJsonProtocol,NullOptions}
 import io.syspulse.skel.Ingestable
 
 
-object IcpJson extends JsonCommon with NullOptions with ProductFormatsInstances {
+object IcpJson extends JsonCommon 
+  //with NullOptions 
+  with ProductFormatsInstances {
+  
   import DefaultJsonProtocol._
   //implicit val jf_icp_op = jsonFormat7(Operation)
   implicit val jf_icp_tx = jsonFormat15(Transaction)

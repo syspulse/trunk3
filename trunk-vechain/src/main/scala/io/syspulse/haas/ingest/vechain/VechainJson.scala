@@ -6,7 +6,10 @@ import io.syspulse.skel.service.JsonCommon
 import spray.json._
 import spray.json.{DefaultJsonProtocol,NullOptions}
 
-object VechainJson extends JsonCommon with NullOptions with ProductFormatsInstances {
+object VechainJson extends JsonCommon 
+  //with NullOptions 
+  with ProductFormatsInstances {
+  
   import DefaultJsonProtocol._
 
   implicit val jf_strk_tx = jsonFormat16(Transaction)
