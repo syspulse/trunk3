@@ -273,13 +273,13 @@ object App extends skel.Server {
           // Vechain
           case "block.vechain" =>
             Some(new vechain.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "transaction.vechain" =>
+          case "transaction.vechain" | "tx.vechain" =>
             Some(new vechain.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Stellar
           case "block.stellar" =>
             Some(new stellar.flow.horizon.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "transaction.stellar" =>
+          case "transaction.stellar" | "tx.stellar" =>
             Some(new stellar.flow.horizon.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Solana

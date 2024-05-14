@@ -147,7 +147,7 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
     entity(as[ScriptCreateReq]) { req =>
       onSuccess(createScript(req)) { r =>
         
-        if(r.isSuccess && config.freq == 0L) {
+        if(r.isSuccess) {
           pipeline.setInterceptor(req.id,req.src)
 
         }
@@ -168,7 +168,7 @@ class InterceptRoutes(registry: ActorRef[Command],pipeline:PipelineIngest[_,_,_]
     entity(as[ScriptUpdateReq]) { req =>
       onSuccess(updateScript(req.copy(id = id))) { r => {
                 
-        if(r.isSuccess && config.freq == 0L) {
+        if(r.isSuccess) {
           pipeline.setInterceptor(id,req.src)
 
         }

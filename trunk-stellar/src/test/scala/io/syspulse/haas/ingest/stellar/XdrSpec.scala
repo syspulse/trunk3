@@ -2,7 +2,7 @@ package io.syspulse.haas.ingest.stellar
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-//import org.scalatest.TryValues._
+import org.scalatest.TryValues._
 
 import  org.stellar.sdk.xdr._
 

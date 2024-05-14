@@ -26,7 +26,6 @@ import io.syspulse.haas.ingest.Config
 
 import io.syspulse.haas.ingest.stellar.Block
 import io.syspulse.haas.ingest.stellar.Transaction
-import io.syspulse.haas.ingest.stellar.Operation
 import io.syspulse.haas.ingest.stellar.StellarJson._
 
 import io.syspulse.haas.ingest.stellar.flow.horizon._

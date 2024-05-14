@@ -3,15 +3,15 @@ package io.syspulse.haas.ingest.stellar
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
-case class Operation(
-  i:Long,           // operation index
-  typ:String,       // type
-  st:String,       // status  
-  addr:String,      // account addr
-  v:String,         // value (String ??)
-  curr:String,      // currency
-  dec:Int,          // decimals
-)
+// case class Operation(
+//   i:Long,           // operation index
+//   typ:String,       // type
+//   st:String,       // status  
+//   addr:String,      // account addr
+//   v:String,         // value (String ??)
+//   curr:String,      // currency
+//   dec:Int,          // decimals
+// )
 
 case class Transaction(  
   ts:Long,              // timestamp

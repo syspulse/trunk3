@@ -6,7 +6,10 @@ import io.syspulse.skel.service.JsonCommon
 import spray.json._
 import spray.json.{DefaultJsonProtocol,NullOptions}
 
-object SolanaJson extends JsonCommon with NullOptions with ProductFormatsInstances {
+object SolanaJson extends JsonCommon 
+  //with NullOptions 
+  with ProductFormatsInstances {
+  
   import DefaultJsonProtocol._
 
   implicit val jf_strk_tr = jsonFormat11(Transaction)
