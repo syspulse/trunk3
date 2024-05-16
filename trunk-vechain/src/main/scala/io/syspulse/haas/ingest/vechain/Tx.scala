@@ -4,9 +4,9 @@ import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
 case class EventTx(
-  contract:String,
-  data:String,  
-  topics:Array[String] = Array(),
+  addr:String,  // contract address
+  data:String,      // data 
+  topics:Array[String] = Array(), // topics
 ) {
   override def toString = Util.toStringWithArray(this)
 }
@@ -37,7 +37,7 @@ case class Tx(
   rwd: BigInt,      // reward
   fail: Boolean,    // reverted 
   
-  logs: Array[EventTx],
+  logs: Array[EventTx],   // Event logs
     
   i:Option[Long] = None,  // transaction index in Block
 ) extends Ingestable {
