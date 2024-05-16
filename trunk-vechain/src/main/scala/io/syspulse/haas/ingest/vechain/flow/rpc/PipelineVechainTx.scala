@@ -75,7 +75,7 @@ class PipelineTx(config:Config) extends PipelineVechainTx[Tx](config) {
     // ATTENTION !!!
     // For Clauses with muliple contract calls Events will be propagated to every Transaction/Clause !!
     // There is no way to distringuish in VeChain which Events are caused by which Clause
-    val txx = tt.map( tx => {      
+    val txx = tt.view.zipWithIndex.map{ case(tx,i) => {      
         tx.clauses.map(clause => Tx(
           ts = block.timestamp,
           b = block.number,
@@ -116,13 +116,15 @@ class PipelineTx(config:Config) extends PipelineVechainTx[Tx](config) {
               
               ll.toArray
             }
-          }
+          },
+
+          i = Some(i)
         ))
-    })
+    }}
   
     // commit cursor
     cursor.commit(block.number)
     
-    txx.flatten
+    txx.flatten.toSeq
   }
 }

@@ -17,13 +17,13 @@ case class Tx(
   hash:String,      // transaction hash
   sz:Int,           // size
 
-  from:String,
-  to:String,        
+  from:String,      // from address
+  to:String,        // to address
   v: BigInt,        // value
   nonce:String,     // nonce
   
-  gas:BigInt,         // gas 
-  pric:Int,           // gas coefficient
+  gas:BigInt,       // gas 
+  pric:Int,         // gas coefficient
   
   data:String,      // calldata
 
