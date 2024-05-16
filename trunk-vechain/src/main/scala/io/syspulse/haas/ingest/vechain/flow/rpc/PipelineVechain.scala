@@ -76,11 +76,17 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
         val uri = rpcUri.uri
         log.info(s"uri=${uri}")
         
-        val blockStr = config.block.split("://").toList match {
-          case "file" :: file :: Nil => cursor.setFile(file).read()
-          case "file" :: Nil => cursor.read()
-          case _ => config.block
-        }
+        val blockStr = 
+          (config.block.split("://").toList match {
+            // start from latest and save to file
+            case "latest" :: file :: Nil => cursor.setFile(file).read(); "latest"
+            case "last" :: file :: Nil => cursor.setFile(file).read(); "latest"
+            case "file" :: file :: Nil => cursor.setFile(file).read()
+            case "file" :: Nil => cursor.read()
+            // start block and save to file (10://file.txt)
+            case block :: file :: Nil => cursor.setFile(file).read(); block
+            case _ => config.block
+          })
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>
