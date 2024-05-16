@@ -172,7 +172,7 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
               s"${uri}/blocks/${block}", 
               headers = Map("content-type" -> "application/json")
             )
-            log.info(s"rsp=${rsp.statusCode}")
+            log.debug(s"rsp=${rsp.statusCode}")
             
             rsp.statusCode match {
               case 200 => //

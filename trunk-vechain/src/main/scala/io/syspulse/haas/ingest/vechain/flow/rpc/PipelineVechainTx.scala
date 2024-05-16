@@ -100,7 +100,7 @@ class PipelineTx(config:Config) extends PipelineVechainTx[Tx](config) {
           pay = tx.gasPayer,
           paid = toBigInt(tx.paid),
           rwd = toBigInt(tx.reward),
-          fail = tx.reverted,
+          st = if(tx.reverted) 0 else 1,
           
           logs = {
             if(clause.data == "0x" || clause.data == "")

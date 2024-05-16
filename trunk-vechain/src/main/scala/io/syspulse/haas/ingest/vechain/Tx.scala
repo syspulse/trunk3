@@ -35,7 +35,7 @@ case class Tx(
   pay: String,      // gas payer
   paid: BigInt,     // gas payed
   rwd: BigInt,      // reward
-  fail: Boolean,    // reverted 
+  st: Int,          // status (0 - reverted , 1 - ok)
   
   logs: Array[EventTx],   // Event logs
     
