@@ -55,10 +55,60 @@ case class RpcTx(
   nonce: String,
   dependsOn: Option[String],
   size: Int,
+
   meta: Option[RpcTxMeta],
-    
 )  extends Ingestable
 
+
+case class RpcTxOutputTransfer(
+  amount:String,
+  recipient:String,
+  sender:String
+)
+
+// {
+//   "address": "0x0000000000000000000000000000456e65726779",
+//   "topics": [
+//     "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+//     "0x000000000000000000000000435933c8064b4ae76be665428e0307ef2ccfbd68"
+//   ],
+//   "data": "0x4de71f2d588aa8a1ea00fe8312d92966da424d9939a511fc0be81e65fad52af8"
+// }
+case class RpcTxOutputEvent(
+  address:String,
+  topics:Seq[String],
+  data:String
+)
+
+case class RpcTxOuput(
+  contractAddress:Option[String],
+  events:Seq[RpcTxOutputEvent],
+  transfers:Seq[RpcTxOutputTransfer]
+)
+
+// Transaction in Block
+case class RpcTxBlock(
+  id: String,
+  chainTag: Int,
+  blockRef: String,
+  expiration: Int,
+  clauses: Seq[RpcClause],
+  gasPriceCoef: Int,
+  gas: Long,
+  origin: String,
+  delegator: Option[String],
+  nonce: String,
+  dependsOn: Option[String],
+  size: Int,
+      
+  gasUsed: Long,
+  gasPayer: String,
+  paid: String,
+  reward: String,
+  reverted: Boolean,
+  outputs: Seq[RpcTxOuput]
+
+)  extends Ingestable
 
 // {
 //   "number": 17367493,
@@ -126,6 +176,7 @@ case class RpcBlockTx(
   signer: String,
   isTrunk: Boolean,
   isFinalized: Boolean,
-  transactions: Seq[RpcTx]
+
+  transactions: Seq[RpcTxBlock]
     
 )  extends Ingestable

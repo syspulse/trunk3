@@ -6,9 +6,9 @@ import io.syspulse.skel.service.JsonCommon
 import spray.json._
 import spray.json.{DefaultJsonProtocol,NullOptions}
 
-object StarknetJson extends JsonCommon 
-  //with NullOptions 
-  with ProductFormatsInstances {
+object StarknetJson extends DefaultJsonProtocol
+  //extends JsonCommon with ProductFormatsInstances 
+{
   
   import DefaultJsonProtocol._
 

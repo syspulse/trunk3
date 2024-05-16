@@ -50,7 +50,7 @@ case class Config(
 
   receiptBatch:Int = -1,      // max receipt batch size
   receiptThrottle:Long = 1000L, // throttle between receipts batches within the single block
-  receiptRequest:String = "block", // receipts request style
+  receiptRequest:String = "block", // receipts request style (block/batch)
   receiptDelay:Long = 0L,          // delay to request receipts (Polygon/BSC lag)
 
   apiToken:String = "",

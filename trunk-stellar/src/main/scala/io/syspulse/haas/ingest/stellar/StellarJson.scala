@@ -8,10 +8,9 @@ import spray.json.{DefaultJsonProtocol,NullOptions}
 
 import io.syspulse.skel.Ingestable
 
-object StellarJson extends JsonCommon 
-  //with NullOptions 
-  with ProductFormatsInstances {
-  import DefaultJsonProtocol._
+object StellarJson extends DefaultJsonProtocol
+  //extends JsonCommon  with ProductFormatsInstances 
+{
   //implicit val jf_icp_op = jsonFormat7(Operation)
   implicit val jf_st_tx = jsonFormat18(Transaction)
   implicit val jf_st_block = jsonFormat5(Block)   

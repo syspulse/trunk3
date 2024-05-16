@@ -69,7 +69,7 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
     val ts = toLong(b.timestamp)
     val block_number = toLong(b.number)
 
-    log.info(s"${block_number}: transactions: ${b.transactions.size}")
+    log.info(s"Block[${block_number},${b.transactions.size}]")
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(blk)
 

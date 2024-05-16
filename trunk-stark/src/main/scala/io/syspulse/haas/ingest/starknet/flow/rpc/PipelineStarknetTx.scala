@@ -71,7 +71,7 @@ class PipelineTx(config:Config) extends PipelineStarknetTx[Tx](config) {
     val numEvents = receipts.values.foldLeft(0)((c,r) => c + r.events.size)
     val numTransfers = b.transactions.foldLeft(0)((c,t) => c + {if(! t.calldata.isDefined) 0 else 1})
     val numCalls = b.transactions.size - numTransfers
-    log.info(s"Block(${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls})")
+    log.info(s"Block[${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls}]")
 
     if(receipts.size != b.transactions.size) {
       log.error(s"block=${block_number}: transactions=${b.transactions.size}, receipts=${receipts.size}")

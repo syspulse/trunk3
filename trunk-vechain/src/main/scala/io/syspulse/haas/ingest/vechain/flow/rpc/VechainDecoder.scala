@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.vechain.flow.rpc._
 import io.syspulse.haas.ingest.vechain.flow.rpc.VechainRpcJson
 
+import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.Decoder
 
@@ -83,6 +84,40 @@ trait VechainDecoder[T] extends Decoder[T,RpcBlock,RpcTx,Nothing,Nothing,RpcTx] 
   
   def parseEventLog(data:String):Seq[Nothing] = {
     throw new Exception(s"Not supported: '${data}'")    
+  }
+
+  def parseSingleTx(txHash:String)(config:Config,uri:String):RpcTx = {
+    val rsp = requests.get(s"${uri}/transactions/${txHash}",
+        headers = Map("content-type" -> "application/json")
+      )
+    //log.info(s"rsp=${rsp.statusCode}: ${rsp.text()}")
+    rsp.statusCode match {
+      case 200 => //
+      case _ => 
+        // retry
+        log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+        throw new RetryException("")
+    }
+    
+    val tx = rsp.text().parseJson.convertTo[RpcTx] 
+    tx
+  }
+
+  def parseBatchTx(blockNumber:Long)(config:Config,uri:String):Seq[RpcTxBlock] = {
+    val rsp = requests.get(s"${uri}/blocks/${blockNumber}?expanded=true",
+        headers = Map("content-type" -> "application/json")
+      )
+    //log.info(s"rsp=${rsp.statusCode}: ${rsp.text()}")
+    rsp.statusCode match {
+      case 200 => //
+      case _ => 
+        // retry
+        log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+        throw new RetryException("")
+    }
+    
+    val txx = rsp.text().parseJson.convertTo[RpcBlockTx]
+    txx.transactions
   }
 
 }
