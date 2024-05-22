@@ -78,7 +78,7 @@ class PipelineTransaction(config:Config) extends PipelineVechainTransaction[Tran
     
     val txx = tt.map( tx => {      
         tx.clauses.map(clause => Transaction(
-          ts = block.timestamp,
+          ts = block.timestamp * 1000L,
           b = block.number,
           hash = tx.id,
           sz = tx.size,

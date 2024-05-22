@@ -11,6 +11,8 @@
 
 ### Soroban
 
+https://developers.stellar.org/network/soroban-rpc/rpc-providers
+
 https://soroban.stellar.org/docs/reference/rpc-list
 
 Futurenet: https://rpc-futurenet.stellar.org

@@ -63,8 +63,8 @@ class PipelineTransaction(config:Config) extends PipelineStellarTransaction[Tran
     val txx = decodeTransactions(b).view.zipWithIndex.map{ case(t,i) => {
       Transaction(
         ts = parseTs(t.created_at),
-        hash = t.id,
-        blk = t.ledger,
+        b = t.ledger,
+        hash = t.id,        
         st = if(t.successful) 1 else 0,              // status 0 - failed (like in ethereum)
 
         from = t.source_account,

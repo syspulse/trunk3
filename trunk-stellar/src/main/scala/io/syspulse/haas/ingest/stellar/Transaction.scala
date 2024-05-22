@@ -14,9 +14,9 @@ import io.syspulse.skel.util.Util
 // )
 
 case class Transaction(  
-  ts:Long,              // timestamp
+  ts:Long,              // timestamp  
+  b:Long,             // block number
   hash:String,          // transaction hash
-  blk:Long,             // block number
   st:Int,              // status 0 - success
   
   from:String,

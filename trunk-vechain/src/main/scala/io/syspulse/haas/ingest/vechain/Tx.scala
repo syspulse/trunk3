@@ -4,7 +4,7 @@ import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
 case class EventTx(
-  addr:String,  // contract address
+  address:String,  // contract address
   data:String,      // data 
   topics:Array[String] = Array(), // topics
 ) {

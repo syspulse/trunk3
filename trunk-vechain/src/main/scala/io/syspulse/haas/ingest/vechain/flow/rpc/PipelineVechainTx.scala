@@ -77,7 +77,7 @@ class PipelineTx(config:Config) extends PipelineVechainTx[Tx](config) {
     // There is no way to distringuish in VeChain which Events are caused by which Clause
     val txx = tt.view.zipWithIndex.map{ case(tx,i) => {      
         tx.clauses.map(clause => Tx(
-          ts = block.timestamp,
+          ts = block.timestamp * 1000L,
           b = block.number,
           hash = tx.id,
           sz = tx.size,
@@ -108,7 +108,7 @@ class PipelineTx(config:Config) extends PipelineVechainTx[Tx](config) {
             else { 
               val ll:Seq[EventTx] = tx.outputs.flatMap( o => o.events.map( e => {
                 EventTx(
-                  o.contractAddress.getOrElse(""),
+                  e.address, //o.contractAddress.getOrElse(""),
                   e.data,
                   e.topics.toArray
                 )                
