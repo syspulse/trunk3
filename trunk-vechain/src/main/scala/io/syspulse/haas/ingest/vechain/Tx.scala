@@ -23,11 +23,11 @@ case class Tx(
   nonce:String,     // nonce
   
   gas:BigInt,       // gas 
-  pric:Int,         // gas coefficient
+  pric:Long,         // gas coefficient
   
   data:String,      // calldata
 
-  exp:Int,          // expirateion
+  exp:Long,         // expirateion
   del:Option[String],       // delegator
   dep:Option[String],       // dependsOn
 
