@@ -14,31 +14,31 @@ import io.syspulse.skel.util.Util
 // )
 
 case class Transaction(  
-  ts:Long,              // timestamp  
-  b:Long,             // block number
-  hash:String,          // transaction hash
-  st:Int,              // status 0 - success
+  ts:Long,              // timestamp
+  b:Long,               // block_number
+  hash:String,          // transaction_hash
+  st:Int,               // status (0 - success, 1 - fail)
   
-  from:String,
+  from:String,          // from
   // to:Option[String],  // there is no To in raw transaction
-  fee:BigInt,
-  //v:BigInt,           // there is no Value in raw transaction
+  fee:BigInt,           // fee
+  //v:BigInt,           // value there is no Value in raw transaction
 
   fromseq: String,      // source_account_sequence
   feeaddr: String,      // fee_account
   feemax: BigInt,       // max_fee
 
-  ops: Int,             // number of operations
+  ops: Int,             // operations_number
 
-  inp: String,          // envelope XDR
-  res: String,          // result XDR
-  meta: String,         // result_meta XDR
-  feemeta: String,      // fee meta XDR
+  inp: String,          // input (envelope XDR)
+  res: String,          // result (result XDR)
+  meta: String,         // result_meta (result meta XDR)
+  feemeta: String,      // fee_meta (fee meta XDR)
 
-  mtype: String,        // memo type
-  sig: Array[String],     // signatures
-  after: Option[Long],          // valid after
-  //pre,                  // preconditions
+  mtype: String,        // memo_type
+  sig: Array[String],   // signatures
+  after: Option[Long],  // valid_after
+  //pre,                // preconditions
     
   i:Option[Long] = None,// transaction index in Block
 

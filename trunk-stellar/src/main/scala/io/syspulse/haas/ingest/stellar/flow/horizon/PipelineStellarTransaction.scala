@@ -60,10 +60,14 @@ class PipelineTransaction(config:Config) extends PipelineStellarTransaction[Tran
 
   def transform(b: StellarRpcBlock): Seq[Transaction] = {
          
-    val txx = decodeTransactions(b).view.zipWithIndex.map{ case(t,i) => {
+    var opsNum = 0    
+    val txx = decodeTransactions(b).zipWithIndex.map{ case(t,i) => {
+
+      opsNum = opsNum + t.operation_count
+
       Transaction(
         ts = parseTs(t.created_at),
-        b = t.ledger,
+        b = b.sequence, //t.ledger,
         hash = t.id,        
         st = if(t.successful) 1 else 0,              // status 0 - failed (like in ethereum)
 
@@ -94,7 +98,7 @@ class PipelineTransaction(config:Config) extends PipelineStellarTransaction[Tran
 
     //if(txx.size == 0) 
     {
-      log.info(s"${b.sequence}: transactions=${txx.size}")
+      log.info(s"Block[${b.sequence},tx=${txx.size},ops=${opsNum}]")
     }
       
     // commit cursor

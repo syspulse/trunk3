@@ -13,27 +13,27 @@ case class EventTx(
 
 case class Tx(  
   ts:Long,          // timestamp
-  b:Long,           // block number
-  hash:String,      // transaction hash
+  b:Long,           // block_number
+  hash:String,      // transaction_hash
   sz:Int,           // size
 
-  from:String,      // from address
+  from:String,      // from_address
   to:String,        // to address
   v: BigInt,        // value
   nonce:String,     // nonce
   
   gas:BigInt,       // gas 
-  pric:Long,         // gas coefficient
+  pric:Long,        // gas_coefficient
   
   data:String,      // calldata
 
-  exp:Long,         // expirateion
-  del:Option[String],       // delegator
-  dep:Option[String],       // dependsOn
+  exp:Long,             // expiration
+  del:Option[String],   // delegator
+  dep:Option[String],   // dependsOn
 
-  used: Long,       // gas used
-  pay: String,      // gas payer
-  paid: BigInt,     // gas payed
+  used: Long,       // gas_used
+  pay: String,      // gas_payer
+  paid: BigInt,     // gas_payed
   rwd: BigInt,      // reward
   st: Int,          // status (0 - reverted , 1 - ok)
   

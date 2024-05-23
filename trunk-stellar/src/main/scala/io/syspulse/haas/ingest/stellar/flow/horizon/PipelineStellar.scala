@@ -204,7 +204,7 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
   
   def decodeTransactions(b: StellarRpcBlock):Seq[StellarRpcTransaction] = {
     if(b.successful_transaction_count + b.failed_transaction_count > 0) {
-      val txRsp = requests.get(uri.uri + s"/ledgers/${b.sequence}/transactions",headers = Map("content-type" -> "application/json"))      
+      val txRsp = requests.get(uri.uri + s"/ledgers/${b.sequence}/transactions?limit=200",headers = Map("content-type" -> "application/json"))      
       
       log.debug(s"${txRsp}")
 

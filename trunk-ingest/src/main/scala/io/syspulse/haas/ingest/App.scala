@@ -282,9 +282,11 @@ object App extends skel.Server {
           case "block.stellar" =>
             Some(new stellar.flow.horizon.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
           case "transaction.stellar" =>
-            Some(new stellar.flow.horizon.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+            Some(new stellar.flow.horizon.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))          
           case "tx.stellar" =>
-            Some(new stellar.flow.horizon.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+            Some(new stellar.flow.horizon.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          // case "tx.stellar" =>
+          //   Some(new stellar.flow.horizon.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Solana
           case "block.solana" =>
