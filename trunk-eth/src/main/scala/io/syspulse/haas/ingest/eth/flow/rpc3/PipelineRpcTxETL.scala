@@ -97,7 +97,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       b.transactionsRoot,
       b.stateRoot,        
       b.receiptsRoot,
-      b.miner,
+      formatAddr(b.miner),
       
       toBigInt(b.difficulty),
       toBigInt(b.totalDifficulty),
@@ -129,8 +129,8 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
         tx.hash,
         toLong(tx.nonce),
         transaction_index,
-        tx.from,
-        tx.to,
+        formatAddr(tx.from),
+        formatAddr(tx.to),
         toBigInt(tx.value),
         toLong(tx.gas),
         toBigInt(tx.gasPrice),
@@ -141,7 +141,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
                         
         receipt.map(r => toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
         receipt.map(r => toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
-        receipt.map(_.contractAddress).flatten, //tx.receipt_contract_address, 
+        receipt.map(r => formatAddr(r.contractAddress)).flatten, //tx.receipt_contract_address, 
         Some(b.receiptsRoot), //tx.receipt_root, 
         receipt.flatMap(r => r.status.map(toLong(_).toInt)), //tx.receipt_status, 
         receipt.map(_.effectiveGasPrice.map(r => toBigInt(r))).flatten, //tx.receipt_effective_gas_price
@@ -151,7 +151,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
         logs = logs.map( r => {
           LogTx(
             toLong(r.logIndex).toInt,
-            r.address,
+            formatAddr(r.address),
             r.data,
             r.topics
           )

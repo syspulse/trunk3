@@ -96,6 +96,8 @@ object App extends skel.Server {
         ArgLong('_', "timeout.idle",s"Idle timeout in msec (def: ${d.timeoutIdle})"),
         ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
 
+        ArgString('_', "format.addr",s"Format addresses (def: ${d.formatAddr})"),
+
         ArgLogging(),
         ArgParam("<params>",""),
 
@@ -164,6 +166,8 @@ object App extends skel.Server {
 
       timeoutIdle = c.getLong("timeout.idle").getOrElse(d.timeoutIdle),
       threadPool = c.getInt("thread.pool").getOrElse(d.threadPool),
+
+      formatAddr = c.getString("format.addr").getOrElse(d.formatAddr),
       
       cmd = c.getCmd().getOrElse(d.cmd),      
       params = c.getParams(),

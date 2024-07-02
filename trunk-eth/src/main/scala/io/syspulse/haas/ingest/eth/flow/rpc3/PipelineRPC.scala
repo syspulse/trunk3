@@ -437,4 +437,24 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
     receiptMap
   }
+  
+  def formatAddr(addr:Option[String]):Option[String] = { 
+    if(!addr.isDefined) return None
+
+    Option(formatAddr(addr.get))
+  }
+
+  def formatAddr(addr:String):String = {    
+    if(addr == null) 
+      return addr
+
+    if(config.formatAddr.size == 0) 
+      return addr
+
+    config.formatAddr.charAt(0) match {
+      case 'l' => addr.toLowerCase
+      case 'u' => addr.toUpperCase
+      case _ => addr
+    }
+  }
 }

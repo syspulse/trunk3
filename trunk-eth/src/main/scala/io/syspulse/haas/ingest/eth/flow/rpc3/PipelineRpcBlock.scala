@@ -75,7 +75,7 @@ class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
       b.transactionsRoot,
       b.stateRoot,        
       b.receiptsRoot,
-      b.miner,
+      formatAddr(b.miner),
       
       toBigInt(b.difficulty),
       toBigInt(b.totalDifficulty),

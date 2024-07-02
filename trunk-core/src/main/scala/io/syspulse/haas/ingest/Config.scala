@@ -71,6 +71,8 @@ case class Config(
 
   threadPool:Int = 16,
 
+  formatAddr:String = "",  // format addresses to (lower,upper,human)
+
   cmd:String = "stream",
   params: Seq[String] = Seq(),
   c:Seq[String] = Seq()

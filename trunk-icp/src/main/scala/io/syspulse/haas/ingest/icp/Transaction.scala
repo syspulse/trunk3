@@ -15,26 +15,26 @@ import io.syspulse.skel.Ingestable
 
 case class Transaction(  
   ts:Long,              // timestamp
-  hash:String,          // transaction hash
-  blk:Long,             // block number
+  hash:String,          // transaction_hash
+  blk:Long,             // block_number
   
-  from:Option[String],
-  to:Option[String],
-  fee:BigInt,
-  v:BigInt,
+  from:Option[String], // from
+  to:Option[String],   // to
+  fee:BigInt,          // fee
+  v:BigInt,            // value
   
   alw:Option[BigInt],   // allowance
-  alwe:Option[BigInt],  // expected allowence
+  alwe:Option[BigInt],  // allowance_expected
 
   spend:Option[String], // spender
   
-  typ:String,           // transfer type
+  typ:String,           // transfer_type
   memo:String,          // 
-  icrc1:Option[String], // icrc1 memo
+  icrc1:Option[String], // icrc1_memo
   
   exp:Option[Long],     // expiration  
   
-  i:Option[Long] = None,// transaction index in Block
+  i:Option[Long] = None,// transaction_index
 
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)

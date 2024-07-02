@@ -17,7 +17,7 @@ case class Transaction(
   ts:Long,              // timestamp
   b:Long,               // block_number
   hash:String,          // transaction_hash
-  st:Int,               // status (0 - success, 1 - fail)
+  st:Int,               // status
   
   from:String,          // from
   // to:Option[String],  // there is no To in raw transaction
@@ -30,17 +30,17 @@ case class Transaction(
 
   ops: Int,             // operations_number
 
-  inp: String,          // input (envelope XDR)
-  res: String,          // result (result XDR)
-  meta: String,         // result_meta (result meta XDR)
-  feemeta: String,      // fee_meta (fee meta XDR)
+  inp: String,          // input_xdr
+  res: String,          // result_xdr
+  meta: String,         // result_meta_xdr
+  feemeta: String,      // fee_meta_xdr
 
   mtype: String,        // memo_type
   sig: Array[String],   // signatures
   after: Option[Long],  // valid_after
   //pre,                // preconditions
     
-  i:Option[Long] = None,// transaction index in Block
+  i:Option[Long] = None,// transaction_index
 
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)

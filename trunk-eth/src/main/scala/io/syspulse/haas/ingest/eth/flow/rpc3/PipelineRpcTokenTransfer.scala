@@ -98,10 +98,10 @@ class PipelineTokenTransfer(config:Config) extends PipelineRpcTokenTransfer[Toke
         TokenTransfer(
           ts = ts * 1000L,
           blk = block_number,
-          con = log.address,
+          con = formatAddr(log.address),
 
-          from = from,
-          to = to,
+          from = formatAddr(from),
+          to = formatAddr(to),
           v = value,
 
           hash = tx.hash,                                 // transaction hash !

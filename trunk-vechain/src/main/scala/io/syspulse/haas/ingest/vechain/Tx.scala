@@ -17,8 +17,8 @@ case class Tx(
   hash:String,      // transaction_hash
   sz:Int,           // size
 
-  from:String,      // from_address
-  to:String,        // to address
+  from:String,      // from
+  to:String,        // to
   v: BigInt,        // value
   nonce:String,     // nonce
   
@@ -35,11 +35,11 @@ case class Tx(
   pay: String,      // gas_payer
   paid: BigInt,     // gas_payed
   rwd: BigInt,      // reward
-  st: Int,          // status (0 - reverted , 1 - ok)
+  st: Int,          // status
   
-  logs: Array[EventTx],   // Event logs
+  logs: Array[EventTx],   // events
     
-  i:Option[Long] = None,  // transaction index in Block
+  i:Option[Long] = None,  // transaction_index
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
   override def toString = Util.toStringWithArray(this)
