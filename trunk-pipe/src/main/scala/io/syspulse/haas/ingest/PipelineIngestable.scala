@@ -59,7 +59,7 @@ abstract class PipelineIngestable[T,O <: skel.Ingestable,E <: skel.Ingestable,W 
   override def getFileLimit():Long = config.limit
   override def getFileSize():Long = config.size
 
-  def filter():Seq[String] = config.filter
+  //def filter():Seq[String] = config.filter
   def apiSuffix():String
 
   def convert(t:T):O

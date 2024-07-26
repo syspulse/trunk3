@@ -98,7 +98,11 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
       b.baseFeePerGas.map(d => toLong(d))
     )
 
-    val txx = b.transactions.map{ tx:RpcTx => {
+    val txx = b.transactions
+    .filter(tx => {
+      config.filter.size == 0 || config.filter.contains(tx.hash)
+    })
+    .map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
       val logs = receipts.get(tx.hash).get.logs
       val receipt = receipts.get(tx.hash)

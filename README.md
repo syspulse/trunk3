@@ -81,6 +81,14 @@ Blocks Range:
 ./run-trunk.sh -e block -f http://geth:8545 --block=0 --block.end=100
 ```
 
+Filter by specific transactions:
+
+```
+./run-trunk.sh -e tx -f http://geth:8545 --block=20254722 --block.end=20254722 \
+   --filter=0x4248cbd371e0c876ebafd7e088aec9f790d32280129663c46c6050c8de2dfa23,0x375ad6cd6b2d79995d697b4c6708b3dc73bbc04bf9e874cb8c3d105ef63560ec
+```
+
+
 Blocks from the state file (to continue stream with restarts) to Kafka topic `blocks`
 ```
 ./run-trunk.sh -e block -f http://geth:8545 -o kafka://broker-1:9092/blocks --block=file://BLOCKS 
@@ -228,3 +236,4 @@ Polling uses diff calculation to check only new Mempool transactions
 ```
 ./run-trunk.sh -e trace -f http://geth:8545 --rpc.url=http://geth:8545
 ```
+

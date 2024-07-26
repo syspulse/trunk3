@@ -65,6 +65,11 @@ class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
 
   def transform(block: RpcBlock): Seq[Block] = {
     val b = block.result.get
+    
+    if(config.filter.size != 0 && config.filter.contains(b.hash)) {
+      return Seq()
+    }
+
     val blk = Block(
       toLong(b.number),
       b.hash,

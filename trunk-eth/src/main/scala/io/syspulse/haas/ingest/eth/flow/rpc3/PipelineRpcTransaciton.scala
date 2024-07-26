@@ -72,7 +72,11 @@ class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transact
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
     
-    val txx = b.transactions.map{ tx:RpcTx => {
+    val txx = b.transactions
+    .filter(tx => {
+      config.filter.size == 0 || config.filter.contains(tx.hash)
+    })
+    .map{ tx:RpcTx => {
       val transaction_index = toLong(tx.transactionIndex).toInt
       val receipt = receipts.get(tx.hash)
       
