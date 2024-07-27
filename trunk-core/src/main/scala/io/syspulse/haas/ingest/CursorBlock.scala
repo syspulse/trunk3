@@ -12,7 +12,7 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
     private val log = Logger(this.getClass)
 
     val datastore = if(config.datastore.isBlank() || file.startsWith("/")) "" else config.datastore + "/"  
-    val stateFile = s"${datastore}${file}"
+    val stateFile = s"${datastore}${file}"    
 
     if(!os.exists(os.Path(stateFile,os.pwd))) {
       // create file
@@ -35,10 +35,21 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   private var cursor = CursorFile(file)
   private var current:Long = 0
   var blockStart:Long = 0
-  var blockEnd:Long = 0
+  var blockEnd:Long = Int.MaxValue
+  var blockList:Seq[Long] = Seq() // special option to read only the list of blocks
+  var blockListIndex = 0
     
+  def setList(blocks:Seq[Long]) = this.synchronized {
+    blockList = blocks
+    blockEnd = blockList.last
+  }
+  
   def setFile(newStateFile:String) = this.synchronized {
-    cursor = CursorFile(newStateFile)
+    if(newStateFile.isBlank())
+      this
+    else
+      cursor = CursorFile(newStateFile)
+      
     this
   }
 
@@ -53,9 +64,17 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   
   def init(blockStart:Long, blockEnd:Long) = {
     this.synchronized {
-      this.current = blockStart
-      this.blockStart = blockStart
-      this.blockEnd = blockEnd
+      if(blockList.size > 0) {
+        // if list is specified, init it
+        blockListIndex = 0
+        this.current = blockList(blockListIndex)
+        this.blockStart = blockList(blockListIndex)
+        this.blockEnd = blockList.last
+      } else {
+        this.current = blockStart
+        this.blockStart = blockStart
+        this.blockEnd = blockEnd
+      }
     }    
   }
 
@@ -64,15 +83,30 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   }
 
   def get() = this.synchronized {
-    this.current
+    current
   }
 
   def next() = this.synchronized {
-    current + 1
+    if(blockList.size > 0) {
+      if(blockListIndex >= blockList.size && blockListIndex >= blockEnd) {
+        // beyond, should not come here
+        -1L
+      } else {
+        current = blockList(blockListIndex)
+        blockListIndex = blockListIndex + 1
+        current
+      }
+      
+    } else
+      current + 1
   }
 
   def commit(block:Long) = this.synchronized {
-    current = block + 1
+    if(blockList.size > 0) {
+      // don't change
+    } else {
+      current = block + 1
+    }
     write(current)
   }
 

@@ -78,14 +78,25 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
         val blockStr = 
           (config.block.split("://").toList match {
             // start from latest and save to file
-            case "latest" :: file :: Nil => cursor.setFile(file).read(); "latest"
-            case "last" :: file :: Nil => cursor.setFile(file).read(); "latest"
+            case "latest" :: file :: Nil => cursor.setFile(file).read(); 
+              "latest"
+            case "last" :: file :: Nil => cursor.setFile(file).read(); 
+              "latest"
+            case "latest" :: Nil =>  // use default file
+              cursor.setFile("").read()              
 
             case "file" :: file :: Nil => cursor.setFile(file).read()
             case "file" :: Nil => cursor.read()
 
+            case "list" :: file :: Nil => 
+              val data = os.read(os.Path(file,os.pwd))
+              val list = data.split("[\\n,]").filter(!_.isBlank).map(_.toLong)
+              cursor.setList(list.toSeq)
+              list.head.toString
+
             // start block and save to file (10://file.txt)
-            case block :: file :: Nil => cursor.setFile(file).read(); block
+            case block :: file :: Nil => cursor.setFile(file).read(); 
+              block
 
             case _ => config.block
           })
@@ -141,7 +152,9 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
         }
         
         val blockEnd = config.blockEnd match {
-          case "" => Int.MaxValue
+          case "" => 
+            cursor.blockEnd
+            //Int.MaxValue
           case "latest" => blockStart
           case hex if hex.startsWith("0x") =>
             java.lang.Long.parseLong(hex,16).toInt
@@ -220,7 +233,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           })
           .mapConcat(lastBlock => {
             // ATTENTION:
-            // lag and reorg are not compatible !            
+            // lag and reorg are not compatible !
+                        
+            if(cursor.blockList.size > 0) {
+              // selected list
+              cursor.blockList
+            }
+            else
             if(config.blockReorg == 0 || cursor.get() < (lastBlock - config.blockReorg))              
               // normal fast operation or reorg before the tip
               cursor.get() to lastBlock

@@ -18,8 +18,8 @@ object Dependencies {
     lazy val elastic4sVersion = "7.17.3"
 
     lazy val skelVersion = "0.0.8"
-    lazy val extVersion = "0.0.3"
-    lazy val appVersion = "0.8.1"
+    lazy val extVersion = "0.0.5"
+    lazy val appVersion = "0.9.0"
     lazy val jarPrefix = ""
     
     lazy val appDockerRoot = "/app"
@@ -202,6 +202,7 @@ object Dependencies {
     val libSkelCli =          "io.syspulse"                     %% "skel-cli"                       % skelVersion
     val libSkelSerde =        "io.syspulse"                     %% "skel-serde"                     % skelVersion
     val libSkelOdometer =     "io.syspulse"                     %% "skel-odometer"                  % skelVersion
+    val libSkelBlockchain =   "io.syspulse"                     %% "blockchain-core"                % skelVersion
     
     val libSkelSyslogCore =   "io.syspulse"                     %% "syslog-core"                    % skelVersion
     val libSkelJobCore =      "io.syspulse"                     %% "job-core"                       % skelVersion

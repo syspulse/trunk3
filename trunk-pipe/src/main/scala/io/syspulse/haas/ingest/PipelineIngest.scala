@@ -45,6 +45,7 @@ import io.syspulse.ext.core.ExtractorJson._
 import io.syspulse.haas.intercept.Script
 import io.syspulse.haas.intercept.ScriptInterceptor
 import io.syspulse.haas.intercept.InterceptResult
+import io.syspulse.blockchain.Blockchain
 
 abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
   (implicit val fmt:JsonFormat[E],
@@ -54,6 +55,8 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   
   private val log = Logger(s"${this}")
 
+  val blockchain = Blockchain(config.interceptorBlockchain)
+  
   // interceptor can be changed in runtime
   @volatile
   var interceptor = if(config.script.isEmpty()) 
@@ -92,6 +95,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
         }}
 
         r.map(r => { 
+          
           val event = io.syspulse.ext.core.Event(
             did = config.interceptorName,
             eid = UUID.random.toString,
@@ -100,7 +104,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             `type` = config.interceptorType,
             severity = config.interceptorSeverity,
             ts = System.currentTimeMillis(),
-            blockchain = io.syspulse.ext.core.Blockchain(config.interceptorBlockchain),
+            blockchain = io.syspulse.ext.core.Blockchain(blockchain.id.getOrElse(""),blockchain.name),
             metadata = Map(
               "tx_hash" -> r.txHash,
               "monitored_contract" -> config.interceptorContract,

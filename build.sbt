@@ -283,7 +283,8 @@ lazy val trunk_pipe = (project in file("trunk-pipe"))
         Seq(
           libSkelCore,
           libSkelIngest,
-          libSkelDSL,          
+          libSkelDSL,
+          libSkelBlockchain,          
           libExtCore,
 
           libUUID, 
@@ -466,7 +467,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
       libSkelSerde,
 
       libSkelCrypto,
-      libEthAbi,
+      libEthAbi,      
 
       libRequests, // can be replaced with akka-http
 
