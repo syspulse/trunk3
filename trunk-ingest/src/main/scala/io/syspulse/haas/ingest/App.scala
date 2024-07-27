@@ -137,7 +137,7 @@ object App extends skel.Server {
       throttle = c.getLong("throttle").getOrElse(d.throttle),     
       format = c.getString("format").getOrElse(d.format),
 
-      filter = c.getListString("filter",d.filter),
+      filter = c.getListString("filter",d.filter).map(_.toLowerCase()),
       //abi = c.getString("abi").getOrElse(d.abi),
 
       datastore = c.getString("datastore").getOrElse(d.datastore),

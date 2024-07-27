@@ -88,6 +88,14 @@ Filter by specific transactions:
    --filter=0x4248cbd371e0c876ebafd7e088aec9f790d32280129663c46c6050c8de2dfa23,0x375ad6cd6b2d79995d697b4c6708b3dc73bbc04bf9e874cb8c3d105ef63560ec
 ```
 
+Filter by specific block and transactions:
+
+Blocks and Transactions in list
+
+```
+./run-trunk.sh -e tx -f http://geth:8545 --block=list://BLOCK-filter.tx --filter=file://TX-filter.tx
+```
+
 
 Blocks from the state file (to continue stream with restarts) to Kafka topic `blocks`
 ```
