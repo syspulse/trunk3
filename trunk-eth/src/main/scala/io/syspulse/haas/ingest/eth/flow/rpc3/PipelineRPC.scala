@@ -237,7 +237,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                         
             if(cursor.blockList.size > 0) {
               // selected list
-              cursor.blockList
+              cursor.getList()
             }
             else
             if(config.blockReorg == 0 || cursor.get() < (lastBlock - config.blockReorg))              

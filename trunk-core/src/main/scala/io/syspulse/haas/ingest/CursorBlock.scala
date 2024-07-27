@@ -43,6 +43,14 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
     blockList = blocks
     blockEnd = blockList.last
   }
+
+  def getList() = this.synchronized {
+    if(blockList.size > 0) {
+      // take list taking into ccount index
+      blockList.drop(blockListIndex)
+    } else
+      Seq()    
+  }
   
   def setFile(newStateFile:String) = this.synchronized {
     if(newStateFile.isBlank())
@@ -87,7 +95,7 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   }
 
   def next() = this.synchronized {
-    if(blockList.size > 0) {
+    if(blockList.size > 0) {      
       if(blockListIndex >= blockList.size && blockListIndex >= blockEnd) {
         // beyond, should not come here
         -1L
@@ -103,7 +111,8 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
 
   def commit(block:Long) = this.synchronized {
     if(blockList.size > 0) {
-      // don't change
+      current = block
+      blockListIndex = blockList.indexOf(block) + 1
     } else {
       current = block + 1
     }
