@@ -5,5 +5,6 @@ TX_FILE=${2}
    -f http://geth:8545 \
    --block=list://${BLOCK_FILE} \
    --filter=file://${TX_FILE} \
-   --batch=1 --block.throttle=1000 \
+   --batch=1 --block.throttle=5000 \
    $@
+

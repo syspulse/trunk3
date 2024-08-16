@@ -30,7 +30,7 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   }
   
 
-  override def toString() = s"${current} [${blockStart} : ${blockEnd}]"
+  override def toString() = s"${current} [${blockStart} : ${blockEnd}] (${file})"
 
   private var cursor = CursorFile(file)
   private var current:Long = 0
