@@ -30,7 +30,10 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   }
   
 
-  override def toString() = s"${current} [${blockStart} : ${blockEnd}] (${file})"
+  override def toString() = if(blockList.size > 0)
+    s"${current} [${blockList.mkString(",")}] (${file})"
+  else
+    s"${current} [${blockStart} : ${blockEnd}] (${file})"
 
   private var cursor = CursorFile(file)
   private var current:Long = 0
@@ -40,7 +43,7 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   var blockListIndex = 0
     
   def setList(blocks:Seq[Long]) = this.synchronized {
-    blockList = blocks
+    blockList = blocks.sorted
     blockEnd = blockList.last
   }
 
