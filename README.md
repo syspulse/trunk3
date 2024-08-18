@@ -245,3 +245,18 @@ Polling uses diff calculation to check only new Mempool transactions
 ./run-trunk.sh -e trace -f http://geth:8545 --rpc.url=http://geth:8545
 ```
 
+## Replay
+
+### Replaying previous transactions
+
+To replay transactions `trunk` needs to know blocks of these transactions, thus it requires two parameter: 
+
+- `--block=list://${BLOCKS}` - file with block number (file:// is already reserved for block numbers)
+- `--filter=file://${TRANSACTIONS}` - file with a list of transactions (hashes)
+- `--batch=1` - Override default batching
+
+Example:
+
+```
+./run-trunk.sh -e tx.extractor --block=list://${BLOCK_FILE} --filter=file://${TX_FILE} --batch=1 --block.throttle=5000
+```
