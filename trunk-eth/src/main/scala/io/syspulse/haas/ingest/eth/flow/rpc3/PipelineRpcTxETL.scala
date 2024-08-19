@@ -39,6 +39,7 @@ import io.syspulse.haas.ingest.eth.etl.TxJson._
 
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
+import io.syspulse.haas.ingest.IngestUtil
 
 // ====================================================================================================
 // ATTENTION !
@@ -55,7 +56,7 @@ abstract class PipelineRpcTxETL[E <: skel.Ingestable](config:Config)
     val bb = parseBlock(data)
     if(bb.size!=0) {
       val b = bb.last.result.get
-      latestTs.set(toLong(b.timestamp) * 1000L)
+      latestTs.set(IngestUtil.toLong(b.timestamp) * 1000L)
     }
     
     bb
@@ -72,15 +73,15 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
   def transform(blk: RpcBlock): Seq[Tx] = {
     val b = blk.result.get
 
-    val ts = toLong(b.timestamp)
-    val block_number = toLong(b.number)
+    val ts = IngestUtil.toLong(b.timestamp)
+    val block_number = IngestUtil.toLong(b.number)
          
     val receipts:Map[String,RpcReceipt] = decodeReceipts(blk)
     
     val numEvents = receipts.values.foldLeft(0)((c,r) => c + r.logs.size)
     val numTransfers = b.transactions.foldLeft(0)((c,t) => c + {if(t.input.isEmpty() || t.input == "0x") 0 else 1})
     val numCalls = b.transactions.size - numTransfers
-    log.info(s"Block[${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls},${toLong(b.size)}]")
+    log.info(s"Block[${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls},${IngestUtil.toLong(b.size)}]")
 
     if(receipts.size != b.transactions.size) {
       log.error(s"block=${block_number}: transactions=${b.transactions.size} != receipts=${receipts.size}")
@@ -88,7 +89,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
     }
 
     val block = Block(
-      toLong(b.number),
+      IngestUtil.toLong(b.number),
       b.hash,
       b.parentHash,
       b.nonce,
@@ -99,17 +100,17 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       b.receiptsRoot,
       formatAddr(b.miner),
       
-      toBigInt(b.difficulty),
-      toBigInt(b.totalDifficulty),
-      toLong(b.size),
+      IngestUtil.toBigInt(b.difficulty),
+      IngestUtil.toBigInt(b.totalDifficulty),
+      IngestUtil.toLong(b.size),
 
       b.extraData, 
           
-      toLong(b.gasLimit), 
-      toLong(b.gasUsed), 
-      toLong(b.timestamp) * 1000L,  // ATTENTION: ETL compatibility is broken here !!!
+      IngestUtil.toLong(b.gasLimit), 
+      IngestUtil.toLong(b.gasUsed), 
+      IngestUtil.toLong(b.timestamp) * 1000L,  // ATTENTION: ETL compatibility is broken here !!!
       b.transactions.size,
-      b.baseFeePerGas.map(d => toLong(d))
+      b.baseFeePerGas.map(d => IngestUtil.toLong(d))
     )
 
     val txx = b.transactions
@@ -117,7 +118,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       config.filter.size == 0 || config.filter.contains(tx.hash)
     })
     .map{ tx:RpcTx => {
-      val transaction_index = toLong(tx.transactionIndex).toInt
+      val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
       val logs:Array[RpcLog] = {
         val logs = receipts.get(tx.hash)
         if(!logs.isDefined) {
@@ -131,30 +132,30 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
 
       Tx(
         tx.hash,
-        toLong(tx.nonce),
+        IngestUtil.toLong(tx.nonce),
         transaction_index,
         formatAddr(tx.from),
         formatAddr(tx.to),
-        toBigInt(tx.value),
-        toLong(tx.gas),
-        toBigInt(tx.gasPrice),
+        IngestUtil.toBigInt(tx.value),
+        IngestUtil.toLong(tx.gas),
+        IngestUtil.toBigInt(tx.gasPrice),
         tx.input,
-        tx.maxFeePerGas.map(toBigInt(_)),
-        tx.maxPriorityFeePerGas.map(toBigInt(_)),
-        tx.`type`.map(r => toLong(r).toInt),
+        tx.maxFeePerGas.map(IngestUtil.toBigInt(_)),
+        tx.maxPriorityFeePerGas.map(IngestUtil.toBigInt(_)),
+        tx.`type`.map(r => IngestUtil.toLong(r).toInt),
                         
-        receipt.map(r => toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
-        receipt.map(r => toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
+        receipt.map(r => IngestUtil.toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
+        receipt.map(r => IngestUtil.toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
         receipt.map(r => formatAddr(r.contractAddress)).flatten, //tx.receipt_contract_address, 
         Some(b.receiptsRoot), //tx.receipt_root, 
-        receipt.flatMap(r => r.status.map(toLong(_).toInt)), //tx.receipt_status, 
-        receipt.map(_.effectiveGasPrice.map(r => toBigInt(r))).flatten, //tx.receipt_effective_gas_price
+        receipt.flatMap(r => r.status.map(IngestUtil.toLong(_).toInt)), //tx.receipt_status, 
+        receipt.map(_.effectiveGasPrice.map(r => IngestUtil.toBigInt(r))).flatten, //tx.receipt_effective_gas_price
 
         block = block,
 
         logs = logs.map( r => {
           LogTx(
-            toLong(r.logIndex).toInt,
+            IngestUtil.toLong(r.logIndex).toInt,
             formatAddr(r.address),
             r.data,
             r.topics

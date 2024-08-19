@@ -38,6 +38,7 @@ import io.syspulse.haas.ingest.eth.TransactionJson._
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
+import io.syspulse.haas.ingest.IngestUtil
 
 abstract class PipelineRpcTransaction[E <: skel.Ingestable](config:Config)
                 (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -49,7 +50,7 @@ abstract class PipelineRpcTransaction[E <: skel.Ingestable](config:Config)
     val bb = parseBlock(data)
     if(bb.size!=0) {
       val b = bb.last.result.get
-      latestTs.set(toLong(b.timestamp) * 1000L)
+      latestTs.set(IngestUtil.toLong(b.timestamp) * 1000L)
     }    
     bb
   }
@@ -65,8 +66,8 @@ class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transact
   def transform(block: RpcBlock): Seq[Transaction] = {
     val b = block.result.get
 
-    val ts = toLong(b.timestamp)
-    val block_number = toLong(b.number)
+    val ts = IngestUtil.toLong(b.timestamp)
+    val block_number = IngestUtil.toLong(b.number)
 
     log.info(s"Block(${block_number},${b.transactions.size})")
       
@@ -77,7 +78,7 @@ class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transact
       config.filter.size == 0 || config.filter.contains(tx.hash)
     })
     .map{ tx:RpcTx => {
-      val transaction_index = toLong(tx.transactionIndex).toInt
+      val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
       val receipt = receipts.get(tx.hash)
       
       Transaction(
@@ -89,24 +90,24 @@ class PipelineTransaction(config:Config) extends PipelineRpcTransaction[Transact
         formatAddr(tx.from),
         formatAddr(tx.to),
         
-        toLong(tx.gas),
-        toBigInt(tx.gasPrice),
+        IngestUtil.toLong(tx.gas),
+        IngestUtil.toBigInt(tx.gasPrice),
         
         tx.input,
-        toBigInt(tx.value),
-        toLong(tx.nonce),
+        IngestUtil.toBigInt(tx.value),
+        IngestUtil.toLong(tx.nonce),
         
-        tx.maxFeePerGas.map(toBigInt(_)), //tx.max_fee_per_gas,
-        tx.maxPriorityFeePerGas.map(toBigInt(_)), //tx.max_priority_fee_per_gas, 
+        tx.maxFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_fee_per_gas,
+        tx.maxPriorityFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_priority_fee_per_gas, 
 
-        tx.`type`.map(r => toLong(r).toInt),
+        tx.`type`.map(r => IngestUtil.toLong(r).toInt),
 
-        receipt.map(r => toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
-        receipt.map(r => toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
+        receipt.map(r => IngestUtil.toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
+        receipt.map(r => IngestUtil.toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
         receipt.map(r => formatAddr(r.contractAddress)).flatten, //tx.receipt_contract_address, 
         Some(b.receiptsRoot), //tx.receipt_root, 
-        receipt.flatMap(r => r.status.map(toLong(_).toInt)), //tx.receipt_status, 
-        receipt.map(_.effectiveGasPrice.map(r => toBigInt(r))).flatten, //tx.receipt_effective_gas_price
+        receipt.flatMap(r => r.status.map(IngestUtil.toLong(_).toInt)), //tx.receipt_status, 
+        receipt.map(_.effectiveGasPrice.map(r => IngestUtil.toBigInt(r))).flatten, //tx.receipt_effective_gas_price
 
       )
     }}.toSeq

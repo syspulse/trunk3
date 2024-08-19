@@ -38,6 +38,7 @@ import io.syspulse.haas.ingest.eth.TokenTransferJson._
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
+import io.syspulse.haas.ingest.IngestUtil
 
 abstract class PipelineRpcTokenTransfer[E <: skel.Ingestable](config:Config)
                 (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -49,7 +50,7 @@ abstract class PipelineRpcTokenTransfer[E <: skel.Ingestable](config:Config)
     val bb = parseBlock(data)
     if(bb.size!=0) {
       val b = bb.last.result.get
-      latestTs.set(toLong(b.timestamp) * 1000L)
+      latestTs.set(IngestUtil.toLong(b.timestamp) * 1000L)
     }    
     bb
   }
@@ -67,15 +68,15 @@ class PipelineTokenTransfer(config:Config) extends PipelineRpcTokenTransfer[Toke
   def transform(block: RpcBlock): Seq[TokenTransfer] = {
     val b = block.result.get
 
-    val ts = toLong(b.timestamp)
-    val block_number = toLong(b.number)
+    val ts = IngestUtil.toLong(b.timestamp)
+    val block_number = IngestUtil.toLong(b.number)
     
     log.info(s"transaction: ${b.transactions.size}")
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
     
     val tt = b.transactions.flatMap( tx => {
-      val transaction_index = toLong(tx.transactionIndex).toInt
+      val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
       val receipt = receipts(tx.hash)
       val logs = receipt.logs
       
@@ -91,9 +92,9 @@ class PipelineTokenTransfer(config:Config) extends PipelineRpcTokenTransfer[Toke
         val from = s"0x${log.topics(1).drop(TOPIC_DATA_ADDR_PREFIX.size)}"
         val to = s"0x${log.topics(2).drop(TOPIC_DATA_ADDR_PREFIX.size)}"
         val value = if(log.topics.size == 4)
-          toBigInt(log.topics(3))
+          IngestUtil.toBigInt(log.topics(3))
         else
-          toBigInt(log.data)
+          IngestUtil.toBigInt(log.data)
 
         TokenTransfer(
           ts = ts * 1000L,
@@ -105,7 +106,7 @@ class PipelineTokenTransfer(config:Config) extends PipelineRpcTokenTransfer[Toke
           v = value,
 
           hash = tx.hash,                                 // transaction hash !
-          i = toLong(log.logIndex).toInt,                 // log index
+          i = IngestUtil.toLong(log.logIndex).toInt,                 // log index
         )
       })
       

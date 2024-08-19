@@ -32,6 +32,7 @@ import io.syspulse.haas.ingest.starknet.StarknetJson._
 import io.syspulse.haas.ingest.starknet.flow.rpc._
 import io.syspulse.haas.ingest.starknet.flow.rpc.StarknetRpcJson._
 
+import io.syspulse.haas.ingest.IngestUtil
 
 abstract class PipelineStarknetTx[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -87,7 +88,7 @@ class PipelineTx(config:Config) extends PipelineStarknetTx[Tx](config) {
       b.new_root,
       b.timestamp * 1000L,
       tx = None,
-      l1gas = b.l1_gas_price.map(g => toBigInt(g.price_in_wei))
+      l1gas = b.l1_gas_price.map(g => IngestUtil.toBigInt(g.price_in_wei))
     )
 
     val txx = b.transactions.view.zipWithIndex.map{ case(tx,i) => {
@@ -105,11 +106,11 @@ class PipelineTx(config:Config) extends PipelineStarknetTx[Tx](config) {
 
       Tx(
         hash = tx.transaction_hash,
-        nonce = toLong(tx.nonce),
+        nonce = IngestUtil.toLong(tx.nonce),
         from = tx.sender_address.getOrElse(""),
-        fee = tx.max_fee.map(f => toBigInt(f)),
+        fee = tx.max_fee.map(f => IngestUtil.toBigInt(f)),
         typ = tx.`type`,
-        ver = toLong(tx.version).toInt,
+        ver = IngestUtil.toLong(tx.version).toInt,
         sig = tx.signature.getOrElse(Array.empty).mkString(":"),
         data = tx.calldata.getOrElse(Array.empty),
         entry = tx.entry_point_selector,

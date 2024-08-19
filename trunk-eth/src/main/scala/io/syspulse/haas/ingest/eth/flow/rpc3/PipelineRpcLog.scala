@@ -38,6 +38,7 @@ import io.syspulse.haas.ingest.eth.EventJson._
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
+import io.syspulse.haas.ingest.IngestUtil
 
 abstract class PipelineRpcEvent[E <: skel.Ingestable](config:Config)
                 (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -49,7 +50,7 @@ abstract class PipelineRpcEvent[E <: skel.Ingestable](config:Config)
     val bb = parseBlock(data)
     if(bb.size!=0) {
       val b = bb.last.result.get
-      latestTs.set(toLong(b.timestamp) * 1000L)
+      latestTs.set(IngestUtil.toLong(b.timestamp) * 1000L)
     }    
     bb
   }
@@ -65,15 +66,15 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
   def transform(block: RpcBlock): Seq[Event] = {
     val b = block.result.get
 
-    val ts = toLong(b.timestamp)
-    val block_number = toLong(b.number)
+    val ts = IngestUtil.toLong(b.timestamp)
+    val block_number = IngestUtil.toLong(b.number)
 
     log.info(s"transaction: ${b.transactions.size}")
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
     
     val ee = b.transactions.flatMap( tx => {
-      val transaction_index = toLong(tx.transactionIndex).toInt
+      val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
       val receipt = receipts(tx.hash)
       val logs = receipt.logs
       
@@ -85,8 +86,8 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
           data = log.data,
           hash = tx.hash,                                 // transaction hash !
           topics = log.topics, 
-          i = toLong(log.logIndex).toInt,                 // log index
-          tix = toLong(tx.transactionIndex).toInt         // transaction index          
+          i = IngestUtil.toLong(log.logIndex).toInt,                 // log index
+          tix = IngestUtil.toLong(tx.transactionIndex).toInt         // transaction index          
         )
       })
       

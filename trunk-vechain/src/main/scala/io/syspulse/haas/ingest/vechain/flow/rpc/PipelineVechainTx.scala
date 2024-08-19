@@ -35,6 +35,8 @@ import io.syspulse.haas.ingest.vechain.flow.rpc._
 import io.syspulse.haas.ingest.vechain.flow.rpc.VechainRpcJson._
 import io.syspulse.haas.ingest.vechain.VechainURI
 
+import io.syspulse.haas.ingest.IngestUtil
+
 abstract class PipelineVechainTx[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineVechain[RpcBlock,RpcBlock,E](config) {
@@ -84,7 +86,7 @@ class PipelineTx(config:Config) extends PipelineVechainTx[Tx](config) {
 
           from = tx.origin,
           to = clause.to, 
-          v = toBigInt(clause.value),//new java.math.BigInteger(clause.value.stripPrefix("0x"),16),        // value
+          v = IngestUtil.toBigInt(clause.value),//new java.math.BigInteger(clause.value.stripPrefix("0x"),16),        // value
           nonce = tx.nonce,
           
           gas = tx.gas, 
@@ -98,8 +100,8 @@ class PipelineTx(config:Config) extends PipelineVechainTx[Tx](config) {
 
           used = tx.gasUsed,
           pay = tx.gasPayer,
-          paid = toBigInt(tx.paid),
-          rwd = toBigInt(tx.reward),
+          paid = IngestUtil.toBigInt(tx.paid),
+          rwd = IngestUtil.toBigInt(tx.reward),
           st = if(tx.reverted) 0 else 1,
           
           logs = {

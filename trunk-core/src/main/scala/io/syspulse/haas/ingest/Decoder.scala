@@ -19,10 +19,10 @@ import io.syspulse.haas.serde._
 trait Decoder[E,BLOCK,TRANSACTION,TRANSFER,LOG,TX] {
   implicit val fmt:JsonFormat[E]
 
-  def toLong(data:String) = java.lang.Long.parseLong(data.stripPrefix("0x"),16)
-  def toBigInt(data:String) = Util.toBigInt(data) //BigInt(Util.unhex(data))
-  def toOption(data:String) = if(data.isEmpty() || data=="0x") None else Some(data)
-  def toOptionLong(data:String) = if(data.isEmpty() || data=="0x") None else Some(toLong(data))
+  // def toLong(data:String) = java.lang.Long.parseLong(data.stripPrefix("0x"),16)
+  // def toBigInt(data:String) = Util.toBigInt(data) //BigInt(Util.unhex(data))
+  // def toOption(data:String) = if(data.isEmpty() || data=="0x") None else Some(data)
+  // def toOptionLong(data:String) = if(data.isEmpty() || data=="0x") None else Some(toLong(data))
 
   def OptionEmpty(s:String) = if(s.isEmpty()) None else Some(s)
 
