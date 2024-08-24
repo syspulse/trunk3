@@ -15,9 +15,16 @@ object EthUtil {
       // standard is to have 2 values in topic
       e.topics.size match {
         case 3 => 
+          // https://etherscan.io/tx/0xe8b8eb76d5a102706045a64e4efee8dc40337badc2763caca074237ac28d825f#eventlog
           val from = s"0x${e.topics(1).drop(24 + 2)}".toLowerCase()
           val to = s"0x${e.topics(2).drop(24 + 2)}".toLowerCase()
           val v = IngestUtil.toBigInt(e.data)
+          Some((from,to,v))
+        case 4 =>
+          // transfer(address,uint256)          
+          val from = s"0x${e.topics(1).drop(24 + 2)}".toLowerCase()
+          val to = s"0x${e.topics(2).drop(24 + 2)}".toLowerCase()
+          val v = IngestUtil.toBigInt(s"0x${e.topics(3).drop(2)}".toLowerCase())
           Some((from,to,v))
         case 1 =>
           // CrytpKitty style (https://etherscan.io/tx/0x9514ca69668169270225a1d2d713dee6aa3fc797107d1d710d4d9c622bfcc3bb#eventlog)
