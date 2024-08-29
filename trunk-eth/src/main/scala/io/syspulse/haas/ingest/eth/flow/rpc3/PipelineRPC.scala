@@ -249,7 +249,21 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
               (cursor.get() - config.blockReorg) to lastBlock
           })          
           .groupedWithin(config.blockBatch,FiniteDuration(1L,TimeUnit.MILLISECONDS)) // batch limiter 
-          .map(blocks => blocks.filter(_ <= blockEnd))
+          .map(blocks => 
+            // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
+            // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
+            // duplicates since commit is not changing. 
+            // Example: 
+            // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
+            // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
+            blocks
+            .distinct
+            .filter(b => 
+              b <= blockEnd 
+              && 
+              b >= cursor.get() 
+            )
+          )
           .takeWhile(blocks =>  // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0
           )
@@ -268,21 +282,27 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
               })
                         
             val json = s"""[${blocksReq.mkString(",")}]"""
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-                        
-            val body = rsp.text()
-            
-            rsp.statusCode match {
-              case 200 => //
-                log.trace(s"${body}")
-              case _ => 
-                // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                throw new RetryException(s"${rsp.statusCode}")
+            try {
+              val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))                        
+              val body = rsp.text()
+              
+              rsp.statusCode match {
+                case 200 => //
+                  log.trace(s"${body}")
+                case _ => 
+                  // retry
+                  log.error(s"RPC error: ${rsp.statusCode}: ${body}")
+                  throw new RetryException(s"${rsp.statusCode}")
+              }
+                              
+              val batch = decodeBatch(body)
+              batch
+              
+            } catch {
+              case e:Exception =>
+                log.error(s"failed to get batch: '${json}'",e)
+                Seq()
             }
-            
-            val batch = decodeBatch(body)                        
-            batch
           })
           .log(s"${feed}")
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
