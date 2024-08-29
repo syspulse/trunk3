@@ -17,9 +17,10 @@ Streaming Web3 RPC ingestion engine
 
 ## Sources
 
-| source | uri | description |
-|--------|-----|--------------|
-| EVM    | http://geth:8545 | Standard EVM RPC             |
+| source | uri | description | comments |
+|--------|-----|--------------|----------|   
+| EVM    | http://geth:8545 | Standard EVM RPC             | 
+| [Telos](#telos)  | https://telos | Telos EVM RPC             | (see receiptes request)
 | [ethereumetl](https://github.com/syspulse/ethereum-etl)|     | From ethereumetl stream (kafka) |
 | ICP | icp:// | Dfinity Rosetta/[Ledger](https://ledger-api.internetcomputer.org/swagger-ui/#/) RPC | 
 | Starknet | stark:// | Starknet RPC (default is Infura with key) |
@@ -178,6 +179,16 @@ export INFURA_KEY=1234
 ```
 ./run-trunk.sh -f stark:// -e transaction.stark --api.token=$INFURA_KEY
 ```
+
+## Telos
+
+Telos requires `---receipt.request=batch` 
+
+```
+./run-trunk.sh -f https://mainnet-eu.telos.net/evm -e transaction --receipt.request=batch
+```
+
+
 
 ----
 
