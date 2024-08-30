@@ -67,7 +67,7 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
   import StellarRpcJson._
 
   val cursor = new CursorBlock("BLOCK-stellar")(config) 
-  implicit val uri = StellarURI(config.feed,config.apiToken)
+  implicit val uri:StellarURI = StellarURI(config.feed,config.apiToken)
     
   override def source(feed:String) = {
     feed.split("://|:").toList match {
@@ -80,14 +80,30 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
         val blockStr = 
           (config.block.split("://").toList match {
             // start from latest and save to file
-            case "latest" :: file :: Nil => cursor.setFile(file).read(); "latest"
-            case "last" :: file :: Nil => cursor.setFile(file).read(); "latest"
+            case "latest" :: file :: Nil => cursor.setFile(file).read()
+              "latest"
+            case "last" :: file :: Nil => cursor.setFile(file).read()
+              "latest"
+            case "latest" :: Nil =>  // use default file
+              cursor.setFile("").read()
+              "latest"
+
             case "file" :: file :: Nil => cursor.setFile(file).read()
             case "file" :: Nil => cursor.read()
+
+            case "list" :: file :: Nil => 
+              val data = os.read(os.Path(file,os.pwd))
+              val list = data.split("[\\n,]").filter(!_.isBlank).map(_.toLong)
+              cursor.setList(list.toSeq)
+              list.head.toString
+
             // start block and save to file (10://file.txt)
-            case block :: file :: Nil => cursor.setFile(file).read(); block
+            case block :: file :: Nil => cursor.setFile(file).read(); 
+              block
+
             case _ => config.block
           })
+
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>
@@ -164,7 +180,21 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
           })          
           // batch limiter with a small tiny throttle
           .groupedWithin(config.blockBatch,FiniteDuration( 50L ,TimeUnit.MILLISECONDS)) 
-          .map(blocks => blocks.filter(_ <= blockEnd))
+          .map(blocks => 
+            // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
+            // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
+            // duplicates since commit is not changing. 
+            // Example: 
+            // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
+            // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
+            blocks
+            .distinct
+            .filter(b => 
+              b <= blockEnd 
+              && 
+              b >= cursor.get() 
+            )
+          )
           .takeWhile(blocks =>  // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0
           )

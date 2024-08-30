@@ -23,7 +23,7 @@ Streaming Web3 RPC ingestion engine
 | [Telos](#telos)  | https://telos | Telos EVM RPC             | (see receiptes request)
 | [ethereumetl](https://github.com/syspulse/ethereum-etl)|     | From ethereumetl stream (kafka) |
 | ICP | icp:// | Dfinity Rosetta/[Ledger](https://ledger-api.internetcomputer.org/swagger-ui/#/) RPC | 
-| Starknet | stark:// | Starknet RPC (default is Infura with key) |
+| Starknet | stark:// | Starknet RPC (default is Lava) |
 | Vechain | vechain:// | Vechain RPC (default is public RPC) | 
 | Stellar | stellar:// | Stellar Horizon RPC | 
 | Solana | sol://, sol:dev:// | Solana RPC (dev,test) | 
@@ -168,6 +168,16 @@ From default VeChain RPC
 
 ## Starknet
 
+### From Lava
+
+You must use `--batch=1` since Lava does not support batch requests
+
+```
+./run-trunk.sh -f stark:// -e transaction.stark --batch=1
+```
+
+### From Infura
+
 From Infura Starknet RPC
 
 Export Infura API key:
@@ -177,7 +187,7 @@ export INFURA_KEY=1234
 ```
 
 ```
-./run-trunk.sh -f stark:// -e transaction.stark --api.token=$INFURA_KEY
+./run-trunk.sh -f stark://infura:// -e transaction.stark --api.token=$INFURA_KEY
 ```
 
 ## Telos

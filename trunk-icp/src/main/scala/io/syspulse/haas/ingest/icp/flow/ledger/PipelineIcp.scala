@@ -180,8 +180,20 @@ abstract class PipelineIcp[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           // batch limiter with a small tiny throttle
           .groupedWithin(config.blockBatch,FiniteDuration( 1L ,TimeUnit.MILLISECONDS)) 
           .map(blocks => blocks.filter(_ <= blockEnd))
-          .takeWhile(blocks =>  // limit flow by the specified end block
-            blocks.filter(_ <= blockEnd).size > 0
+          .map(blocks => 
+            // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
+            // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
+            // duplicates since commit is not changing. 
+            // Example: 
+            // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
+            // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
+            blocks
+            .distinct
+            .filter(b => 
+              b <= blockEnd 
+              && 
+              b >= cursor.get() 
+            )
           )
           .mapConcat(blocks => {
             log.info(s"--> ${blocks}")

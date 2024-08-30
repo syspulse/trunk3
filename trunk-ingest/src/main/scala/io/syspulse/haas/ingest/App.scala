@@ -267,11 +267,11 @@ object App extends skel.Server {
             Some(new icp.flow.ledger.PipelineTransaction(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           // Starknet
-          case "block.stark" =>
+          case "block.stark" | "block.starknet" =>
             Some(new starknet.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "transaction.stark" =>
+          case "transaction.stark" |  "transaction.starknet" =>
             Some(new starknet.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "tx.stark" =>
+          case "tx.stark" | "tx.starknet" =>
             Some(new starknet.flow.rpc.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTx,config.output)))
 
           // Vechain
