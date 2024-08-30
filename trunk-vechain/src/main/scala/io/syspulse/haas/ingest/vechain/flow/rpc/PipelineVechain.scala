@@ -79,11 +79,24 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
         val blockStr = 
           (config.block.split("://").toList match {
             // start from latest and save to file
-            case "latest" :: file :: Nil => cursor.setFile(file).read(); "latest"
-            case "last" :: file :: Nil => cursor.setFile(file).read(); "latest"
+            case "latest" :: file :: Nil => cursor.setFile(file).read() 
+              "latest"
+            case "last" :: file :: Nil => cursor.setFile(file).read()
+              "latest"
+            case "latest" :: Nil =>  // use default file
+              cursor.setFile("").read()
+              "latest"
+
             case "file" :: file :: Nil => cursor.setFile(file).read()
             case "file" :: Nil => cursor.read()
-            // start block and save to file (10://file.txt)
+            
+            case "list" :: file :: Nil => 
+              val data = os.read(os.Path(file,os.pwd))
+              val list = data.split("[\\n,]").filter(!_.isBlank).map(_.toLong)
+              cursor.setList(list.toSeq)
+              list.head.toString
+            
+            // start block and save to file (10://file.txt)            
             case block :: file :: Nil => cursor.setFile(file).read(); block
             case _ => config.block
           })
@@ -164,7 +177,21 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
               (cursor.get() - config.blockReorg) to lastBlock
           })          
           .groupedWithin(config.blockBatch,FiniteDuration(1,TimeUnit.MILLISECONDS)) // batch limiter 
-          .map(blocks => blocks.filter(_ <= blockEnd))
+          .map(blocks => 
+            // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
+            // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
+            // duplicates since commit is not changing. 
+            // Example: 
+            // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
+            // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
+            blocks
+            .distinct
+            .filter(b => 
+              b <= blockEnd 
+              && 
+              b >= cursor.get() 
+            )
+          )
           .takeWhile(blocks => // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0
           )
@@ -174,24 +201,33 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
             blocks
           })
           .map( block => {
-            val rsp = requests.get(
-              s"${uri}/blocks/${block}", 
-              headers = Map("content-type" -> "application/json")
-            )
-            log.debug(s"rsp=${rsp.statusCode}")
-            
-            rsp.statusCode match {
-              case 200 => //
-                
-              case _ => 
-                // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
-                throw new RetryException("")
-            }
+            try {
+              val rsp = requests.get(
+                s"${uri}/blocks/${block}", 
+                headers = Map("content-type" -> "application/json")
+              )
+              log.debug(s"rsp=${rsp.statusCode}")
+              
+              rsp.statusCode match {
+                case 200 => //
+                  
+                case _ => 
+                  // retry
+                  log.error(s"RPC error: ${rsp.statusCode}: ${rsp.text()}")
+                  throw new RetryException(s"${rsp.statusCode}")
+              }
 
-            rsp.text()
+              // simulate batch
+              Seq(rsp.text())
+            } catch {
+              case e:Exception =>
+                log.error(s"failed to get block: ${block}",e)
+                Seq()
+            }
           })
-          //.filter(reorgFlow)
+          .log(s"${feed}")
+          .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
+          .mapConcat(batch => batch)
           .map(b => ByteString(b))
       
       case _ => super.source(feed)

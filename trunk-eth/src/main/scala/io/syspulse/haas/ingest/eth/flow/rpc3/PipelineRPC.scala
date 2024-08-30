@@ -297,7 +297,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                               
               val batch = decodeBatch(body)
               batch
-              
+
             } catch {
               case e:Exception =>
                 log.error(s"failed to get batch: '${json}'",e)
