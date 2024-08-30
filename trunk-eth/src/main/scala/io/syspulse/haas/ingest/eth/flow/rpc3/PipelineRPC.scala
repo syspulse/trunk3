@@ -280,8 +280,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                     "id":0
                   }""".trim.replaceAll("\\s+","")  
               })
-                        
-            val json = s"""[${blocksReq.mkString(",")}]"""
+
+            // if only 1 tx, don't batch (to be compatible with some weird RPC which don't support batch)
+            val json = if(blocks.size == 1) 
+              blocksReq.head 
+            else 
+              s"""[${blocksReq.mkString(",")}]"""
+
             try {
               val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))                        
               val body = rsp.text()
@@ -295,7 +300,11 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                   throw new RetryException(s"${rsp.statusCode}")
               }
                               
-              val batch = decodeBatch(body)
+              val batch = if(blocks.size == 1)
+                decodeSingle(body)
+              else
+                decodeBatch(body)
+              
               batch
 
             } catch {

@@ -27,6 +27,7 @@ import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
 import io.syspulse.haas.ingest.Decoder
 import io.syspulse.skel.util.DiffSet
 import io.syspulse.haas.ingest.Config
+import io.syspulse.haas.ingest.IngestUtil
 
 trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,RpcTx] {
 
@@ -121,7 +122,10 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       raw.maxPriorityFeePerGas.map(v => BigInt(Util.unhex(v))),
       raw.hash,
       raw.input,
-      java.lang.Long.parseLong(raw.nonce.drop(2),16),
+
+      //java.lang.Long.parseLong(raw.nonce.drop(2),16),
+      IngestUtil.toBigInt(raw.nonce),
+      
       raw.to,
       i = raw.transactionIndex,
       v = BigInt(Util.unhex(raw.value)),

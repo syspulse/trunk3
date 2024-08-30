@@ -17,7 +17,7 @@ case class MempoolTx(
   tip: Option[BigInt], // old transactions without tip
   hash: String,
   inp: String,
-  non: Long,
+  non: BigInt,
   to: Option[String],
   i: Option[Int],              // transaction index
   v: BigInt,

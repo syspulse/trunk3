@@ -6,7 +6,10 @@ import io.syspulse.skel.util.Util
 // Fat Tx from ethereum-etl
 case class Tx(
   hash:String,
-  nonce:Long,
+  
+  //nonce:Long,
+  nonce:BigInt,
+  
   transaction_index:Int,
   from_address:String,
   to_address:Option[String],

@@ -16,7 +16,9 @@ case class Tx(
   inp:String,
   v:BigInt,
 
-  non:Long,
+  //non:Long,
+  non:BigInt,
+
   fee:Option[BigInt],
   tip:Option[BigInt], 
   typ:Option[Int],

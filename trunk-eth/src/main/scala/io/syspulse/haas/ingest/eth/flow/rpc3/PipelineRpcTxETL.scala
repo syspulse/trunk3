@@ -132,7 +132,10 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
 
       Tx(
         tx.hash,
-        IngestUtil.toLong(tx.nonce),
+
+        //IngestUtil.toLong(tx.nonce),
+        IngestUtil.toBigInt(tx.nonce),
+        
         transaction_index,
         formatAddr(tx.from),
         formatAddr(tx.to),

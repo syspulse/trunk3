@@ -107,7 +107,7 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
       val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
       val logs = receipts.get(tx.hash).get.logs
       val receipt = receipts.get(tx.hash)
-
+      
       Tx(
         // ts * 1000L,
         transaction_index,
@@ -122,7 +122,9 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
         
         tx.input,
         IngestUtil.toBigInt(tx.value),
-        IngestUtil.toLong(tx.nonce),
+        
+        //IngestUtil.toLong(tx.nonce),
+        IngestUtil.toBigInt(tx.nonce),
         
         tx.maxFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_fee_per_gas,
         tx.maxPriorityFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_priority_fee_per_gas, 
