@@ -82,6 +82,17 @@ Blocks Range:
 ./run-trunk.sh -e block -f http://geth:8545 --block=0 --block.end=100
 ```
 
+Blocks Range with delay between batches:
+```
+./run-trunk.sh -e block -f http://geth:8545 --block=10000 --block.end=100000 --block.throttle=3000
+```
+
+Blocks Range with throttling between blocks:
+```
+./run-trunk.sh -e block -f http://geth:8545 --block=10000 --block.end=100000 --batch=1 --block.throttle=1000
+```
+
+
 Filter by specific transactions:
 
 ```
