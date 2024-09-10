@@ -214,6 +214,8 @@ object App extends skel.Server {
 
       case "stream" => 
         val pp:Seq[PipelineIngest[_,_,_]] = config.entity.flatMap( e => e match {
+          case "raw" =>
+            Some(new eth.flow.raw.PipelineRaw(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           // ethereum_etl compatible input !
           case "block.etl" =>
