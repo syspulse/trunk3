@@ -9,8 +9,12 @@ import io.syspulse.skel.util.Util
 
 object IngestUtil {
 
+  def toLong(data:Option[String]) = data.map(data =>java.lang.Long.parseLong(data.stripPrefix("0x"),16))
   def toLong(data:String) = java.lang.Long.parseLong(data.stripPrefix("0x"),16)
+
+  def toBigInt(data:Option[String]) = data.map(data => Util.toBigInt(data)) //BigInt(Util.unhex(data))
   def toBigInt(data:String) = Util.toBigInt(data) //BigInt(Util.unhex(data))
+  
   def toOption(data:String) = if(data.isEmpty() || data=="0x") None else Some(data)
   def toOptionLong(data:String) = if(data.isEmpty() || data=="0x") None else Some(toLong(data))
   

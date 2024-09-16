@@ -32,6 +32,8 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
 
+import io.syspulse.haas.ingest.IngestUtil
+
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 import io.syspulse.haas.ingest.eth.MempoolJson._
@@ -59,27 +61,75 @@ abstract class PipelineRpcMempoolWS[E <: skel.Ingestable](config:Config)
   def convert(m: MempoolTransaction): MempoolTransaction = m
 
   def getMempoolTx(m: MempoolTransaction,trace:Option[Array[CallTrace]]): MempoolTx = {
-    val mtx = MempoolTx(
-      ts = m.ts,
-      pool = "0",     // NOTE: CHANGE TO Byte: pending - 0, queued - 1,
-      bhash = None,         // blockhash
-      b = None,               // blocknumber
-      from = "",
-      gas = 0L,
-      p = BigInt(0),
-      fee = None, // old pre EIP-1155
-      tip = None, // old transactions without tip
-      hash = m.hash,
-      inp = "",
-      non = BigInt(0),
-      to = None,
-      i = None,              // transaction index
-      v = BigInt(0),
-      typ = 0,
-      ch = None,             // chainId
-      sig = None, 
-      
-      trace = trace
+    
+    val tx:Option[RpcMempoolTransaction] = {
+      val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${m.hash}"],"id": ${System.currentTimeMillis}}"""
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val body = rsp.text()    
+            
+      val tx = try {
+        val r = body.parseJson.convertTo[RpcMempoolTransactionResult]
+        if(! r.result.isDefined)
+          None
+        else
+          r.result
+      } catch {
+        case e:Exception => 
+          log.error(s"failed to parse: '${body}'",e)
+          None
+      }
+
+      tx
+    }
+
+    log.debug(s"tx=${tx}")
+
+    val mtx = tx.map(rmx => 
+      MempoolTx(
+        ts = m.ts,
+        pool = "0",     // NOTE: CHANGE TO Byte: pending - 0, queued - 1,
+        bhash = rmx.blockHash,
+        b = IngestUtil.toLong(rmx.blockNumber),
+        from = rmx.from,
+        gas = IngestUtil.toLong(rmx.gas),
+        p = BigInt(0),
+        fee = IngestUtil.toBigInt(rmx.maxFeePerGas), // old pre EIP-1155
+        tip = IngestUtil.toBigInt(rmx.maxPriorityFeePerGas), // old transactions without tip
+        hash = m.hash,
+        inp = rmx.input,
+        non = IngestUtil.toBigInt(rmx.nonce),
+        to = rmx.to,
+        i = None,              // transaction index
+        v = IngestUtil.toBigInt(rmx.v),
+        typ = IngestUtil.toLong(rmx.`type`).map(_.toInt).getOrElse(0),
+        chid = IngestUtil.toLong(rmx.chainId),
+        sig = Some(s"${rmx.v}:${rmx.r}:${rmx.s}"),
+        
+        trace = trace
+      )
+    ).getOrElse(
+      MempoolTx(
+        ts = m.ts,
+        pool = "0",     // NOTE: CHANGE TO Byte: pending - 0, queued - 1,
+        bhash = None,         // blockhash
+        b = None,               // blocknumber
+        from = "",
+        gas = 0L,
+        p = BigInt(0),
+        fee = None, // old pre EIP-1155
+        tip = None, // old transactions without tip
+        hash = m.hash,
+        inp = None,
+        non = BigInt(0),
+        to = None,
+        i = None,              // transaction index
+        v = BigInt(0),
+        typ = 0,
+        chid = None,             // chainId
+        sig = None, 
+        
+        trace = trace
+      )
     )
 
     mtx

@@ -16,13 +16,13 @@ case class MempoolTx(
   fee: Option[BigInt], // old pre EIP-1155
   tip: Option[BigInt], // old transactions without tip
   hash: String,
-  inp: String,
+  inp: Option[String],
   non: BigInt,
   to: Option[String],
   i: Option[Int],              // transaction index
   v: BigInt,
   typ: Int,
-  ch: Option[Int],             // chainId
+  chid: Option[Long],             // chainId
   sig: Option[String],           // zkSync may not have signature
 
   trace:Option[Array[CallTrace]] = None, // optiona traces

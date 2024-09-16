@@ -110,7 +110,8 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
   var pendingDiff = new DiffSet[RpcTxRaw](Set())
   var queuedDiff = new DiffSet[RpcTxRaw](Set())
 
-  def decodeMempoolTx(raw:RpcTxRaw,ts:Long,pool:String):MempoolTx = MempoolTx(
+  def decodeMempoolTx(raw:RpcTxRaw,ts:Long,pool:String):MempoolTx = 
+    MempoolTx(
       ts,
       pool,
       raw.blockHash,
@@ -121,7 +122,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       raw.maxFeePerGas.map(v => BigInt(Util.unhex(v))),
       raw.maxPriorityFeePerGas.map(v => BigInt(Util.unhex(v))),
       raw.hash,
-      raw.input,
+      IngestUtil.toOption(raw.input),
 
       //java.lang.Long.parseLong(raw.nonce.drop(2),16),
       IngestUtil.toBigInt(raw.nonce),
@@ -131,7 +132,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       v = BigInt(Util.unhex(raw.value)),
       typ = Integer.parseInt(raw.`type`.drop(2),16).toByte,
       // this.accessList,
-      ch = raw.chainId.map(v => Integer.parseInt(v.drop(2),16)),
+      chid = raw.chainId.map(v => Integer.parseInt(v.drop(2),16)),
       sig = raw.v.map(_ => s"${Integer.parseInt(raw.v.get.drop(2),16).toByte}:${raw.r.get}:${raw.s.get}")
   )
 
