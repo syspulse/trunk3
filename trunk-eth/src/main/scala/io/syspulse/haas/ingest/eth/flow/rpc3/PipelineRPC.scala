@@ -176,7 +176,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
         // ----- Reorg -----------------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
-          if(config.blockReorg > 0 ) {            
+          if(config.blockReorg > 0 ) { 
             
             val r = ujson.read(lastBlock)
             val result = r.obj("result").obj
@@ -188,11 +188,14 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
             // check if reorg
             val rr = reorg.isReorg(blockNum,blockHash)
+            
             if(rr.size > 0) {
+              
               log.warn(s"reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
               os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
               reorg.reorg(rr)
               true
+              
             } else {
               
               reorg.cache(blockNum,blockHash,ts,txCount)              
@@ -236,37 +239,40 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             // ATTENTION:
             // lag and reorg are not compatible !
                         
-            if(cursor.blockList.size > 0) {
-              // selected list
-              cursor.getList()
-            }
-            else
-            if(config.blockReorg == 0 || cursor.get() < (lastBlock - config.blockReorg))              
-              // normal fast operation or reorg before the tip
-              cursor.get() to lastBlock
-            else
-              // reorg operation on the tip
-              (cursor.get() - config.blockReorg) to lastBlock
+            val bb = 
+              if(cursor.blockList.size > 0) {
+                // selected list
+                cursor.getList()
+              }
+              else
+              if(config.blockReorg == 0 || cursor.get() < (lastBlock - config.blockReorg))              
+                // normal fast operation or reorg before the tip
+                cursor.get() to lastBlock
+              else
+                // reorg operation on the tip
+                (cursor.get() - config.blockReorg) to lastBlock
+            
+            bb
           })          
           .groupedWithin(config.blockBatch,FiniteDuration(1L,TimeUnit.MILLISECONDS)) // batch limiter 
-          .map(blocks => 
-            // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
-            // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
-            // duplicates since commit is not changing. 
-            // Example: 
-            // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
-            // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
-            blocks
-            .distinct
-            .filter(b => 
-              b <= blockEnd 
-              && 
-              b >= cursor.get() 
-            )
-          )
-          .takeWhile(blocks =>  // limit flow by the specified end block
+          .map(blocks => {
+            
+            if(config.blockReorg == 0) {
+              // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
+              // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
+              // duplicates since commit is not changing. 
+              // Example: 
+              // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
+              // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
+              blocks
+              .distinct
+              .filter(b => b <= blockEnd && b >= cursor.get())                
+            } else
+              blocks
+          })
+          .takeWhile(blocks => { // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0
-          )
+          })
           .map(blocks => {
             log.info(s"--> ${blocks}")
             
@@ -316,7 +322,9 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           .log(s"${feed}")
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
           .mapConcat(batch => batch)
-          .filter(reorgFlow)
+          .filter(
+            reorgFlow
+          )
           .map(b => ByteString(b))
       
         val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>

@@ -55,6 +55,8 @@ class ReorgBlock(depth:Int = 10) {
 
   def cache(block:Long,blockHash:String,ts:Long = 0L, txCount:Long = 0):Boolean = {    
     // don't add the same block 
+    log.debug(s"reorg: cache=${block},last=${last})")
+    
     if(last.size != 0 && last.find(_.hash == blockHash).isDefined) {
       false      
     } else {

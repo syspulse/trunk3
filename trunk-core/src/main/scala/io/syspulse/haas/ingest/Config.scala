@@ -43,7 +43,7 @@ case class Config(
   block:String = "latest", // which block to use (only for http:// RPC source)
   blockEnd:String = "",    // empty is infinite
   blockBatch:Int = 10,     // batch size (how many blocks to ask)
-  blockThrottle:Long = 1L, // when chasing to latest block in batches
+  blockThrottle:Long = 1L, // when chasing to latest block in batches. should be called `batch.throttle`
   blockLag:Int = 0, // lag
   blockReorg:Int = 0, // number of block reorgs
   blockLimit:Int = 0,     // how many blocks to take from batch. Can be used to limit when RPC is 429 throttled. 

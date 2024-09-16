@@ -21,10 +21,10 @@ case class Block(
   sz:Long,     // size
   data:String, // extra data
   used:Long,   // gas used
-  limit:Long,  // gas limit
+  gas:Long,  // gas limit
 
   ts:Long,  // timestamp
-  cnt:Long, // transaction count
+  txn:Long, // transaction count
   fee:Option[Long], // base fee
 
 ) extends Ingestable {
