@@ -8,8 +8,9 @@ import spray.json.NullOptions
 
 // with NullOptions only for writing
 object MempoolJson extends JsonCommon {
-  implicit val jf_MempoolTx = jsonFormat18(MempoolTx)
+  import io.syspulse.haas.ingest.eth.CallTraceJson._
 
+  implicit val jf_MempoolTx = jsonFormat19(MempoolTx)
   implicit val jf_MempoolTransaction = jsonFormat2(MempoolTransaction)
 }
 

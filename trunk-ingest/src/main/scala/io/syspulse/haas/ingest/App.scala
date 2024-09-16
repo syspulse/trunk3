@@ -301,12 +301,22 @@ object App extends skel.Server {
             Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Ethereum mempool
-          case "mempool" | "mempool.eth" => 
-            Some(new eth.flow.rpc3.PipelineMempool(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-          case "mempool.ws" => 
-            Some(new eth.flow.rpc3.PipelineMempoolStream(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-          case "trace" | "mempool.trace" => 
-            Some(new eth.flow.rpc3.PipelineMempoolTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+          case "mempool" => 
+            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
+              Some(new eth.flow.rpc3.PipelineMempoolStreamTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+            else 
+              Some(new eth.flow.rpc3.PipelineMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+                      
+          case "mempool.trace" => 
+            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
+              Some(new eth.flow.rpc3.PipelineMempoolStreamTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+            else
+              Some(new eth.flow.rpc3.PipelineMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+
+          case "ws.mempool" => 
+            Some(new eth.flow.rpc3.PipelineMempoolStreamTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+          case "ws.mempool.trace" => 
+            Some(new eth.flow.rpc3.PipelineMempoolStreamTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

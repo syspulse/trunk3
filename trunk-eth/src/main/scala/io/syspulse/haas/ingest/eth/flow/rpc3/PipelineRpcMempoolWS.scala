@@ -48,22 +48,64 @@ abstract class PipelineRpcMempoolWS[E <: skel.Ingestable](config:Config)
   // only json is supported !
   override def parse(data:String):Seq[MempoolTransaction] = {
     val pool = parseMempoolWS(data,true)
-    pool.map(mtx => {
+    pool.map(mm => {
       MempoolTransaction(
         ts = System.currentTimeMillis(),
-        hash = mtx.params.result
+        hash = mm.params.result
       )
     })
   }
 
-  def convert(tx: MempoolTransaction): MempoolTransaction = tx
-    
+  def convert(m: MempoolTransaction): MempoolTransaction = m
 
+  def getMempoolTx(m: MempoolTransaction,trace:Option[Array[CallTrace]]): MempoolTx = {
+    val mtx = MempoolTx(
+      ts = m.ts,
+      pool = "0",     // NOTE: CHANGE TO Byte: pending - 0, queued - 1,
+      bhash = None,         // blockhash
+      b = None,               // blocknumber
+      from = "",
+      gas = 0L,
+      p = BigInt(0),
+      fee = None, // old pre EIP-1155
+      tip = None, // old transactions without tip
+      hash = m.hash,
+      inp = "",
+      non = BigInt(0),
+      to = None,
+      i = None,              // transaction index
+      v = BigInt(0),
+      typ = 0,
+      ch = None,             // chainId
+      sig = None, 
+      
+      trace = trace
+    )
+
+    mtx
+  }
 }
 
-class PipelineMempoolStream(config:Config) extends PipelineRpcMempoolWS[CallTrace](config) {
+class PipelineMempoolStreamCallTrace(config:Config) extends PipelineRpcMempoolWS[CallTrace](config) {
 
-  def transform(mtx: MempoolTransaction): Seq[CallTrace] = {
-    traceMempoolTx(mtx.hash)(config) 
+  def transform(m: MempoolTransaction): Seq[CallTrace] = {
+    traceMempoolTx(m.hash)(config) 
+  }
+}
+
+class PipelineMempoolStreamTxTrace(config:Config) extends PipelineRpcMempoolWS[MempoolTx](config) {
+
+  def transform(m: MempoolTransaction): Seq[MempoolTx] = {    
+    val trace = traceMempoolTx(m.hash)(config) 
+    val mtx = getMempoolTx(m,Some(trace.toArray))    
+    Seq(mtx)
+  }
+}
+
+class PipelineMempoolStreamTx(config:Config) extends PipelineRpcMempoolWS[MempoolTx](config) {
+
+  def transform(m: MempoolTransaction): Seq[MempoolTx] = {
+    val mtx = getMempoolTx(m,None)
+    Seq(mtx)
   }
 }

@@ -274,8 +274,28 @@ Run Ethereum ingest with interception script:
 Polling uses diff calculation to check only new Mempool transactions
 
 ```
+./run-trunk.sh -e mempool -f http://geth:8545 --rpc.url=http://geth:8545
+```
+
+## Mempool Trace 
+
+Verify with: https://x.com/shoucccc/status/1833957952866447756
+
+### Run from Websocket
+
+```
+./run-trunk.sh -e mempool.ws -f ws://geth:8546 --rpc.url=http://geth:8545 --throttle=1
+```
+
+### Run with Polling
+
+Polling uses diff calculation to check only new Mempool transactions
+
+```
 ./run-trunk.sh -e trace -f http://geth:8545 --rpc.url=http://geth:8545
 ```
+
+
 
 ## Replay
 

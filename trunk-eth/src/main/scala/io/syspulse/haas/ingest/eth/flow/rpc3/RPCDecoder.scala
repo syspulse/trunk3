@@ -233,7 +233,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     }
   }
 
-  def traceMempoolTx(txHash: String)(implicit config:Config): Seq[CallTrace] = {    
+  def traceMempoolTx(txHash: String)(implicit config:Config): Vector[CallTrace] = {    
   //   val block = tx.b match {
   //     case Some(n) => s"0x${n.toHexString}"
   //     case None => "latest"
@@ -279,10 +279,10 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         case e:Exception => 
           err = true
           log.error(s"failed to parse: '${body}'",e)
-          return Seq.empty
+          return Vector.empty
       }
       if(! r.result.isDefined)
-        return Seq.empty
+        return Vector.empty
 
       r.result.get
     }
@@ -317,7 +317,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       if(body.contains(""""code":-32000""")) {
         err = true
         log.debug(s"state: ${body}")
-        return Seq.empty
+        return Vector.empty
       }
 
       val r = try {
@@ -326,11 +326,11 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         case e:Exception => 
           err = true
           log.error(s"failed to parse: '${body}'",e)
-          return Seq.empty
+          return Vector.empty
       }
 
       if(! r.result.isDefined)
-        return Seq.empty
+        return Vector.empty
 
       r.result.get.toString
     }
@@ -367,7 +367,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       if(body.contains(""""code":-32000""")) {
         err = true
         log.debug(s"calls: ${body}")
-        return Seq.empty
+        return Vector.empty
       }
 
       val r = try {
@@ -376,20 +376,20 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         case e:Exception => 
           err = true
           log.error(s"failed to parse: '${body}'",e)
-          return Seq.empty
+          return Vector.empty
       }
 
       if(! r.result.isDefined)
-        return Seq.empty
+        return Vector.empty
 
       r.result.get.toString
     }
 
     if(err) {
-      return Seq.empty
+      return Vector.empty
     }
     
-    Seq(
+    Vector(
       CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, state = state, calls = calls)
     )
   }

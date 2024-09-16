@@ -23,9 +23,13 @@ case class MempoolTx(
   v: BigInt,
   typ: Int,
   ch: Option[Int],             // chainId
-  sig: Option[String]           // zkSync may not have signature
+  sig: Option[String],           // zkSync may not have signature
+
+  trace:Option[Array[CallTrace]] = None, // optiona traces
+
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
+  override def toString() = Util.toStringWithArray(this)
 }
 
 case class MempoolBlock(
@@ -40,4 +44,5 @@ case class MempoolTransaction(
   hash: String,  
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)
+  
 }

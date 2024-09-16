@@ -53,7 +53,15 @@ abstract class PipelineRpcMempool[E <: skel.Ingestable](config:Config)
   def convert(mtx: MempoolTx): MempoolTx = mtx
 }
 
-class PipelineMempool(config:Config) extends PipelineRpcMempool[MempoolTx](config) {
+class PipelineMempoolTx(config:Config) extends PipelineRpcMempool[MempoolTx](config) {
 
-  def transform(tx: MempoolTx): Seq[MempoolTx] = Seq(tx)    
+  def transform(mtx: MempoolTx): Seq[MempoolTx] = Seq(mtx)
+}
+
+class PipelineMempoolTxTrace(config:Config) extends PipelineRpcMempool[MempoolTx](config) {
+
+  def transform(mtx: MempoolTx): Seq[MempoolTx] = {
+    val trace = traceMempoolTx(mtx.hash)(config)
+    Seq(mtx.copy(trace = Some(trace.toArray)))
+  }
 }
