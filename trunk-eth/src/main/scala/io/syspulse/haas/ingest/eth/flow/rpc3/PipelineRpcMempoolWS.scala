@@ -41,7 +41,7 @@ import io.syspulse.haas.ingest.eth.CallTraceJson._
 import io.syspulse.haas.ingest.PipelineIngest
 import io.syspulse.haas.ingest.eth.flow.rpc3.RpcTxPoolResult
 
-abstract class PipelineRpcMempoolWS[E <: skel.Ingestable](config:Config)
+abstract class PipelineWsMempool[E <: skel.Ingestable](config:Config)
                                                        (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineMempoolWS[MempoolTransaction,MempoolTransaction,E](config) {
   
@@ -136,14 +136,14 @@ abstract class PipelineRpcMempoolWS[E <: skel.Ingestable](config:Config)
   }
 }
 
-class PipelineMempoolStreamCallTrace(config:Config) extends PipelineRpcMempoolWS[CallTrace](config) {
+class PipelineWsMempoolCallTrace(config:Config) extends PipelineWsMempool[CallTrace](config) {
 
   def transform(m: MempoolTransaction): Seq[CallTrace] = {
     traceMempoolTx(m.hash)(config) 
   }
 }
 
-class PipelineMempoolStreamTxTrace(config:Config) extends PipelineRpcMempoolWS[MempoolTx](config) {
+class PipelineWsMempoolTxTrace(config:Config) extends PipelineWsMempool[MempoolTx](config) {
 
   def transform(m: MempoolTransaction): Seq[MempoolTx] = {    
     val trace = traceMempoolTx(m.hash)(config) 
@@ -152,7 +152,7 @@ class PipelineMempoolStreamTxTrace(config:Config) extends PipelineRpcMempoolWS[M
   }
 }
 
-class PipelineMempoolStreamTx(config:Config) extends PipelineRpcMempoolWS[MempoolTx](config) {
+class PipelineWsMempoolTx(config:Config) extends PipelineWsMempool[MempoolTx](config) {
 
   def transform(m: MempoolTransaction): Seq[MempoolTx] = {
     val mtx = getMempoolTx(m,None)

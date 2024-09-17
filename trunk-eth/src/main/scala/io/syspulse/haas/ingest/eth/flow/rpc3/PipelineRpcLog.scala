@@ -82,7 +82,7 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
         Event(
           ts = ts * 1000L,
           blk = block_number,
-          con = formatAddr(receipt.contractAddress.getOrElse("")),
+          con = formatAddr(receipt.contractAddress.getOrElse(""),config.formatAddr),
           data = log.data,
           hash = tx.hash,                                 // transaction hash !
           topics = log.topics, 

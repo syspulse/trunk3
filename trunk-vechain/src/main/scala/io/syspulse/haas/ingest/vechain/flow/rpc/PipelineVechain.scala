@@ -57,13 +57,7 @@ import io.syspulse.haas.ingest.CursorBlock
 abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
                                                                        (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with VechainDecoder[E] {
-
-  override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
-    minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    maxBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    randomFactor = 0.2
-  ))
-
+  
   import VechainRpcJson._
 
   val cursor = new CursorBlock("BLOCK-vechain")(config)

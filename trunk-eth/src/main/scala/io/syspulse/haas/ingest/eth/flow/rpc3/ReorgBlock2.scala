@@ -22,7 +22,7 @@ class ReorgBlock2(depth:Int = 10) extends ReorgBlock(depth) {
     
     if(rr.size > 0) {
       
-      log.warn(s"Reorg1:reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
+      log.warn(s"Reorg: block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
       os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
       reorg(rr)
       (true,true)

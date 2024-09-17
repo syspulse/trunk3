@@ -62,12 +62,6 @@ abstract class PipelineMempoolWS[T,O <: Ingestable,E <: Ingestable](config:Confi
 
   val delta = true
 
-  override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
-    minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    maxBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    randomFactor = 0.2
-  ))
-
   import EthRpcJson._
 
   implicit val uri = EthURI(config.feed,config.apiToken)

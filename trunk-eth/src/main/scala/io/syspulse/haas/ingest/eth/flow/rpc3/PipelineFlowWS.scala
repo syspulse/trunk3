@@ -51,70 +51,57 @@ import requests.Response
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.RestartSource
 
-import io.syspulse.haas.core.RetryException
+import io.syspulse.skel.ingest.flow.AttributeActor
 
-abstract class PipelineMempoolRPC[T,O <: Ingestable,E <: Ingestable](config:Config)
+import io.syspulse.haas.core.RetryException
+import akka.stream.Attributes
+
+abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
                                                                     (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with RPCDecoder[E] {
 
   val delta = true
 
   import EthRpcJson._
-
+  
   implicit val uri = EthURI(config.feed,config.apiToken)
+
+  val reorg = config.reorgFlow match {
+    case "1" => new ReorgBlock1(config.blockReorg)
+    case "2" => new ReorgBlock2(config.blockReorg)
+    case _ => new ReorgBlock2(config.blockReorg)
+  }
     
   override def source(feed:String) = {
     feed.split("://").toList match {
-      case "http" :: _ | "https" :: _ | "eth" :: _  =>         
+      case "ws" :: _ | "wss" :: _  =>         
         
-         
-        val sourceTick = Source.tick(
-          FiniteDuration(10,TimeUnit.MILLISECONDS), 
-          FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
-          s"${uri.uri}"
+        val s0 = Flows.fromWebsocket(
+          uri.uri, 
+          helloMsg = Some("""{"jsonrpc":"2.0","id":1,"method":"eth_subscribe","params":["newHeads"]}""")
         )
-                
-        // ------- Flow ------------------------------------------------------------------------------------
-        val sourceFlow = sourceTick
-          .map(h => {
-            log.debug(s"Cron --> ${h}")
+        
+        // ----- Reorg Subflow ------------------------------------------------------------------------
+        val reorgFlow = (lastBlock:String) => {
+          if(config.blockReorg > 0 ) { 
+            val (fresh,_) = reorg.track(lastBlock)
+            fresh
 
-            // request latest block to know where we are from current            
-            val id = System.currentTimeMillis() / 1000L
-            val json = s"""{
-                "jsonrpc":"2.0","method":"txpool_content",
-                "params":[],
-                "id":${id}
-              }""".trim.replaceAll("\\s+","")
-
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            val body = rsp.text()
-            log.debug(s"rsp=${rsp.statusCode}: ${body}")
-            
-            rsp.statusCode match {
-              case 200 => //
-                log.debug(s"${body}")
-              case _ => 
-                // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                throw new RetryException("")
-            }
-                        
-            body
-          })
-          .log(s"${feed}")
-          .map(b => ByteString(b))
-      
-        val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>
-          log.info(s"connect -> ${uri.uri}")
-          sourceFlow
+          } else true
         }
 
-        sourceRestart
+        val sourceFlow = s0
+          .throttle(1,FiniteDuration(config.throttle,TimeUnit.MILLISECONDS))
+          .drop(1)  // drop subscription response message
+          .filter( b => 
+            // it must return True to continue processing or false (when duplicated due to reorg algo)
+            reorgFlow(b.utf8String)
+          )
+          .map(b => ByteString(b))
+      
+        sourceFlow
 
       case _ => super.source(feed)
     }
   }
-  
-  
 }

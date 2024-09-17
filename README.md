@@ -138,6 +138,8 @@ NOTE: Ethereum PoS reorgs are usually 1 block deep.
 
 ### Reorg Detection (Blockchain re-organizations)
 
+Long PoS reorg: https://barnabe.substack.com/p/pos-ethereum-reorg
+
 `--reorg` option allows to monitor reorganizations (new block replaces  old ones).
 
 `--reorg` specifies how deep the history for old blocks must be

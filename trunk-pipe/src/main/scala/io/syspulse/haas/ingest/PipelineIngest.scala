@@ -13,6 +13,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Keep
+import akka.stream.RestartSettings
 
 import akka.http.scaladsl.model.{HttpRequest,HttpMethods,HttpEntity,ContentTypes}
 import akka.http.scaladsl.model.headers.Accept
@@ -54,6 +55,12 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   extends PipelineIngestable[T,O,E,io.syspulse.ext.core.Events](config) {
   
   private val log = Logger(s"${this}")
+
+  override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
+    minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
+    maxBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
+    randomFactor = 0.2
+  ))
 
   val blockchain = Blockchain(config.interceptorBlockchain)
   

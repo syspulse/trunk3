@@ -306,20 +306,23 @@ object App extends skel.Server {
           // Ethereum mempool
           case "mempool" => 
             if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
-              Some(new eth.flow.rpc3.PipelineMempoolStreamTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+              Some(new eth.flow.rpc3.PipelineWsMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
             else 
               Some(new eth.flow.rpc3.PipelineMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
                       
           case "mempool.trace" => 
             if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
-              Some(new eth.flow.rpc3.PipelineMempoolStreamTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+              Some(new eth.flow.rpc3.PipelineWsMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
             else
               Some(new eth.flow.rpc3.PipelineMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
           case "ws.mempool" => 
-            Some(new eth.flow.rpc3.PipelineMempoolStreamTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+            Some(new eth.flow.rpc3.PipelineWsMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
           case "ws.mempool.trace" => 
-            Some(new eth.flow.rpc3.PipelineMempoolStreamTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+            Some(new eth.flow.rpc3.PipelineWsMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+
+          case "ws.block" => 
+            Some(new eth.flow.rpc3.PipelineWsBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

@@ -29,48 +29,36 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
+import io.syspulse.haas.ingest.Config
+import io.syspulse.haas.ingest.eth._
+
+import io.syspulse.haas.ingest.IngestUtil
+
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.BlockJson
 import io.syspulse.haas.ingest.eth.BlockJson._
 
-import io.syspulse.haas.ingest.Config
 
-import io.syspulse.haas.ingest.eth.flow.rpc3._
-import io.syspulse.haas.ingest.IngestUtil
+import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
+import io.syspulse.haas.ingest.PipelineIngest
 
-abstract class PipelineRpcBlock[E <: skel.Ingestable](config:Config)
-                                                     (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
-  PipelineRPC[RpcBlock,RpcBlock,E](config) {  
+abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
+  (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
+  PipelineFlowWS[RpcSubscriptionHeadResult,Block,E](config) {
+  
+  def apiSuffix():String = s"/stream.block"
 
-  def apiSuffix():String = s"/block"
-
-  def parse(data:String):Seq[RpcBlock] = {
-    val bb = parseBlock(data)    
-    if(bb.size!=0) {
-      val b = bb.last.result.get
-      latestTs.set(IngestUtil.toLong(b.timestamp) * 1000L)      
-    }
-    bb
+  def parse(data:String):Seq[RpcSubscriptionHeadResult] = {
+    val h = parseHead(data)
+    if(h.isDefined) {
+      latestTs.set(IngestUtil.toLong(h.get.timestamp) * 1000L)
+      Seq(h.get)
+    } else 
+      Seq.empty
   }
 
-  def convert(block:RpcBlock):RpcBlock = {
-    block
-  }
-
-  // def transform(block: Block): Seq[Block] = {
-  //   Seq(block)
-  // }
-}
-
-class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
-
-  def transform(block: RpcBlock): Seq[Block] = {
-    val b = block.result.get
+  def convert(b:RpcSubscriptionHeadResult):Block = {
     
-    if(config.filter.size != 0 && config.filter.contains(b.hash)) {
-      return Seq()
-    }
-
     val blk = Block(
       IngestUtil.toLong(b.number),
       b.hash,
@@ -84,21 +72,32 @@ class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
       formatAddr(b.miner,config.formatAddr),
       
       IngestUtil.toBigInt(b.difficulty),
-      IngestUtil.toBigInt(b.totalDifficulty),
-      IngestUtil.toLong(b.size),
+      IngestUtil.toBigInt(b.totalDifficulty).getOrElse(0L),
+      0L, //IngestUtil.toLong(b.size), // size Unknown
 
       b.extraData, 
           
       IngestUtil.toLong(b.gasLimit), 
       IngestUtil.toLong(b.gasUsed), 
       IngestUtil.toLong(b.timestamp) * 1000L, 
-      b.transactions.size,
-      b.baseFeePerGas.map(d => IngestUtil.toLong(d))
+      0, //b.transactions.size,  // FIX ME ! transactions number need to be retrieved
+      b.baseFeePerGas.map(d => IngestUtil.toLong(d)),
+      
+      // TODO: Add to Blocks !
+      // b.withdrawalsRoot,
+      // b.blobGasUsed,
+      // b.blobGasPrice,
+      // b.withdrawals
     )
-    
-    // commit cursor
-    cursor.commit(IngestUtil.toLong(b.number))
 
-    Seq(blk)
-  }    
+    blk
+  }
+
+}
+
+class PipelineWsBlock(config:Config) extends PipelineWsHead[Block](config) {
+
+  def transform(b: Block): Seq[Block] = {
+    Seq(b)
+  }
 }

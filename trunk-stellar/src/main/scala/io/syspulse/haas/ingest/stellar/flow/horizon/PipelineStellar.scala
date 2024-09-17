@@ -58,12 +58,6 @@ abstract class PipelineStellar[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
                                                                        (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with StellarDecoder[E] {
 
-  override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
-    minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    maxBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    randomFactor = 0.2
-  ))
-
   import StellarRpcJson._
 
   val cursor = new CursorBlock("BLOCK-stellar")(config) 

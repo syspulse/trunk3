@@ -59,12 +59,6 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                                                                        (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with RPCDecoder[E] {
 
-  override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
-    minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    maxBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
-    randomFactor = 0.2
-  ))
-
   import EthRpcJson._
 
   val cursor = new CursorBlock("BLOCK-eth")(config)
@@ -482,24 +476,5 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
     receiptMap
   }
-  
-  def formatAddr(addr:Option[String]):Option[String] = { 
-    if(!addr.isDefined) return None
-
-    Option(formatAddr(addr.get))
-  }
-
-  def formatAddr(addr:String):String = {    
-    if(addr == null) 
-      return addr
-
-    if(config.formatAddr.size == 0) 
-      return addr
-
-    config.formatAddr.charAt(0) match {
-      case 'l' => addr.toLowerCase
-      case 'u' => addr.toUpperCase
-      case _ => addr
-    }
-  }
+    
 }

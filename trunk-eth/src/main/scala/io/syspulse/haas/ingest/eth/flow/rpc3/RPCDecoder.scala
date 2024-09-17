@@ -395,59 +395,52 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     )
   }
 
-  // ----Reorg engines --------------------------------------------------------------------------------------------------------
-  // def isReorg1(lastBlock:String)(implicit reorg:ReorgBlock) = {
-  //   val r = ujson.read(lastBlock)
-  //   val result = r.obj("result").obj
+  def parseHead(data:String):Option[RpcSubscriptionHeadResult] = {
+    if(data.isEmpty()) return None
     
-  //   val blockNum = java.lang.Long.decode(result("number").str).toLong
-  //   val blockHash = result("hash").str
-  //   val ts = java.lang.Long.decode(result("timestamp").str).toLong
-  //   val txCount = result("transactions").arr.size
+    // only JSON is supported
+    if(data.stripLeading().startsWith("{")) {      
+      val head = try {
+        data.parseJson.convertTo[RpcSubscriptionHead]
+      } catch {
+        case e:Exception => 
+          log.error(s"failed to parse: '${data}'",e)
+          //log.error(s"failed to parse: '${data}'")
+          throw new RetryException(s"failed to parse: '${data}'")          
+      }
 
-  //   // check if reorg
-  //   val rr = reorg.isReorg(blockNum,blockHash)
-    
-  //   if(rr.size > 0) {
-      
-  //     log.warn(s"Reorg1:reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
-  //     os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
-  //     reorg.reorg(rr)
-  //     (true,true)
-      
-  //   } else {
-      
-  //     val fresh = reorg.cache(blockNum,blockHash,ts,txCount)
-  //     (fresh,false)
-  //   }
-  // }
+      if(head.result.isDefined) {
+        // response to subscription, ignore
+        return None
+      }
 
-  // // new flow without duplicates
-  // def isReorg2(lastBlock:String)(implicit reorg:ReorgBlock) = {    
+      Some(head.params.get.result)
+      
+    } else {
+      log.error(s"failed to parse: '${data}'")
+      throw new RetryException(s"failed to parse: '${data}'")        
+      //None
+    }    
+  }
 
-  //   val r = ujson.read(lastBlock)
-  //   val result = r.obj("result").obj
-    
-  //   val blockNum = java.lang.Long.decode(result("number").str).toLong
-  //   val blockHash = result("hash").str
-  //   val ts = java.lang.Long.decode(result("timestamp").str).toLong
-  //   val txCount = result("transactions").arr.size
-    
-  //   // check if reorg
-  //   val rr = reorg.isReorg(blockNum,blockHash)
-    
-  //   if(rr.size > 0) {
-      
-  //     log.warn(s"Reorg2: reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
-  //     os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
-  //     reorg.reorg(rr)
-  //     (true,true)
-      
-  //   } else {
-      
-  //     reorg.cache(blockNum,blockHash,ts,txCount)
-  //     (true,false)
-  //   }
-  // }
-  
+  def formatAddr(addr:Option[String],fmt:String):Option[String] = { 
+    if(!addr.isDefined) return None
+
+    Option(formatAddr(addr.get,fmt))
+  }
+
+  def formatAddr(addr:String,fmt:String):String = {    
+    if(addr == null) 
+      return addr
+
+    if(fmt.size == 0) 
+      return addr
+
+    fmt.charAt(0) match {
+      case 'l' => addr.toLowerCase
+      case 'u' => addr.toUpperCase
+      case _ => addr
+    }
+  }
+
 }

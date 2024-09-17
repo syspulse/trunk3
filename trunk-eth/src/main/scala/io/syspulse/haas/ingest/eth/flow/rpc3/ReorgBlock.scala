@@ -71,17 +71,30 @@ abstract class ReorgBlock(val depth:Int = 10) {
   }    
   
 
-  def parseBlock(lastBlock:String)= {
-
+  def parseBlock(lastBlock:String)= {    
     val r = ujson.read(lastBlock)
-    val result = r.obj("result").obj
     
-    val blockNum = java.lang.Long.decode(result("number").str).toLong
-    val blockHash = result("hash").str
-    val ts = java.lang.Long.decode(result("timestamp").str).toLong
-    val txCount = result("transactions").arr.size
+    // we support block and head parsing    
+    if(r.obj.contains("result")) {
+      val result = r.obj("result").obj
+      
+      val blockNum = java.lang.Long.decode(result("number").str).toLong
+      val blockHash = result("hash").str
+      val ts = java.lang.Long.decode(result("timestamp").str).toLong
+      val txCount = result("transactions").arr.size
+      
+      (blockNum,blockHash,ts,txCount)
 
-    (blockNum,blockHash,ts,txCount)
+    } else {
+      val result = r.obj("params").obj("result").obj
+
+      val blockNum = java.lang.Long.decode(result("number").str).toLong
+      val blockHash = result("hash").str
+      val ts = java.lang.Long.decode(result("timestamp").str).toLong      
+      
+      (blockNum,blockHash,ts,0)
+    }
+    
   }
 
   // track
