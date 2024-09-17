@@ -71,6 +71,33 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   val reorg = new ReorgBlock(config.blockReorg)
   implicit val uri = EthURI(config.feed,config.apiToken)
     
+  // ------------------------------------------------------------------------------------------------------------
+  def isReorg(lastBlock:String) = {
+    val r = ujson.read(lastBlock)
+    val result = r.obj("result").obj
+    
+    val blockNum = java.lang.Long.decode(result("number").str).toLong
+    val blockHash = result("hash").str
+    val ts = java.lang.Long.decode(result("timestamp").str).toLong
+    val txCount = result("transactions").arr.size
+
+    // check if reorg
+    val rr = reorg.isReorg(blockNum,blockHash)
+    
+    if(rr.size > 0) {
+      
+      log.warn(s"reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
+      os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
+      reorg.reorg(rr)
+      (true,true)
+      
+    } else {
+      
+      val dup = reorg.cache(blockNum,blockHash,ts,txCount)
+      (dup,false)
+    }
+  }
+  
   override def source(feed:String) = {
     feed.split("://").toList match {
       case "http" :: _ | "https" :: _ | "eth" :: _  =>         
@@ -174,36 +201,15 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           s"${uri.uri}"
         )
 
-        // ----- Reorg -----------------------------------------------------------------------------------
+        // ----- Reorg Subflow --------------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
           if(config.blockReorg > 0 ) { 
-            
-            val r = ujson.read(lastBlock)
-            val result = r.obj("result").obj
-            
-            val blockNum = java.lang.Long.decode(result("number").str).toLong
-            val blockHash = result("hash").str
-            val ts = java.lang.Long.decode(result("timestamp").str).toLong
-            val txCount = result("transactions").arr.size
-
-            // check if reorg
-            val rr = reorg.isReorg(blockNum,blockHash)
-            
-            if(rr.size > 0) {
-              
-              log.warn(s"reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
-              os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
-              reorg.reorg(rr)
-              true
-              
-            } else {
-              
-              reorg.cache(blockNum,blockHash,ts,txCount)              
-            }
+            val (dup,reorg) = isReorg(lastBlock)
+            reorg
 
           } else true
         }
-        
+                
         // ------- Flow ------------------------------------------------------------------------------------
         val sourceFlow = sourceTick
           .map(h => {
@@ -232,7 +238,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             val r = ujson.read(body)
             val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
             
-            log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}")
+            log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}, reorg=${config.blockReorg}")
             lastBlock - config.blockLag
           })
           .mapConcat(lastBlock => {

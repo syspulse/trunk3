@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.Logger
 
 case class CachedBlock(num:Long,hash:String,ts:Long = 0L,txCound:Long = 0)
 
-class ReorgBlock(depth:Int = 10) {
+class ReorgBlock(val depth:Int = 10) {
   private val log = Logger(this.getClass())  
   override def toString() = s"${last}"
   
@@ -54,11 +54,12 @@ class ReorgBlock(depth:Int = 10) {
   }
 
   def cache(block:Long,blockHash:String,ts:Long = 0L, txCount:Long = 0):Boolean = {    
-    // don't add the same block 
     log.debug(s"reorg: cache=${block},last=${last})")
     
-    if(last.size != 0 && last.find(_.hash == blockHash).isDefined) {
-      false      
+    if(last.size != 0 && last.find(_.hash == blockHash).isDefined) {      
+      // don't add the same blocks, because of how reorging works it will create duplicates 
+      false
+
     } else {
       last = last.+:(CachedBlock(block,blockHash,ts,txCount))
       

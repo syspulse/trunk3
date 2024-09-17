@@ -87,7 +87,7 @@ abstract class PipelineRpcMempoolWS[E <: skel.Ingestable](config:Config)
     val mtx = tx.map(rmx => 
       MempoolTx(
         ts = m.ts,
-        pool = "0",     // NOTE: CHANGE TO Byte: pending - 0, queued - 1,
+        pool = "0",     // always pending
         bhash = rmx.blockHash,
         b = IngestUtil.toLong(rmx.blockNumber),
         from = rmx.from,
@@ -110,7 +110,7 @@ abstract class PipelineRpcMempoolWS[E <: skel.Ingestable](config:Config)
     ).getOrElse(
       MempoolTx(
         ts = m.ts,
-        pool = "0",     // NOTE: CHANGE TO Byte: pending - 0, queued - 1,
+        pool = "0",     // always pending
         bhash = None,         // blockhash
         b = None,               // blocknumber
         from = "",
