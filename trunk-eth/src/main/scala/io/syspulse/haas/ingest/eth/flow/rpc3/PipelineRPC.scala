@@ -68,7 +68,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   import EthRpcJson._
 
   val cursor = new CursorBlock("BLOCK-eth")(config)
-  implicit val reorg = new ReorgBlock(config.blockReorg)
+  
+  val reorg = config.reorgFlow match {
+    case "1" => new ReorgBlock1(config.blockReorg)
+    case "2" => new ReorgBlock2(config.blockReorg)
+    case _ => new ReorgBlock2(config.blockReorg)
+  }
+
   implicit val uri = EthURI(config.feed,config.apiToken)
       
   // ----- Source ----------------------------------------------------------------------------------------------------------------
@@ -178,12 +184,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
         // ----- Reorg Subflow -----------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
           if(config.blockReorg > 0 ) { 
-
-            val (fresh,_) = config.reorgFlow match {
-              case "1" => isReorg1(lastBlock)
-              case "2" => isReorg2(lastBlock)
-              case _ => (false,false)
-            }
+            val (fresh,_) = reorg.track(lastBlock)
             fresh
 
           } else true
@@ -235,11 +236,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                 cursor.get() to lastBlock
               else {
                 // reorg operation on the tip
-                config.reorgFlow match {
-                  case "1" => (cursor.get() - config.blockReorg) to lastBlock
-                  case "2" => cursor.get() to lastBlock
-                  case _ => cursor.get() to lastBlock
-                }
+                reorg.range(cursor.get(),lastBlock)
               }
             
             bb

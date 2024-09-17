@@ -9,8 +9,8 @@ import com.typesafe.scalalogging.Logger
 
 case class CachedBlock(num:Long,hash:String,ts:Long = 0L,txCound:Long = 0)
 
-class ReorgBlock(val depth:Int = 10) {
-  private val log = Logger(this.getClass())  
+abstract class ReorgBlock(val depth:Int = 10) {
+  protected val log = Logger(this.getClass())  
   override def toString() = s"${last}"
   
   var last:List[CachedBlock] = List() // hashes of last blocks to detect reorg 
@@ -70,5 +70,24 @@ class ReorgBlock(val depth:Int = 10) {
     }
   }    
   
+
+  def parseBlock(lastBlock:String)= {
+
+    val r = ujson.read(lastBlock)
+    val result = r.obj("result").obj
+    
+    val blockNum = java.lang.Long.decode(result("number").str).toLong
+    val blockHash = result("hash").str
+    val ts = java.lang.Long.decode(result("timestamp").str).toLong
+    val txCount = result("transactions").arr.size
+
+    (blockNum,blockHash,ts,txCount)
+  }
+
+  // track
+  def range(cursor:Long,lastBlock:Long):scala.collection.immutable.NumericRange.Inclusive[Long]
+
+  // track last block
+  def track(lastBlock:String):(Boolean,Boolean)
 }
 
