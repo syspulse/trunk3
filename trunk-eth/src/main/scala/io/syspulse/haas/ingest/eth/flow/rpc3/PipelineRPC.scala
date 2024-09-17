@@ -68,36 +68,10 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   import EthRpcJson._
 
   val cursor = new CursorBlock("BLOCK-eth")(config)
-  val reorg = new ReorgBlock(config.blockReorg)
+  implicit val reorg = new ReorgBlock(config.blockReorg)
   implicit val uri = EthURI(config.feed,config.apiToken)
-    
-  // ------------------------------------------------------------------------------------------------------------
-  def isReorg(lastBlock:String) = {
-    val r = ujson.read(lastBlock)
-    val result = r.obj("result").obj
-    
-    val blockNum = java.lang.Long.decode(result("number").str).toLong
-    val blockHash = result("hash").str
-    val ts = java.lang.Long.decode(result("timestamp").str).toLong
-    val txCount = result("transactions").arr.size
-
-    // check if reorg
-    val rr = reorg.isReorg(blockNum,blockHash)
-    
-    if(rr.size > 0) {
       
-      log.warn(s"reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
-      os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
-      reorg.reorg(rr)
-      (true,true)
-      
-    } else {
-      
-      val dup = reorg.cache(blockNum,blockHash,ts,txCount)
-      (dup,false)
-    }
-  }
-  
+  // ----- Source ----------------------------------------------------------------------------------------------------------------
   override def source(feed:String) = {
     feed.split("://").toList match {
       case "http" :: _ | "https" :: _ | "eth" :: _  =>         
@@ -201,11 +175,16 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           s"${uri.uri}"
         )
 
-        // ----- Reorg Subflow --------------------------------------------------------------------------------
+        // ----- Reorg Subflow -----------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
           if(config.blockReorg > 0 ) { 
-            val (dup,reorg) = isReorg(lastBlock)
-            reorg
+
+            val (fresh,_) = config.reorgFlow match {
+              case "1" => isReorg1(lastBlock)
+              case "2" => isReorg2(lastBlock)
+              case _ => (false,false)
+            }
+            fresh
 
           } else true
         }
@@ -254,9 +233,14 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
               if(config.blockReorg == 0 || cursor.get() < (lastBlock - config.blockReorg))              
                 // normal fast operation or reorg before the tip
                 cursor.get() to lastBlock
-              else
+              else {
                 // reorg operation on the tip
-                (cursor.get() - config.blockReorg) to lastBlock
+                config.reorgFlow match {
+                  case "1" => (cursor.get() - config.blockReorg) to lastBlock
+                  case "2" => cursor.get() to lastBlock
+                  case _ => cursor.get() to lastBlock
+                }
+              }
             
             bb
           })          
@@ -329,6 +313,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
           .mapConcat(batch => batch)
           .filter(
+            // it must return True to continue processing or false (when duplicated due to reorg algo)
             reorgFlow
           )
           .map(b => ByteString(b))

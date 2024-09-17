@@ -394,4 +394,60 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, state = state, calls = calls)
     )
   }
+
+  // ----Reorg engines --------------------------------------------------------------------------------------------------------
+  def isReorg1(lastBlock:String)(implicit reorg:ReorgBlock) = {
+    val r = ujson.read(lastBlock)
+    val result = r.obj("result").obj
+    
+    val blockNum = java.lang.Long.decode(result("number").str).toLong
+    val blockHash = result("hash").str
+    val ts = java.lang.Long.decode(result("timestamp").str).toLong
+    val txCount = result("transactions").arr.size
+
+    // check if reorg
+    val rr = reorg.isReorg(blockNum,blockHash)
+    
+    if(rr.size > 0) {
+      
+      log.warn(s"Reorg1:reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
+      os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
+      reorg.reorg(rr)
+      (true,true)
+      
+    } else {
+      
+      val fresh = reorg.cache(blockNum,blockHash,ts,txCount)
+      (fresh,false)
+    }
+  }
+
+  // new flow without duplicates
+  def isReorg2(lastBlock:String)(implicit reorg:ReorgBlock) = {    
+
+    val r = ujson.read(lastBlock)
+    val result = r.obj("result").obj
+    
+    val blockNum = java.lang.Long.decode(result("number").str).toLong
+    val blockHash = result("hash").str
+    val ts = java.lang.Long.decode(result("timestamp").str).toLong
+    val txCount = result("transactions").arr.size
+    
+    // check if reorg
+    val rr = reorg.isReorg(blockNum,blockHash)
+    
+    if(rr.size > 0) {
+      
+      log.warn(s"Reorg2: reorg block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
+      os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
+      reorg.reorg(rr)
+      (true,true)
+      
+    } else {
+      
+      reorg.cache(blockNum,blockHash,ts,txCount)
+      (true,false)
+    }
+  }
+  
 }

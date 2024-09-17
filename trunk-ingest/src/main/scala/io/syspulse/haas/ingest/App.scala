@@ -97,6 +97,7 @@ object App extends skel.Server {
         ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
 
         ArgString('_', "format.addr",s"Format addresses (def: ${d.formatAddr})"),
+        ArgString('_', "reorg.flow",s"Reorg engine (def: ${d.reorgFlow})"),
 
         ArgLogging(),
         ArgParam("<params>",""),
@@ -169,6 +170,8 @@ object App extends skel.Server {
 
       formatAddr = c.getString("format.addr").getOrElse(d.formatAddr),
       
+      reorgFlow = c.getString("reorg.flow").getOrElse(d.reorgFlow),
+
       cmd = c.getCmd().getOrElse(d.cmd),      
       params = c.getParams(),
     )
