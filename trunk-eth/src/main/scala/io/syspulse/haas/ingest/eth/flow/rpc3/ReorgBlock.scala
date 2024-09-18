@@ -9,13 +9,15 @@ import com.typesafe.scalalogging.Logger
 
 case class CachedBlock(num:Long,hash:String,ts:Long = 0L,txCount:Long = 0)
 
-abstract class ReorgBlock(val depth:Int = 10) {
+abstract class ReorgBlock(val depth:Int,reorgFile:String) {
   protected val log = Logger(this.getClass())  
   override def toString() = s"${last}"
   
   var last:List[CachedBlock] = List() // hashes of last blocks to detect reorg 
 
   def isReorg(block:Long,blockHash:String):List[CachedBlock] = {
+    //log.warn(s"isReorg: block=${block}: last=${last})")
+
     val reorgs =  {
       // println(s"============> ${block} (${blockHash}): ${LastBlock.lastBlock}")
       if(last.size == 0)
@@ -48,13 +50,12 @@ abstract class ReorgBlock(val depth:Int = 10) {
     if(blocks.size == 0) 
       return List.empty
 
-    log.info(s"reorg: reorg=(blocks=${blocks},last=${last})")
+    log.warn(s"reorg: reorg=(blocks=${blocks},last=${last})")
     last = last.toSet.&~(blocks.toSet).toList
     last      
   }
 
-  def cache(block:Long,blockHash:String,ts:Long = 0L, txCount:Long = 0):Boolean = {    
-    log.debug(s"reorg: cache=${block},last=${last})")
+  def cache(block:Long,blockHash:String,ts:Long = 0L, txCount:Long = 0):Boolean = {        
     
     if(last.size != 0 && last.find(_.hash == blockHash).isDefined) {      
       // don't add the same blocks, because of how reorging works it will create duplicates 
@@ -66,6 +67,7 @@ abstract class ReorgBlock(val depth:Int = 10) {
       if(last.size > depth) {
         last = last.take(depth)
       }
+      
       true
     }
   }    
@@ -115,10 +117,19 @@ abstract class ReorgBlock(val depth:Int = 10) {
     if(rr.size > 0) {
       
       log.warn(s"Reorg: block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
-      os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
+
+      if(reorgFile.nonEmpty) {
+        try {        
+          os.write.append(os.Path(reorgFile),s"${ts},${blockNum},${blockHash},${txCount}\n")          
+        } catch {
+          case e:Exception => log.error(s"Failed to write reorg to file: '${reorgFile}': ${e}")
+        }
+      }
+
+      // !
       reorg(rr)
-      (true,true)
       
+      (true,true)      
     } else {
       
       val fresh = cache(blockNum,blockHash,ts,txCount)      

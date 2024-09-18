@@ -97,7 +97,9 @@ object App extends skel.Server {
         ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
 
         ArgString('_', "format.addr",s"Format addresses (def: ${d.formatAddr})"),
+        
         ArgString('_', "reorg.flow",s"Reorg engine (def: ${d.reorgFlow})"),
+        ArgString('_', "reorg.file",s"Reorg file (def: ${d.reorgFile})"),
 
         ArgLogging(),
         ArgParam("<params>",""),
@@ -171,7 +173,8 @@ object App extends skel.Server {
       formatAddr = c.getString("format.addr").getOrElse(d.formatAddr),
       
       reorgFlow = c.getString("reorg.flow").getOrElse(d.reorgFlow),
-
+      reorgFile = c.getString("reorg.file").getOrElse(d.reorgFile),
+      
       cmd = c.getCmd().getOrElse(d.cmd),      
       params = c.getParams(),
     )
@@ -246,7 +249,11 @@ object App extends skel.Server {
 
           // Standard Web3 RPC 
           case "block" | "block.eth" =>
-            Some(new eth.flow.rpc3.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
+              Some(new eth.flow.rpc3.PipelineWsBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+            else
+              Some(new eth.flow.rpc3.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+
           case "tx" | "tx.eth" =>
             Some(new eth.flow.rpc3.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           case "transaction" | "transaction.eth" =>

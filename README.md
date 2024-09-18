@@ -142,7 +142,11 @@ Long PoS reorg: https://barnabe.substack.com/p/pos-ethereum-reorg
 
 `--reorg` option allows to monitor reorganizations (new block replaces  old ones).
 
-`--reorg` specifies how deep the history for old blocks must be
+`--reorg=<depth>` specifies how deep the history for old blocks must be.
+`--reorg.flow=<flow>` specifies reorg flow algo:
+
+- __reorg1__ - Tracks and re-asks previous blocks to find hash change. It works for trunk3 polling
+- __reorg2__ - It works for trunk3 websocket push (ws://geth:8546) or in Detectors. ATTENTION: It does not work for polling (http://geth:8545) !!!
 
 __NOTES__: 
 1. It is important to have `throttle` small enough to detect fast reorgs (more detection than etherscan)
@@ -151,8 +155,18 @@ __NOTES__:
 Example of a command to show re-orged blocks:
 
 (Be careful using it agains public RPC since it asks the node about latest block every second)
+
+
+Polling: 
+
 ```
-./run-trunk.sh -e block -f http://geth:8545 --delimiter= --block=latest --logging=WARN --reorg=2 --throttle=1000
+./run-trunk.sh -e block -f http://geth:8545 --block=latest --logging=WARN --reorg=2 --reorg.flow=reorg1 --throttle=1000
+```
+
+Websocket (no throttle, no block latest):
+
+```
+./run-trunk.sh -e block -f ws://geth:8546 --logging=WARN --reorg=2 --reorg.flow=reorg1
 ```
 
 Reorg supports `block` and `transaction` entity

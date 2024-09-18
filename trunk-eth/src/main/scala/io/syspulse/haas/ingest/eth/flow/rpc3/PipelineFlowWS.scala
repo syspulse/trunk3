@@ -57,7 +57,7 @@ import io.syspulse.haas.core.RetryException
 import akka.stream.Attributes
 
 abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
-                                                                    (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
+  (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with RPCDecoder[E] {
 
   val delta = true
@@ -85,6 +85,11 @@ abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
         val reorgFlow = (lastBlock:String) => {
           if(config.blockReorg > 0 ) { 
             val (fresh,_) = reorg.track(lastBlock)
+            
+            if(! fresh) {
+              log.error(s"reorg: fresh=${fresh}, ${lastBlock}")
+            }
+            
             fresh
 
           } else true
