@@ -7,7 +7,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
 import com.typesafe.scalalogging.Logger
 
-case class CachedBlock(num:Long,hash:String,ts:Long = 0L,txCound:Long = 0)
+case class CachedBlock(num:Long,hash:String,ts:Long = 0L,txCount:Long = 0)
 
 abstract class ReorgBlock(val depth:Int = 10) {
   protected val log = Logger(this.getClass())  
@@ -101,6 +101,29 @@ abstract class ReorgBlock(val depth:Int = 10) {
   def range(cursor:Long,lastBlock:Long):scala.collection.immutable.NumericRange.Inclusive[Long]
 
   // track last block
-  def track(lastBlock:String):(Boolean,Boolean)
+  def track(lastBlock:String):(Boolean,Boolean) = {
+    val (blockNum,blockHash,ts,txCount) = parseBlock(lastBlock)
+    
+    track(blockNum,blockHash,ts,txCount)
+  }
+
+  def track(blockNum:Long,blockHash:String,ts:Long,txCount:Long):(Boolean,Boolean) = {
+    
+    // check if reorg
+    val rr = isReorg(blockNum,blockHash)
+    
+    if(rr.size > 0) {
+      
+      log.warn(s"Reorg: block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
+      os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
+      reorg(rr)
+      (true,true)
+      
+    } else {
+      
+      val fresh = cache(blockNum,blockHash,ts,txCount)      
+      (fresh,false)
+    }
+  }
 }
 

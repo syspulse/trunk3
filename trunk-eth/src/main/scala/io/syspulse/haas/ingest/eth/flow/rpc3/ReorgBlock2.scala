@@ -9,31 +9,37 @@ import com.typesafe.scalalogging.Logger
 
 class ReorgBlock2(depth:Int = 10) extends ReorgBlock(depth) {
   
-  def range(cursor:Long,lastBlock:Long) = {
-    (cursor - depth) to lastBlock    
+  def range(cursor:Long,lastBlock:Long) = {    
+    cursor to lastBlock
   }
 
   // track last block
-  def track(lastBlock:String) = {
-    val (blockNum,blockHash,ts,txCount) = parseBlock(lastBlock)
+  // def track(lastBlock:String) = {
+  //   val (blockNum,blockHash,ts,txCount) = parseBlock(lastBlock)
 
-    // check if reorg
-    val rr = isReorg(blockNum,blockHash)
+  //   // check if reorg
+  //   val rr = isReorg(blockNum,blockHash)
     
-    if(rr.size > 0) {
+  //   if(rr.size > 0) {
       
-      log.warn(s"Reorg: block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
-      os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
-      reorg(rr)
-      (true,true)
+  //     log.warn(s"Reorg: block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
+  //     os.write.append(os.Path("REORG",os.pwd),s"${ts},${blockNum},${blockHash},${txCount}}")
+  //     reorg(rr)
+  //     (true,true)
       
-    } else {
+  //   } else {
       
-      val fresh = cache(blockNum,blockHash,ts,txCount)
+  //     val fresh = cache(blockNum,blockHash,ts,txCount)
       
-      // ignore fresh
-      (true,false)
-    }
+  //     // ignore fresh
+  //     (true,false)
+  //   }
+  // }
+
+  override def cache(blockNum:Long,blockHash:String,ts:Long,txCount:Long):Boolean = {
+    // ignore fresh
+    super.cache(blockNum,blockHash,ts,txCount)
+    true
   }
 }
 

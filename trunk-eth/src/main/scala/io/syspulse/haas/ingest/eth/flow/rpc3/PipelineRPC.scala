@@ -64,8 +64,8 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
   val cursor = new CursorBlock("BLOCK-eth")(config)
   
   val reorg = config.reorgFlow match {
-    case "1" => new ReorgBlock1(config.blockReorg)
-    case "2" => new ReorgBlock2(config.blockReorg)
+    case "reorg1" => new ReorgBlock1(config.blockReorg)
+    case "reorg2" => new ReorgBlock2(config.blockReorg)
     case _ => new ReorgBlock2(config.blockReorg)
   }
 

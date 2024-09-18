@@ -80,7 +80,7 @@ abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
       IngestUtil.toLong(b.gasLimit), 
       IngestUtil.toLong(b.gasUsed), 
       IngestUtil.toLong(b.timestamp) * 1000L, 
-      0, //b.transactions.size,  // FIX ME ! transactions number need to be retrieved
+      -1, //b.transactions.size,  // FIX ME ! transactions number need to be retrieved
       b.baseFeePerGas.map(d => IngestUtil.toLong(d)),
       
       // TODO: Add to Blocks !

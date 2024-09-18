@@ -73,7 +73,7 @@ case class Config(
 
   formatAddr:String = "",  // format addresses to (lower,upper,human)
 
-  reorgFlow:String = "1",  // 1 - Old Reorg Flow (duplicates), 2 - New Reorg Flow
+  reorgFlow:String = "reorg1",  // 1 - Old Reorg Flow (duplicates), 2 - New Reorg Flow
 
   cmd:String = "stream",
   params: Seq[String] = Seq(),
