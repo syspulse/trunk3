@@ -138,7 +138,8 @@ trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx]
                     OptionEmpty(receipt_contract_address), 
                     OptionEmpty(receipt_root), 
                     OptionEmpty(receipt_status).map(_.toInt),
-                    OptionEmpty(receipt_effective_gas_price).map(BigInt(_))
+                    OptionEmpty(receipt_effective_gas_price).map(BigInt(_)),
+                    None
                   ))
             
             case _ => 

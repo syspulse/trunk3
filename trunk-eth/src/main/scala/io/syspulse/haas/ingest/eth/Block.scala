@@ -1,6 +1,7 @@
 package io.syspulse.haas.ingest.eth
 
 import io.syspulse.skel.Ingestable
+import io.syspulse.skel.util.Util
 
 case class Block(
   i:Long,       // block number
@@ -27,6 +28,9 @@ case class Block(
   txn:Long, // transaction count
   fee:Option[Long], // base fee
 
+  tx:Option[Array[Transaction]] = None,
+
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(i)
+  override def toString = Util.toStringWithArray(this)
 }

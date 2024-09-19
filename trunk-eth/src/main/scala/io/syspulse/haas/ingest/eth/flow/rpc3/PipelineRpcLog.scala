@@ -71,7 +71,7 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
 
     log.info(s"transaction: ${b.transactions.size}")
       
-    val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
+    val receipts:Map[String,RpcReceipt] = decodeReceipts(block)(config,uri.uri)
     
     val ee = b.transactions.flatMap( tx => {
       val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt

@@ -73,7 +73,7 @@ class PipelineTokenTransfer(config:Config) extends PipelineRpcTokenTransfer[Toke
     
     log.info(s"transaction: ${b.transactions.size}")
       
-    val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
+    val receipts:Map[String,RpcReceipt] = decodeReceipts(block)(config,uri.uri)
     
     val tt = b.transactions.flatMap( tx => {
       val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt

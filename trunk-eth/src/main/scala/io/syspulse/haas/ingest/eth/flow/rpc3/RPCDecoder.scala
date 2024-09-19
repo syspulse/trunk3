@@ -22,14 +22,16 @@ import io.syspulse.haas.ingest.eth.EthURI
 
 import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.eth.flow.rpc3._
-import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
+import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 
 import io.syspulse.haas.ingest.Decoder
 import io.syspulse.skel.util.DiffSet
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.IngestUtil
 
-trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,RpcTx] {
+import io.syspulse.skel.service.JsonCommon
+
+trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,RpcTx] with JsonCommon {
 
   protected val log = Logger(s"${this}")
 
@@ -443,4 +445,219 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     }
   }
 
+  // ---- Receipts --------------------------------------------------------------------------------------------------------------------------
+  
+  // legacy and very inefficient for the whole Block
+  // However it is supported by 'anvil'
+  def decodeReceiptsBatch(block: RpcBlock)(implicit config:Config,uri:String): Map[String,RpcReceipt] = {
+    block.result.map(r => 
+      decodeTxReceipts(r.transactions.map(_.hash).toIndexedSeq)
+    ).getOrElse(Map())
+  }
+
+  def decodeTxReceipts(transactions: Seq[String])(implicit config:Config,uri:String): Map[String,RpcReceipt] = {
+    
+    if(transactions.size == 0)
+      return Map()
+    
+    val receiptBatch = if(config.receiptBatch == -1) transactions.size else config.receiptBatch
+    val ranges = transactions.grouped(receiptBatch).toSeq
+
+    val receiptMap = ranges.view.zipWithIndex.map{ case(range,i) => {      
+      //log.debug(s"transactions: ${b.transactions.size}")
+        
+      if(range.size > 0) {
+        if(i != 0) {
+          Thread.sleep(config.receiptThrottle)
+        }
+
+        val json = 
+          "[" + range.map( txHash => 
+            s"""{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["${txHash}"],"id":"${txHash}"}"""
+          ).mkString(",") +
+          "]"
+          .trim.replaceAll("\\s+","")
+          
+        try {
+          val receiptsRsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))        
+          val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
+            case 200 =>
+              
+              val batchRsp = receiptsRsp.text()//receiptsRsp.data.toString
+              
+              try {
+                if(batchRsp.contains("""error""") && batchRsp.contains("""code""")) {
+                  throw new Exception(s"${batchRsp}")
+                }
+                              
+                val batchReceipts = batchRsp.parseJson.convertTo[List[RpcReceiptResultBatch]]
+
+                val rr:Seq[RpcReceipt] = batchReceipts.flatMap { r => 
+                  
+                  if(r.result.isDefined) {
+                    Some(r.result.get)
+                  } else {
+                    log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
+                    None
+                  }
+                }
+                
+                rr.map( r => r.transactionHash -> r).toSeq              
+
+              } catch {
+                case e:Exception =>
+                  log.error(s"could not parse receipts batch: ${receiptsRsp}",e)
+                  Seq()
+              }
+            case _ => 
+              log.warn(s"could not get receipts batch: ${receiptsRsp}")
+              Seq()
+          }
+          receipts
+        } catch {
+          case e:Exception =>
+            log.error("failed to get receipts",e)
+            Map()
+        }
+
+      } else
+        Map()  
+    }}.flatten.toMap 
+    
+    receiptMap
+  }
+
+  // --- Receipts via one call
+  def decodeReceiptsBlock(block: RpcBlock)(implicit config:Config,uri:String): Map[String,RpcReceipt] = {
+    val b = block.result.get
+
+    if(b.transactions.size == 0)
+      return Map()
+            
+    val receiptMap = {      
+      //log.debug(s"transactions: ${b.transactions.size}")        
+
+      val id = b.number
+      val json =  s"""{"jsonrpc":"2.0","method":"eth_getBlockReceipts","params":["${b.number}"],"id":"${id}"}"""
+        .trim.replaceAll("\\s+","")
+        
+      try {
+        val receiptsRsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))
+        val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
+          case 200 =>
+            
+            val rsp = receiptsRsp.text()
+            
+            try {
+              if(rsp.contains("""error""") && rsp.contains("""code""")) {
+                throw new Exception(s"${b.number}: ${rsp}")
+              }
+            
+              val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
+              rr.map( r => r.transactionHash -> r).toSeq
+
+            } catch {
+              case e:Exception =>
+                log.error(s"failed to parse receipts: ${b.number}: ${receiptsRsp}: rsp=${rsp}",e)
+                Seq()
+            }
+          case _ => 
+            log.warn(s"failed to get receipts: ${b.number}: ${receiptsRsp}")
+            Seq()
+        }
+        receipts
+      } catch {
+        case e:Exception =>
+          log.error(s"failed to get block receipts: ${b.number}",e)
+          Map()
+      }
+
+    }.toMap 
+
+    // if(receiptMap.size == b.transactions.size) {
+    //   // commit cursor only if all transactions receipts recevied !
+    //   cursor.commit(toLong(b.number))
+    // }
+
+    receiptMap
+  }
+
+  def decodeReceipts(block: RpcBlock)(implicit config:Config,uri:String): Map[String,RpcReceipt] = {    
+    if(config.receiptDelay > 0L) {
+      // ATTENTION: Sleep inside Akka stream Thread !
+      Thread.sleep(config.receiptDelay)
+    }
+
+    config.receiptRequest match {
+      case "block" => decodeReceiptsBlock(block)
+      case "batch" => decodeReceiptsBatch(block)
+      case _ => decodeReceiptsBlock(block)
+    }
+  }
+
+  def decodeTransactions(block: RpcBlock)(implicit config:Config,uri:String): (Seq[Transaction],Seq[RpcReceipt]) = {
+    val b = block.result.get
+
+    val ts = IngestUtil.toLong(b.timestamp)
+    val block_number = IngestUtil.toLong(b.number)
+
+    log.info(s"Block(${block_number},${b.transactions.size})")
+      
+    val receipts:Map[String,RpcReceipt] = decodeReceipts(block)
+    
+    val txx = b.transactions
+    .filter(tx => {
+      config.filter.size == 0 || config.filter.contains(tx.hash)
+    })
+    .map{ tx:RpcTx => {
+      val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
+      val logs = receipts.get(tx.hash).get.logs
+      val receipt = receipts.get(tx.hash)
+      
+      Transaction(
+        ts * 1000L,
+        transaction_index,
+        tx.hash,
+        block_number,
+
+        formatAddr(tx.from,config.formatAddr),
+        formatAddr(tx.to,config.formatAddr),
+        
+        IngestUtil.toLong(tx.gas),
+        IngestUtil.toBigInt(tx.gasPrice),
+        tx.input,
+        IngestUtil.toBigInt(tx.value),
+
+        IngestUtil.toBigInt(tx.nonce),
+        
+        tx.maxFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_fee_per_gas,
+        tx.maxPriorityFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_priority_fee_per_gas, 
+
+        tx.`type`.map(r => IngestUtil.toLong(r).toInt),
+
+        receipt.map(r => IngestUtil.toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
+        receipt.map(r => IngestUtil.toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
+        receipt.map(r => formatAddr(r.contractAddress,config.formatAddr)).flatten, //tx.receipt_contract_address, 
+        Some(b.receiptsRoot), //tx.receipt_root, 
+        receipt.flatMap(r => r.status.map(IngestUtil.toLong(_).toInt)), //tx.receipt_status, 
+        receipt.map(_.effectiveGasPrice.map(r => IngestUtil.toBigInt(r))).flatten, //tx.receipt_effective_gas_price
+
+        logs = Some(logs.map( r => {
+          EventTx(
+            IngestUtil.toLong(r.logIndex).toInt,
+            formatAddr(r.address,config.formatAddr),
+            r.data,
+            r.topics
+          )
+        }))
+      )
+    }}.toSeq
+
+    // if(receipts.size == b.transactions.size) {
+    //   // commit cursor only if all transactions receipts recevied !
+    //   cursor.commit(block_number)
+    // }
+
+    (txx,receipts.values.toSeq)
+  }
 }

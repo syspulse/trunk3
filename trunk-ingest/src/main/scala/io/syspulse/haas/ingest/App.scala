@@ -330,6 +330,10 @@ object App extends skel.Server {
 
           case "ws.block" => 
             Some(new eth.flow.rpc3.PipelineWsBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+          case "ws.transaction" => 
+            Some(new eth.flow.rpc3.PipelineWsTransaction(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+          case "ws.block_transaction" => 
+            Some(new eth.flow.rpc3.PipelineWsBlockTransaction(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

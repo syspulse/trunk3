@@ -70,7 +70,8 @@ abstract class PipelineETLTransaction[E <: skel.Ingestable](config:Config)
     tx.receipt_contract_address, 
     tx.receipt_root, 
     tx.receipt_status, 
-    tx.receipt_effective_gas_price
+    tx.receipt_effective_gas_price,
+    None 
   )
 
 }

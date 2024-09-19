@@ -76,7 +76,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
     val ts = IngestUtil.toLong(b.timestamp)
     val block_number = IngestUtil.toLong(b.number)
          
-    val receipts:Map[String,RpcReceipt] = decodeReceipts(blk)
+    val receipts:Map[String,RpcReceipt] = decodeReceipts(blk)(config,uri.uri)
     
     val numEvents = receipts.values.foldLeft(0)((c,r) => c + r.logs.size)
     val numTransfers = b.transactions.foldLeft(0)((c,t) => c + {if(t.input.isEmpty() || t.input == "0x") 0 else 1})

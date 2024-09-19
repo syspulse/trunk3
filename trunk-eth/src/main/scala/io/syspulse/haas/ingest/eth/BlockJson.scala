@@ -7,7 +7,8 @@ import scala.util.Random
 import spray.json._
 import DefaultJsonProtocol._
 
-object BlockJson extends DefaultJsonProtocol {
-  
-  implicit val jf_block = jsonFormat19(Block.apply _)
+object BlockJson extends DefaultJsonProtocol {  
+  import TransactionJson._
+
+  implicit val jf_blk_block = jsonFormat20(Block.apply _)
 }
