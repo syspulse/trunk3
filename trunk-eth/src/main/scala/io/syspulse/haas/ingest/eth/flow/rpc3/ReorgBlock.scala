@@ -32,6 +32,7 @@ abstract class ReorgBlock(val depth:Int,reorgFile:String) {
       val blockIndex = last.zipWithIndex.find{ case(b,i) =>
         b.num == block && b.hash != blockHash            
       }
+
       val reorgs = blockIndex match {
         case Some(bi) => last.take(bi._2 + 1)
         case None => List()
@@ -50,14 +51,14 @@ abstract class ReorgBlock(val depth:Int,reorgFile:String) {
     if(blocks.size == 0) 
       return List.empty
 
-    log.warn(s"reorg: reorg=(blocks=${blocks},last=${last})")
+    log.warn(s"reorg: blocks=${blocks},last=${last}")
     last = last.toSet.&~(blocks.toSet).toList
     last      
   }
 
   def cache(block:Long,blockHash:String,ts:Long = 0L, txCount:Long = 0):Boolean = {        
     
-    if(last.size != 0 && last.find(_.hash == blockHash).isDefined) {      
+    if(last.size != 0 && last.find(b => b.num == block && b.hash == blockHash).isDefined) {      
       // don't add the same blocks, because of how reorging works it will create duplicates 
       false
 
@@ -92,7 +93,7 @@ abstract class ReorgBlock(val depth:Int,reorgFile:String) {
 
       val blockNum = java.lang.Long.decode(result("number").str).toLong
       val blockHash = result("hash").str
-      val ts = java.lang.Long.decode(result("timestamp").str).toLong      
+      val ts = java.lang.Long.decode(result("timestamp").str).toLong 
       
       (blockNum,blockHash,ts,0)
     }
@@ -103,13 +104,13 @@ abstract class ReorgBlock(val depth:Int,reorgFile:String) {
   def range(cursor:Long,lastBlock:Long):scala.collection.immutable.NumericRange.Inclusive[Long]
 
   // track last block
-  def track(lastBlock:String):(Boolean,Boolean) = {
+  def track(lastBlock:String):(Boolean,List[CachedBlock]) = {
     val (blockNum,blockHash,ts,txCount) = parseBlock(lastBlock)
     
     track(blockNum,blockHash,ts,txCount)
   }
 
-  def track(blockNum:Long,blockHash:String,ts:Long,txCount:Long):(Boolean,Boolean) = {
+  def track(blockNum:Long,blockHash:String,ts:Long,txCount:Long):(Boolean,List[CachedBlock]) = {
     
     // check if reorg
     val rr = isReorg(blockNum,blockHash)
@@ -129,11 +130,11 @@ abstract class ReorgBlock(val depth:Int,reorgFile:String) {
       // !
       reorg(rr)
       
-      (true,true)      
+      (true,rr)      
     } else {
       
       val fresh = cache(blockNum,blockHash,ts,txCount)      
-      (fresh,false)
+      (fresh,List.empty)
     }
   }
 }
