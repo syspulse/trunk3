@@ -98,6 +98,23 @@ abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
         val sourceFlow = s0
           .throttle(1,FiniteDuration(config.throttle,TimeUnit.MILLISECONDS))
           .drop(1)  // drop subscription response message
+          .map(b => { 
+            // only for logging
+            try {
+              val result = ujson.read(b.utf8String).obj("params").obj("result").obj
+              val blockNum = java.lang.Long.decode(result("number").str).toLong
+              val blockHash = result("hash").str
+
+              // emulate PipelineRPC
+              log.info(s"--> Vector(${blockNum})")
+
+            } catch {
+              case e:Exception => 
+                log.warn(s"failed to parse block: ${b}",e)
+            }
+            
+            b  
+          })
           .filter( b => 
             // it must return True to continue processing or false (when duplicated due to reorg algo)
             reorgFlow(b.utf8String)
