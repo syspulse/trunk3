@@ -36,7 +36,7 @@ import io.syspulse.haas.ingest.eth.BlockJson._
 import io.syspulse.haas.ingest.Config
 
 import io.syspulse.haas.ingest.eth.flow.rpc3._
-import io.syspulse.haas.ingest.IngestUtil
+import io.syspulse.skel.blockchain.eth.EthUtil
 
 abstract class PipelineRpcBlock[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -48,7 +48,7 @@ abstract class PipelineRpcBlock[E <: skel.Ingestable](config:Config)
     val bb = parseBlock(data)    
     if(bb.size!=0) {
       val b = bb.last.result.get
-      latestTs.set(IngestUtil.toLong(b.timestamp) * 1000L)      
+      latestTs.set(EthUtil.toLong(b.timestamp) * 1000L)      
     }
     bb
   }
@@ -72,7 +72,7 @@ class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
     }
 
     val blk = Block(
-      IngestUtil.toLong(b.number),
+      EthUtil.toLong(b.number),
       b.hash,
       b.parentHash,
       b.nonce,
@@ -83,21 +83,21 @@ class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
       b.receiptsRoot,
       formatAddr(b.miner,config.formatAddr),
       
-      IngestUtil.toBigInt(b.difficulty),
-      IngestUtil.toBigInt(b.totalDifficulty),
-      IngestUtil.toLong(b.size),
+      EthUtil.toBigInt(b.difficulty),
+      EthUtil.toBigInt(b.totalDifficulty),
+      EthUtil.toLong(b.size),
 
       b.extraData, 
           
-      IngestUtil.toLong(b.gasLimit), 
-      IngestUtil.toLong(b.gasUsed), 
-      IngestUtil.toLong(b.timestamp) * 1000L, 
+      EthUtil.toLong(b.gasLimit), 
+      EthUtil.toLong(b.gasUsed), 
+      EthUtil.toLong(b.timestamp) * 1000L, 
       b.transactions.size,
-      b.baseFeePerGas.map(d => IngestUtil.toLong(d))
+      b.baseFeePerGas.map(d => EthUtil.toLong(d))
     )
     
     // commit cursor
-    cursor.commit(IngestUtil.toLong(b.number))
+    cursor.commit(EthUtil.toLong(b.number))
 
     Seq(blk)
   }    

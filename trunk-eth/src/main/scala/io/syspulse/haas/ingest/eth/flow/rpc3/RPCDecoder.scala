@@ -27,7 +27,7 @@ import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 import io.syspulse.haas.ingest.Decoder
 import io.syspulse.skel.util.DiffSet
 import io.syspulse.haas.ingest.Config
-import io.syspulse.haas.ingest.IngestUtil
+import io.syspulse.skel.blockchain.eth.EthUtil
 
 import io.syspulse.skel.service.JsonCommon
 
@@ -124,10 +124,10 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       raw.maxFeePerGas.map(v => BigInt(Util.unhex(v))),
       raw.maxPriorityFeePerGas.map(v => BigInt(Util.unhex(v))),
       raw.hash,
-      IngestUtil.toOption(raw.input),
+      EthUtil.toOption(raw.input),
 
       //java.lang.Long.parseLong(raw.nonce.drop(2),16),
-      IngestUtil.toBigInt(raw.nonce),
+      EthUtil.toBigInt(raw.nonce),
       
       raw.to,
       i = raw.transactionIndex,
@@ -598,8 +598,8 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
   def decodeTransactions(block: RpcBlock)(implicit config:Config,uri:String): (Seq[Transaction],Seq[RpcReceipt]) = {
     val b = block.result.get
 
-    val ts = IngestUtil.toLong(b.timestamp)
-    val block_number = IngestUtil.toLong(b.number)
+    val ts = EthUtil.toLong(b.timestamp)
+    val block_number = EthUtil.toLong(b.number)
 
     log.info(s"Block(${block_number},${b.transactions.size})")
       
@@ -610,7 +610,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       config.filter.size == 0 || config.filter.contains(tx.hash)
     })
     .map{ tx:RpcTx => {
-      val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
+      val transaction_index = EthUtil.toLong(tx.transactionIndex).toInt
       val logs = receipts.get(tx.hash).get.logs
       val receipt = receipts.get(tx.hash)
       
@@ -623,28 +623,28 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         formatAddr(tx.from,config.formatAddr),
         formatAddr(tx.to,config.formatAddr),
         
-        IngestUtil.toLong(tx.gas),
-        IngestUtil.toBigInt(tx.gasPrice),
+        EthUtil.toLong(tx.gas),
+        EthUtil.toBigInt(tx.gasPrice),
         tx.input,
-        IngestUtil.toBigInt(tx.value),
+        EthUtil.toBigInt(tx.value),
 
-        IngestUtil.toBigInt(tx.nonce),
+        EthUtil.toBigInt(tx.nonce),
         
-        tx.maxFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_fee_per_gas,
-        tx.maxPriorityFeePerGas.map(IngestUtil.toBigInt(_)), //tx.max_priority_fee_per_gas, 
+        tx.maxFeePerGas.map(EthUtil.toBigInt(_)), //tx.max_fee_per_gas,
+        tx.maxPriorityFeePerGas.map(EthUtil.toBigInt(_)), //tx.max_priority_fee_per_gas, 
 
-        tx.`type`.map(r => IngestUtil.toLong(r).toInt),
+        tx.`type`.map(r => EthUtil.toLong(r).toInt),
 
-        receipt.map(r => IngestUtil.toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
-        receipt.map(r => IngestUtil.toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
+        receipt.map(r => EthUtil.toLong(r.cumulativeGasUsed)).getOrElse(0L), //0L,//tx.receipt_cumulative_gas_used, 
+        receipt.map(r => EthUtil.toLong(r.gasUsed)).getOrElse(0L), //0L,//tx.receipt_gas_used, 
         receipt.map(r => formatAddr(r.contractAddress,config.formatAddr)).flatten, //tx.receipt_contract_address, 
         Some(b.receiptsRoot), //tx.receipt_root, 
-        receipt.flatMap(r => r.status.map(IngestUtil.toLong(_).toInt)), //tx.receipt_status, 
-        receipt.map(_.effectiveGasPrice.map(r => IngestUtil.toBigInt(r))).flatten, //tx.receipt_effective_gas_price
+        receipt.flatMap(r => r.status.map(EthUtil.toLong(_).toInt)), //tx.receipt_status, 
+        receipt.map(_.effectiveGasPrice.map(r => EthUtil.toBigInt(r))).flatten, //tx.receipt_effective_gas_price
 
         logs = Some(logs.map( r => {
           EventTx(
-            IngestUtil.toLong(r.logIndex).toInt,
+            EthUtil.toLong(r.logIndex).toInt,
             formatAddr(r.address,config.formatAddr),
             r.data,
             r.topics

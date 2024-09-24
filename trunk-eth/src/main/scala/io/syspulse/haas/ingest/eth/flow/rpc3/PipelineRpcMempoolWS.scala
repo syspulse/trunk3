@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
 
-import io.syspulse.haas.ingest.IngestUtil
+import io.syspulse.skel.blockchain.eth.EthUtil
 
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
@@ -89,20 +89,20 @@ abstract class PipelineWsMempool[E <: skel.Ingestable](config:Config)
         ts = m.ts,
         pool = "0",     // always pending
         bhash = rmx.blockHash,
-        b = IngestUtil.toLong(rmx.blockNumber),
+        b = EthUtil.toLong(rmx.blockNumber),
         from = rmx.from,
-        gas = IngestUtil.toLong(rmx.gas),
+        gas = EthUtil.toLong(rmx.gas),
         p = BigInt(0),
-        fee = IngestUtil.toBigInt(rmx.maxFeePerGas), // old pre EIP-1155
-        tip = IngestUtil.toBigInt(rmx.maxPriorityFeePerGas), // old transactions without tip
+        fee = EthUtil.toBigInt(rmx.maxFeePerGas), // old pre EIP-1155
+        tip = EthUtil.toBigInt(rmx.maxPriorityFeePerGas), // old transactions without tip
         hash = m.hash,
         inp = rmx.input,
-        non = IngestUtil.toBigInt(rmx.nonce),
+        non = EthUtil.toBigInt(rmx.nonce),
         to = rmx.to,
         i = None,              // transaction index
-        v = IngestUtil.toBigInt(rmx.v),
-        typ = IngestUtil.toLong(rmx.`type`).map(_.toInt).getOrElse(0),
-        chid = IngestUtil.toLong(rmx.chainId),
+        v = EthUtil.toBigInt(rmx.v),
+        typ = EthUtil.toLong(rmx.`type`).map(_.toInt).getOrElse(0),
+        chid = EthUtil.toLong(rmx.chainId),
         sig = Some(s"${rmx.v}:${rmx.r}:${rmx.s}"),
         
         trace = trace

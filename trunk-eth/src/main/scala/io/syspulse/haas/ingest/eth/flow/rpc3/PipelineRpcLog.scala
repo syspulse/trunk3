@@ -38,7 +38,8 @@ import io.syspulse.haas.ingest.eth.EventJson._
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson
-import io.syspulse.haas.ingest.IngestUtil
+
+import io.syspulse.skel.blockchain.eth.EthUtil
 
 abstract class PipelineRpcEvent[E <: skel.Ingestable](config:Config)
                 (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -50,7 +51,7 @@ abstract class PipelineRpcEvent[E <: skel.Ingestable](config:Config)
     val bb = parseBlock(data)
     if(bb.size!=0) {
       val b = bb.last.result.get
-      latestTs.set(IngestUtil.toLong(b.timestamp) * 1000L)
+      latestTs.set(EthUtil.toLong(b.timestamp) * 1000L)
     }    
     bb
   }
@@ -66,15 +67,15 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
   def transform(block: RpcBlock): Seq[Event] = {
     val b = block.result.get
 
-    val ts = IngestUtil.toLong(b.timestamp)
-    val block_number = IngestUtil.toLong(b.number)
+    val ts = EthUtil.toLong(b.timestamp)
+    val block_number = EthUtil.toLong(b.number)
 
     log.info(s"transaction: ${b.transactions.size}")
       
     val receipts:Map[String,RpcReceipt] = decodeReceipts(block)(config,uri.uri)
     
     val ee = b.transactions.flatMap( tx => {
-      val transaction_index = IngestUtil.toLong(tx.transactionIndex).toInt
+      val transaction_index = EthUtil.toLong(tx.transactionIndex).toInt
       val receipt = receipts(tx.hash)
       val logs = receipt.logs
       
@@ -86,8 +87,8 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
           data = log.data,
           hash = tx.hash,                                 // transaction hash !
           topics = log.topics, 
-          i = IngestUtil.toLong(log.logIndex).toInt,                 // log index
-          tix = IngestUtil.toLong(tx.transactionIndex).toInt         // transaction index          
+          i = EthUtil.toLong(log.logIndex).toInt,                 // log index
+          tix = EthUtil.toLong(tx.transactionIndex).toInt         // transaction index          
         )
       })
       

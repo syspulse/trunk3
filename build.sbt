@@ -284,7 +284,7 @@ lazy val trunk_pipe = (project in file("trunk-pipe"))
           libSkelCore,
           libSkelIngest,
           libSkelDSL,
-          libSkelBlockchain,          
+          libSkelBlockchainCore,
           libExtCore,
 
           libUUID, 
@@ -301,6 +301,7 @@ lazy val trunk_eth = (project in file("trunk-eth"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
+          libSkelBlockchainEvm,
           libSkelIngest,          
 
           libCsv,
@@ -339,7 +340,8 @@ lazy val trunk_vechain = (project in file("trunk-vechain"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelIngest,          
+          libSkelIngest,
+          libSkelBlockchainEvm,       
 
           libCsv,
           libUUID,           
@@ -358,7 +360,8 @@ lazy val trunk_stark = (project in file("trunk-stark"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelIngest,          
+          libSkelIngest,
+          libSkelBlockchainEvm,       
 
           libCsv,
           libUUID,           

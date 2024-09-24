@@ -202,7 +202,8 @@ object Dependencies {
     val libSkelCli =          "io.syspulse"                     %% "skel-cli"                       % skelVersion
     val libSkelSerde =        "io.syspulse"                     %% "skel-serde"                     % skelVersion
     val libSkelOdometer =     "io.syspulse"                     %% "skel-odometer"                  % skelVersion
-    val libSkelBlockchain =   "io.syspulse"                     %% "blockchain-core"                % skelVersion
+    val libSkelBlockchainCore="io.syspulse"                     %% "blockchain-core"                % skelVersion
+    val libSkelBlockchainEvm ="io.syspulse"                     %% "blockchain-evm"                 % skelVersion
     
     val libSkelSyslogCore =   "io.syspulse"                     %% "syslog-core"                    % skelVersion
     val libSkelJobCore =      "io.syspulse"                     %% "job-core"                       % skelVersion

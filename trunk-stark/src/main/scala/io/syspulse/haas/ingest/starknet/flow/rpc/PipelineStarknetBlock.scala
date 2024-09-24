@@ -30,7 +30,7 @@ import io.syspulse.haas.ingest.starknet.StarknetJson._
 import io.syspulse.haas.ingest.starknet.flow.rpc._
 import io.syspulse.haas.ingest.starknet.flow.rpc.StarknetRpcJson._
 
-import io.syspulse.haas.ingest.IngestUtil
+import io.syspulse.skel.blockchain.eth.EthUtil
 
 abstract class PipelineStarknetBlock[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
@@ -70,7 +70,7 @@ class PipelineBlock(config:Config) extends PipelineStarknetBlock[Block](config) 
       b.new_root,
       b.timestamp * 1000L,
       tx = None,
-      l1gas = b.l1_gas_price.map(g => IngestUtil.toBigInt(g.price_in_wei))
+      l1gas = b.l1_gas_price.map(g => EthUtil.toBigInt(g.price_in_wei))
     )
 
     // commit cursor

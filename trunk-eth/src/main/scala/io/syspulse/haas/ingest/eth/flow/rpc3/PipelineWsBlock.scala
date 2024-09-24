@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.Config
 import io.syspulse.haas.ingest.eth._
 
-import io.syspulse.haas.ingest.IngestUtil
+import io.syspulse.skel.blockchain.eth.EthUtil
 
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.BlockJson
@@ -89,7 +89,7 @@ abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
   def parse(data:String):Seq[RpcSubscriptionHeadResult] = {
     val h = parseHead(data)
     if(h.isDefined) {
-      latestTs.set(IngestUtil.toLong(h.get.timestamp) * 1000L)
+      latestTs.set(EthUtil.toLong(h.get.timestamp) * 1000L)
       Seq(h.get)
     } else 
       Seq.empty
@@ -98,7 +98,7 @@ abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
   def convert(b:RpcSubscriptionHeadResult):Block = {
     
     val blk = Block(
-      IngestUtil.toLong(b.number),
+      EthUtil.toLong(b.number),
       b.hash,
       b.parentHash,
       b.nonce,
@@ -109,17 +109,17 @@ abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
       b.receiptsRoot,
       formatAddr(b.miner,config.formatAddr),
       
-      IngestUtil.toBigInt(b.difficulty),
-      IngestUtil.toBigInt(b.totalDifficulty).getOrElse(0L),
-      0L, //IngestUtil.toLong(b.size), // size Unknown
+      EthUtil.toBigInt(b.difficulty),
+      EthUtil.toBigInt(b.totalDifficulty).getOrElse(0L),
+      0L, //EthUtil.toLong(b.size), // size Unknown
 
       b.extraData, 
           
-      IngestUtil.toLong(b.gasLimit), 
-      IngestUtil.toLong(b.gasUsed), 
-      IngestUtil.toLong(b.timestamp) * 1000L, 
+      EthUtil.toLong(b.gasLimit), 
+      EthUtil.toLong(b.gasUsed), 
+      EthUtil.toLong(b.timestamp) * 1000L, 
       -1, //b.transactions.size,  // FIX ME ! transactions number need to be retrieved
-      b.baseFeePerGas.map(d => IngestUtil.toLong(d)),
+      b.baseFeePerGas.map(d => EthUtil.toLong(d)),
       
       // TODO: Add to Blocks !
       // b.withdrawalsRoot,
