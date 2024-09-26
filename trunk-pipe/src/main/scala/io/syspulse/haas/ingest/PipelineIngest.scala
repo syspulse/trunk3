@@ -111,7 +111,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             `type` = config.interceptorType,
             severity = config.interceptorSeverity,
             ts = System.currentTimeMillis(),
-            blockchain = io.syspulse.ext.core.Blockchain(blockchain.id.getOrElse(""),blockchain.name),
+            blockchain = io.syspulse.ext.core.Blockchain(blockchain.id.getOrElse(""),blockchain.bid),
             metadata = Map(
               "tx_hash" -> r.txHash,
               "monitored_contract" -> config.interceptorContract,
