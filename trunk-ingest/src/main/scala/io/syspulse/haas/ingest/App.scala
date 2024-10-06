@@ -335,6 +335,9 @@ object App extends skel.Server {
           case "ws.block_transaction" => 
             Some(new eth.flow.rpc3.PipelineWsBlockTransaction(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
+          case "mempool.hash" | "ws.mempool.hash" => 
+            Some(new eth.flow.rpc3.PipelineWsMempoolHash(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");
             sys.exit(1)

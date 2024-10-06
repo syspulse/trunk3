@@ -163,3 +163,29 @@ class PipelineWsMempoolTx(config:Config) extends PipelineWsMempool[MempoolTx](co
     Seq(mtx)
   }
 }
+
+class PipelineWsMempoolHash(config:Config) extends PipelineWsMempool[MempoolTx](config) {
+
+  def transform(m: MempoolTransaction): Seq[MempoolTx] = {    
+    Seq(MempoolTx(
+      ts = m.ts,
+      pool = "0",
+      bhash = None,
+      b = None,
+      from = "",
+      gas = 0L,
+      p = BigInt(0),
+      fee = None,
+      tip = None,
+      hash = m.hash,
+      inp = None,
+      non = BigInt(0),
+      to = None,
+      i = None, 
+      v = BigInt(0),
+      typ = 0,
+      chid = None, 
+      sig = None, 
+    ))
+  }
+}

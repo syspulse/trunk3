@@ -268,7 +268,8 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
   //   body
   // }
 
-    var err = false
+    var errState = false
+    var errCall = false
 
     val tx = {
       val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${txHash}"],"id": ${System.currentTimeMillis}}"""
@@ -279,17 +280,18 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         body.parseJson.convertTo[RpcMempoolTransactionResult]
       } catch {
         case e:Exception => 
-          err = true
           log.error(s"failed to parse: '${body}'",e)
           return Vector.empty
       }
-      if(! r.result.isDefined)
+      if(! r.result.isDefined) {
+        log.debug(s"eth_getTransactionByHash: ${txHash}: ${body}")
         return Vector.empty
+      }
 
       r.result.get
     }
 
-    // collect States
+    // collect States    
     val state:Option[RpcTraceStates] = {
       val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
         "params":[
@@ -317,27 +319,69 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       log.debug(s"body=${body}")
 
       if(body.contains(""""code":-32000""")) {
-        err = true
-        log.debug(s"state: ${body}")
-        return Vector.empty
+        errState = true
+        log.debug(s"debug_traceCall: ${txHash}: ${body}")
+        None
+      } else {
+
+        try {
+          val r = body.parseJson.convertTo[RpcTraceStateResult]
+          r.result
+        } catch {
+          case e:Exception => 
+            errState = true
+            log.error(s"failed to parse: '${body}'",e)
+            None
+        }              
       }
-
-      val r = try {
-        body.parseJson.convertTo[RpcTraceStateResult]
-      } catch {
-        case e:Exception => 
-          err = true
-          log.error(s"failed to parse: '${body}'",e)
-          return Vector.empty
-      }
-
-      if(! r.result.isDefined)
-        return Vector.empty
-
-      r.result
     }
 
-    // collect calls
+    // // https://docs.alchemy.com/reference/debug-tracetransaction
+    // val call:Option[RpcTraceCall] = {
+    //   val json = s"""{"jsonrpc":"2.0","method":"debug_traceTransaction",
+    //     "params":[
+    //       {
+    //         "${txHash}",
+    //         {
+    //           "tracer":"callTracer"              
+    //         }
+    //       }
+    //     ],
+    //     "id": ${System.currentTimeMillis}}
+    //     """.trim.replaceAll("\\s+","")
+
+    //   //log.debug(s"${json}")
+
+    //   val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+    //   val body = rsp.text()
+    //   log.debug(s"body=${body}")
+
+    //   if(body.contains(""""code":-32""")) {
+    //     err = true
+    //     log.debug(s"debug_traceTransaction: ${txHash}: ${body}")
+    //     None
+    //   } else {
+        
+    //     try {
+    //       val r = body.parseJson.convertTo[RpcTraceCallResult]
+    //       r.result
+    //     } catch {
+    //       case e:Exception => 
+    //         err = true
+    //         log.error(s"failed to parse: '${body}'",e)
+    //         None
+    //     }        
+    //   }
+    // }
+
+    // if(err) {
+    //   return Vector.empty
+    // }
+    
+    // Vector(
+    //   CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, state = state, call = call)
+    // )
+  
     val call:Option[RpcTraceCall] = {
       val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
         "params":[
@@ -359,42 +403,39 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         ],
         "id": ${System.currentTimeMillis}}
         """.trim.replaceAll("\\s+","")
-
-      //log.debug(s"${json}")
-
+      
       val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
       val body = rsp.text()
       log.debug(s"body=${body}")
 
-      if(body.contains(""""code":-32000""")) {
-        err = true
-        log.debug(s"calls: ${body}")
-        return Vector.empty
+      if(body.contains(""""code":-32""")) {
+        errCall = true
+        log.debug(s"debug_traceCall: ${txHash}: ${body}")
+        None
+      } else {
+
+        try {
+          val r = body.parseJson.convertTo[RpcTraceCallResult]
+          r.result
+        } catch {
+          case e:Exception => 
+            errCall = true
+            log.error(s"failed to parse: '${body}'",e)
+            None
+        }        
       }
-
-      val r = try {
-        body.parseJson.convertTo[RpcTraceCallResult]
-      } catch {
-        case e:Exception => 
-          err = true
-          log.error(s"failed to parse: '${body}'",e)
-          return Vector.empty
-      }
-
-      if(! r.result.isDefined)
-        return Vector.empty
-
-      r.result
     }
 
-    if(err) {
+    if(errState && errCall) {
       return Vector.empty
     }
-    
+
     Vector(
       CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, state = state, call = call)
     )
   }
+
+
 
   def parseHead(data:String):Option[RpcSubscriptionHeadResult] = {
     if(data.isEmpty()) return None

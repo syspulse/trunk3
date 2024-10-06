@@ -385,6 +385,10 @@ case class RpcTraceCall(
   
   input: Option[String],
   output: Option[String],
+
+  error:Option[String],
+  revertReason:Option[String],
+
   calls: Option[Array[RpcTraceCall]]  
 )
 
@@ -493,7 +497,7 @@ object EthRpcJson extends JsonCommon {
   implicit val jf_rpc_state_states = jsonFormat2(RpcTraceStates)
   implicit val jf_rpc_state_res = jsonFormat3(RpcTraceStateResult)
   
-  implicit lazy val jf_rpc_call:JsonFormat[RpcTraceCall] = lazyFormat(jsonFormat9(RpcTraceCall))
+  implicit lazy val jf_rpc_call:JsonFormat[RpcTraceCall] = lazyFormat(jsonFormat11(RpcTraceCall))
   implicit val jf_rpc_call_res = jsonFormat3(RpcTraceCallResult)
 
 }

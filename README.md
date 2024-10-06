@@ -281,8 +281,10 @@ Run Ethereum ingest with interception script:
 
 ### Run from Websocket
 
+Remember, that Websocket is also throttled, so use `--throttle=10`
+
 ```
-./run-trunk.sh -e mempool.ws -f ws://geth:8546 --rpc.url=http://geth:8545 --throttle=1
+./run-trunk.sh -e mempool.ws -f ws://geth:8546 --rpc.url=http://geth:8545 --throttle=10
 ```
 
 ### Run with Polling
