@@ -29,7 +29,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
+
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import java.util.concurrent.TimeUnit
@@ -55,7 +55,7 @@ import io.syspulse.haas.ingest.CursorBlock
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
 abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
-                                                                       (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
+  (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with VechainDecoder[E] {
   
   import VechainRpcJson._

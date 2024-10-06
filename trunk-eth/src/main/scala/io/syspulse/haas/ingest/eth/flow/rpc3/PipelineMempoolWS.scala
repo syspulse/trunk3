@@ -30,7 +30,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
+
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import java.util.concurrent.TimeUnit
@@ -51,13 +51,11 @@ import requests.Response
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.RestartSource
 
-import io.syspulse.skel.ingest.flow.AttributeActor
-
 import io.syspulse.haas.core.RetryException
 import akka.stream.Attributes
 
 abstract class PipelineMempoolWS[T,O <: Ingestable,E <: Ingestable](config:Config)
-                                                                    (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
+  (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with RPCDecoder[E] {
 
   val delta = true
@@ -70,7 +68,7 @@ abstract class PipelineMempoolWS[T,O <: Ingestable,E <: Ingestable](config:Confi
     feed.split("://").toList match {
       case "ws" :: _ | "wss" :: _  =>         
         
-        val s0 = Flows.fromWebsocket(
+        val s0 = fromWebsocket(
           uri.uri, 
           helloMsg = Some("""{"jsonrpc":"2.0","id":1,"method":"eth_subscribe","params":["newPendingTransactions"]}""")
         )

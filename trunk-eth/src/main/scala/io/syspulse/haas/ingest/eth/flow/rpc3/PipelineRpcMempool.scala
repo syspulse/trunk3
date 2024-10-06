@@ -24,7 +24,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
+
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import java.util.concurrent.TimeUnit
@@ -38,8 +38,12 @@ import io.syspulse.haas.ingest.eth.MempoolJson._
 import io.syspulse.haas.ingest.PipelineIngest
 import io.syspulse.haas.ingest.eth.flow.rpc3.RpcTxPoolResult
 
+// disable Parquet4s recursion
+import ParqRcpTraceCall._
+import io.syspulse.skel.serde.Parq.{bigIntTypeCodec,bigIntSchema}
+
 abstract class PipelineRpcMempool[E <: skel.Ingestable](config:Config)
-                                                       (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
+  (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineMempoolRPC[MempoolTx,MempoolTx,E](config) {
   
   def apiSuffix():String = s"/mempool"

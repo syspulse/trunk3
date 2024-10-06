@@ -26,7 +26,7 @@ import io.syspulse.haas.ingest.Decoder
 
 trait StarknetDecoder[T] extends Decoder[T,RpcBlockResult,Nothing,Nothing,Nothing,Nothing] {
 
-  protected val log = Logger(s"${this}")
+  val log = Logger(s"${this}")
 
   import StarknetRpcJson._ 
   

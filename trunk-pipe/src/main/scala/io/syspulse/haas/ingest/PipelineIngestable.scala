@@ -34,7 +34,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
+
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import io.syspulse.haas.ingest.Config
@@ -46,13 +46,11 @@ abstract class PipelineIngestable[T,O <: skel.Ingestable,E <: skel.Ingestable,W 
     parqEncoders1:ParquetRecordEncoder[W],parsResolver1:ParquetSchemaResolver[W]
   )
   extends Pipeline[T,O,E](config.feed,config.output,config.throttle,config.delimiter,config.buffer,format=config.format) {
-  
-  private val log = Logger(s"${this}")
-  
+    
   var latestTs:AtomicLong = new AtomicLong(0)
   
-  override def getRotator():Flows.Rotator = 
-    new Flows.RotatorTimestamp(() => {
+  override def getRotator():Rotator = 
+    new RotatorTimestamp(() => {
       latestTs.get()
     })
 

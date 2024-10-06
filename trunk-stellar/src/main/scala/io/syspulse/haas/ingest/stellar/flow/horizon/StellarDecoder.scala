@@ -32,7 +32,7 @@ import java.time.Instant
 
 trait StellarDecoder[T] extends Decoder[T,StellarRpcBlock,StellarRpcTransaction,Nothing,Nothing,StellarRpcTransaction] {
 
-  protected val log = Logger(s"${this}")
+  val log = Logger(s"${this}")
 
   import StellarRpcJson._  
   

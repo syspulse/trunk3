@@ -30,7 +30,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
+
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import java.util.concurrent.TimeUnit
@@ -50,8 +50,6 @@ import scala.util.control.NoStackTrace
 import requests.Response
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.RestartSource
-
-import io.syspulse.skel.ingest.flow.AttributeActor
 
 import io.syspulse.haas.core.RetryException
 import akka.stream.Attributes
@@ -76,7 +74,7 @@ abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
     feed.split("://").toList match {
       case "ws" :: _ | "wss" :: _  =>         
         
-        val s0 = Flows.fromWebsocket(
+        val s0 = fromWebsocket(
           uri.uri, 
           helloMsg = Some("""{"jsonrpc":"2.0","id":1,"method":"eth_subscribe","params":["newHeads"]}""")
         )

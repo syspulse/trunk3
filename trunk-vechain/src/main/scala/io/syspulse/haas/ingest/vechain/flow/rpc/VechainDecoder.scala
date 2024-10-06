@@ -26,11 +26,10 @@ import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.Decoder
 
 trait VechainDecoder[T] extends Decoder[T,RpcBlock,RpcTx,Nothing,Nothing,RpcTx] {
-
-  protected val log = Logger(s"${this}")
-
+  val log = Logger(s"${this}")
+  
   import VechainRpcJson._ 
-    
+      
   def parseBlock(data:String):Seq[RpcBlock] = {
     if(data.isEmpty()) return Seq()
     

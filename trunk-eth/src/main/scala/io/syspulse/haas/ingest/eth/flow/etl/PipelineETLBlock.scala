@@ -60,8 +60,7 @@ abstract class PipelineETLBlock[E <: skel.Ingestable](config:Config)(implicit va
   // }
 }
 
-class PipelineBlock(config:Config) 
-  extends PipelineETLBlock[Block](config) {
+class PipelineBlock(config:Config) extends PipelineETLBlock[Block](config) {
 
   def transform(block: Block): Seq[Block] = {
     Seq(block)

@@ -35,7 +35,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
+
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import io.syspulse.haas.ingest.Config
@@ -53,9 +53,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     parqEncoders0:ParquetRecordEncoder[E],parsResolver0:ParquetSchemaResolver[E]
   )
   extends PipelineIngestable[T,O,E,io.syspulse.ext.core.Events](config) {
-  
-  private val log = Logger(s"${this}")
-
+    
   override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
     minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
     maxBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),

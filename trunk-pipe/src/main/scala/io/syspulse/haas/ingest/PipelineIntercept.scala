@@ -34,7 +34,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
+
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import io.syspulse.haas.ingest.Config
@@ -57,8 +57,6 @@ abstract class PipelineIntercept[T,O <: skel.Ingestable,E <: skel.Ingestable]
   (implicit val fmt10:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngestable[T,O,E,InterceptOutput](config) {
   
-  private val log = Logger(s"${this}")
-
   var interceptor = if(config.script.isEmpty()) 
     None 
   else 

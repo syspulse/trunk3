@@ -44,7 +44,7 @@ import io.syspulse.haas.ingest.PipelineIngest
 
 abstract class PipelineETLLog[E <: skel.Ingestable](config:Config)(implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineIngest[EthLog,Event,E](config) with PipelineETL[E] {
-  
+    
   def apiSuffix():String = s"/log"
   
   def parse(data:String):Seq[EthLog] = {
@@ -67,8 +67,7 @@ abstract class PipelineETLLog[E <: skel.Ingestable](config:Config)(implicit val 
 
 }
 
-class PipelineLog(config:Config) 
-  extends PipelineETLLog[Event](config) {
+class PipelineLog(config:Config) extends PipelineETLLog[Event](config) {
 
   def transform(e: Event): Seq[Event] = Seq(e)
 }

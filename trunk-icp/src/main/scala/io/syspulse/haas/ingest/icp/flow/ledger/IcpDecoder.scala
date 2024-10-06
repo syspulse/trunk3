@@ -30,9 +30,9 @@ import io.syspulse.haas.ingest.Decoder
 
 trait IcpDecoder[T] extends Decoder[T,IcpRpcBlock,IcpRpcBlock,Nothing,Nothing,IcpRpcBlock] {
 
-  protected val log = Logger(s"${this}")
+  import IcpRpcJson._
 
-  import IcpRpcJson._  
+  val log = Logger(s"${this}")
   
   // it really parses IcpTransactions into IcpBlock (Transaction)
   def parseBlock(data:String):Seq[IcpRpcBlock] = {

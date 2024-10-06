@@ -4,10 +4,11 @@ import com.typesafe.scalalogging.Logger
 
 // ATTENTION
 import io.syspulse.skel.service.JsonCommon
-import io.syspulse.skel.Ingestable
 
 import spray.json._
 import spray.json.{DefaultJsonProtocol,NullOptions}
+
+import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
 // --- Mempool ----
@@ -166,7 +167,7 @@ case class RpcBlock(
   jsonrpc:String,  
   result:Option[RpcBlockResult],
   id: Any
-)  extends Ingestable
+) extends Ingestable
 
 
 case class RpcLog(
@@ -335,7 +336,9 @@ case class RpcMempoolTransactionResult(
 //   {
 //     "0x264bd8291fae1d75db2c5f573b07faa6715997b5":{"balance":"0x18fc211544b2d4c4262","nonce":823700},
 //     "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97":{"balance":"0x862e268b9c6dfb7f"},
-//     "0xf77c3c4ae233d4433a6bc32ac1e15909739d8aa4":{"balance":"0x160093701509db5"}
+//     "0xf77c3c4ae233d4433a6bc32ac1e15909739d8aa4":{"balance":"0x160093701509db5"},
+//     "0x6b175474e89094c44da98b954eedeac495271d0f":{"storage":{"0x539c5502461a2d0bd30d62ca6abfdb215af8574930c0749e06e22b5656df9b04":"0x00000000000000000000000000000000000000000000000b1c43700aeb91ca21"}}},
+//     "0x6b175474e89094c44da98b954eedeac495271d0f":{"balance":"0x0","code":"0x60000000000"},
 //   },
 //   "pre":
 //   {
@@ -345,10 +348,22 @@ case class RpcMempoolTransactionResult(
 //   }
 // }
 
+case class RpcTraceState(
+  storage:Option[Map[String,String]],
+  balance:Option[String],
+  code:Option[String],
+  nonce:Option[Long]
+)
+
+case class RpcTraceStates(
+  post:Map[String,RpcTraceState],
+  pre:Map[String,RpcTraceState]
+)
+
 case class RpcTraceStateResult(
   jsonrpc:String,
   id:Long,
-  result:Option[JsValue]
+  result:Option[RpcTraceStates] //Option[JsValue]
 )
 // --- call ---------------------------------------
 // {
@@ -360,10 +375,23 @@ case class RpcTraceStateResult(
 //   "value":"0x6e66e70e34ec00",
 //   "type":"CALL"}
 // }
+case class RpcTraceCall(
+  `type`:String,
+  from:String,
+  to:String,
+  value:Option[String],  
+  gas:String,
+  gasUsed:String,
+  
+  input: Option[String],
+  output: Option[String],
+  calls: Option[Array[RpcTraceCall]]  
+)
+
 case class RpcTraceCallResult(
   jsonrpc:String,
   id:Long,
-  result:Option[JsValue]
+  result:Option[RpcTraceCall]  //Option[JsValue]
 )
 
 
@@ -461,6 +489,11 @@ object EthRpcJson extends JsonCommon {
   implicit val jf_rpc_mem_tx = jsonFormat20(RpcMempoolTransaction)  
   implicit val jf_rpc_mem_tx_res = jsonFormat3(RpcMempoolTransactionResult)  
 
+  implicit val jf_rpc_state = jsonFormat4(RpcTraceState)
+  implicit val jf_rpc_state_states = jsonFormat2(RpcTraceStates)
   implicit val jf_rpc_state_res = jsonFormat3(RpcTraceStateResult)
-  implicit val jf_rpc_call_res = jsonFormat3(RpcTraceCallResult)  
+  
+  implicit lazy val jf_rpc_call:JsonFormat[RpcTraceCall] = lazyFormat(jsonFormat9(RpcTraceCall))
+  implicit val jf_rpc_call_res = jsonFormat3(RpcTraceCallResult)
+
 }

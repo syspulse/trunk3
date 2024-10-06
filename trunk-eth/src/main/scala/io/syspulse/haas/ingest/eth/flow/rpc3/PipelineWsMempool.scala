@@ -24,8 +24,6 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
-import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import java.util.concurrent.TimeUnit
 
@@ -41,11 +39,17 @@ import io.syspulse.haas.ingest.eth.CallTraceJson._
 import io.syspulse.haas.ingest.PipelineIngest
 import io.syspulse.haas.ingest.eth.flow.rpc3.RpcTxPoolResult
 
+import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
+
+// disable Parquet4s recursion
+import ParqRcpTraceCall._
+import io.syspulse.skel.serde.Parq.{bigIntTypeCodec,bigIntSchema}
+
 abstract class PipelineWsMempool[E <: skel.Ingestable](config:Config)
-                                                       (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
+  (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineMempoolWS[MempoolTransaction,MempoolTransaction,E](config) {
   
-  def apiSuffix():String = s"/mempool.stream"
+  def apiSuffix():String = s"/mempool.ws"
 
   // only json is supported !
   override def parse(data:String):Seq[MempoolTransaction] = {
@@ -147,7 +151,7 @@ class PipelineWsMempoolTxTrace(config:Config) extends PipelineWsMempool[MempoolT
 
   def transform(m: MempoolTransaction): Seq[MempoolTx] = {    
     val trace = traceMempoolTx(m.hash)(config) 
-    val mtx = getMempoolTx(m,Some(trace.toArray))    
+    val mtx = getMempoolTx(m,Some(trace.toArray))
     Seq(mtx)
   }
 }

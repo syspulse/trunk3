@@ -32,15 +32,14 @@ import io.syspulse.skel.blockchain.eth.EthUtil
 import io.syspulse.skel.service.JsonCommon
 
 trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,RpcTx] with JsonCommon {
-
-  protected val log = Logger(s"${this}")
-
+  val log = Logger(s"${this}")
+  
   import EthRpcJson._
   import TxJson._
   import BlockJson._
   import TokenTransferJson._
   import EventJson._
-  
+    
   def parseBlock(data:String):Seq[RpcBlock] = {
     if(data.isEmpty()) return Seq()
     
@@ -291,7 +290,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     }
 
     // collect States
-    val state = {
+    val state:Option[RpcTraceStates] = {
       val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
         "params":[
           {
@@ -335,11 +334,11 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       if(! r.result.isDefined)
         return Vector.empty
 
-      r.result.get.toString
+      r.result
     }
 
-    // collect States
-    val calls = {
+    // collect calls
+    val call:Option[RpcTraceCall] = {
       val json = s"""{"jsonrpc":"2.0","method":"debug_traceCall",
         "params":[
           {
@@ -385,7 +384,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       if(! r.result.isDefined)
         return Vector.empty
 
-      r.result.get.toString
+      r.result
     }
 
     if(err) {
@@ -393,7 +392,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     }
     
     Vector(
-      CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, state = state, calls = calls)
+      CallTrace(ts = System.currentTimeMillis(),hash = tx.hash, state = state, call = call)
     )
   }
 

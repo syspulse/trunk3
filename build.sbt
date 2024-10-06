@@ -301,6 +301,7 @@ lazy val trunk_eth = (project in file("trunk-eth"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
+          libSkelSerde,
           libSkelBlockchainEvm,
           libSkelIngest,          
 

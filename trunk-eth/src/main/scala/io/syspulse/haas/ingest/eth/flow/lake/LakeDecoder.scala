@@ -26,7 +26,7 @@ import io.syspulse.haas.ingest.eth._
 
 trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx] {
 
-  protected val log = Logger(s"${this}")
+  val log = Logger(s"${this}")
   
   import BlockJson._
   import TransactionJson._

@@ -29,7 +29,7 @@ import io.syspulse.haas.ingest.Decoder
 
 trait IcpDecoder[T] extends Decoder[T,IcpRpcBlock,Nothing,Nothing,Nothing,Nothing] {
 
-  protected val log = Logger(s"${this}")
+  val log = Logger(s"${this}")
 
   import IcpRpcJson._  
   
