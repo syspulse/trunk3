@@ -104,7 +104,7 @@ abstract class PipelineWsMempool[E <: skel.Ingestable](config:Config)
         non = EthUtil.toBigInt(rmx.nonce),
         to = rmx.to,
         i = None,              // transaction index
-        v = EthUtil.toBigInt(rmx.v),
+        v = EthUtil.toBigInt(rmx.value),
         typ = EthUtil.toLong(rmx.`type`).map(_.toInt).getOrElse(0),
         chid = EthUtil.toLong(rmx.chainId),
         sig = Some(s"${rmx.v}:${rmx.r}:${rmx.s}"),
@@ -115,8 +115,8 @@ abstract class PipelineWsMempool[E <: skel.Ingestable](config:Config)
       MempoolTx(
         ts = m.ts,
         pool = "0",     // always pending
-        bhash = None,         // blockhash
-        b = None,               // blocknumber
+        bhash = None,   // blockhash
+        b = None,       // blocknumber
         from = "",
         gas = 0L,
         p = BigInt(0),
@@ -127,9 +127,9 @@ abstract class PipelineWsMempool[E <: skel.Ingestable](config:Config)
         non = BigInt(0),
         to = None,
         i = None,              // transaction index
-        v = BigInt(0),
+        v = None,              // value
         typ = 0,
-        chid = None,             // chainId
+        chid = None,           // chainId
         sig = None, 
         
         trace = trace
@@ -182,7 +182,7 @@ class PipelineWsMempoolHash(config:Config) extends PipelineWsMempool[MempoolTx](
       non = BigInt(0),
       to = None,
       i = None, 
-      v = BigInt(0),
+      v = None,
       typ = 0,
       chid = None, 
       sig = None, 

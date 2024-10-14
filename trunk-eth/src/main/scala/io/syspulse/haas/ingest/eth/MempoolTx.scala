@@ -20,7 +20,7 @@ case class MempoolTx(
   non: BigInt,
   to: Option[String],
   i: Option[Int],              // transaction index
-  v: BigInt,
+  v: Option[BigInt],
   typ: Int,
   chid: Option[Long],             // chainId
   sig: Option[String],           // zkSync may not have signature

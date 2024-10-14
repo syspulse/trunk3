@@ -130,7 +130,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       
       raw.to,
       i = raw.transactionIndex,
-      v = BigInt(Util.unhex(raw.value)),
+      v = Some(BigInt(Util.unhex(raw.value))),
       typ = Integer.parseInt(raw.`type`.drop(2),16).toByte,
       // this.accessList,
       chid = raw.chainId.map(v => Integer.parseInt(v.drop(2),16)),
