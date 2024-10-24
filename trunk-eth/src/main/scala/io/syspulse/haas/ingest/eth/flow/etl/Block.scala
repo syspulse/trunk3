@@ -14,7 +14,7 @@ case class Block(
   receipts_root:String,
   miner:String,
   difficulty:BigInt,
-  total_difficulty:BigInt,
+  total_difficulty:Option[BigInt],
   size:Long,
   extra_data:String,
   gas_limit:Long,

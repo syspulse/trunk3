@@ -17,7 +17,7 @@ case class Block(
 
   miner:String, // miner
   dif:BigInt,  // difficulty
-  dif0:BigInt, // total difficulty
+  dif0:Option[BigInt], // total difficulty
   
   sz:Long,     // size
   data:String, // extra data

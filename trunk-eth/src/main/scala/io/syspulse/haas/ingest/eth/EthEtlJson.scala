@@ -22,7 +22,7 @@ case class EthBlock(
 
   miner:String,
   difficulty:BigInt,
-  total_difficulty:BigInt,
+  total_difficulty:Option[BigInt],
   
   size:Long,
   extra_data:String,
@@ -72,7 +72,7 @@ case class EthBlockTx(
 
   miner:String,
   difficulty:BigInt,
-  total_difficulty:BigInt,
+  total_difficulty:Option[BigInt],
   
   size:Long,
   extra_data:String,

@@ -101,7 +101,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       formatAddr(b.miner,config.formatAddr),
       
       EthUtil.toBigInt(b.difficulty),
-      EthUtil.toBigInt(b.totalDifficulty),
+      b.totalDifficulty.map(EthUtil.toBigInt(_)),
       EthUtil.toLong(b.size),
 
       b.extraData, 

@@ -110,7 +110,7 @@ abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
       formatAddr(b.miner,config.formatAddr),
       
       EthUtil.toBigInt(b.difficulty),
-      EthUtil.toBigInt(b.totalDifficulty).getOrElse(0L),
+      b.totalDifficulty.map(EthUtil.toBigInt(_)),
       0L, //EthUtil.toLong(b.size), // size Unknown
 
       b.extraData, 

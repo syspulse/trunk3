@@ -152,7 +152,7 @@ case class RpcBlockResult(
   nonce:String,
   baseFeePerGas:Option[String],
   withdrawalsRoot: Option[String],
-  totalDifficulty: String,
+  totalDifficulty: Option[String],
   
   //uncles: Seq[RpcUncle],
   uncles: Array[String],
