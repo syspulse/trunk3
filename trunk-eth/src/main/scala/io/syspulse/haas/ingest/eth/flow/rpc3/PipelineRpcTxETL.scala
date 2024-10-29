@@ -92,7 +92,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       EthUtil.toLong(b.number),
       b.hash,
       b.parentHash,
-      b.nonce,
+    b.nonce,
       b.sha3Uncles,        
       b.logsBloom,
       b.transactionsRoot,

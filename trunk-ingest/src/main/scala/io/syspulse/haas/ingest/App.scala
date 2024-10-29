@@ -354,7 +354,7 @@ object App extends skel.Server {
     Console.err.println(s"r=${r}")
     r match {
       case a:Awaitable[_] => {
-        val rr = Await.result(a,FiniteDuration(300,TimeUnit.MINUTES))
+        val rr = Await.result(a,FiniteDuration(1,TimeUnit.MINUTES))
         Console.err.println(s"rr: ${rr}")
       }
       case akka.NotUsed => 

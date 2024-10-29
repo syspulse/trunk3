@@ -238,7 +238,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
           .groupedWithin(config.blockBatch,FiniteDuration(1L,TimeUnit.MILLISECONDS)) // batch limiter 
           .map(blocks => {
             
-            if(config.blockReorg == 0) {
+            val bb = if(config.blockReorg == 0) {
               // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
               // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
               // duplicates since commit is not changing. 
@@ -250,9 +250,16 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
               .filter(b => b <= blockEnd && b >= cursor.get())                
             } else
               blocks
+
+            if(bb.size == 0) {
+              // informational
+              log.warn(s"Race: ${blocks} -> ${bb}: cursor=${cursor.get()}")
+            }
+            bb
           })
-          .takeWhile(blocks => { // limit flow by the specified end block
-            blocks.filter(_ <= blockEnd).size > 0
+          .filter(_.size > 0)       // due to parallelization and slow downstream processing, race is possible and empty list is passed
+          .takeWhile(blocks => {    // limit flow by the specified end block
+            blocks.filter(_ <= blockEnd).size > 0            
           })
           .map(blocks => {
             log.info(s"--> ${blocks}")
