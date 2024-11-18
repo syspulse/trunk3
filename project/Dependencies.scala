@@ -18,7 +18,7 @@ object Dependencies {
     lazy val elastic4sVersion = "7.17.3"
 
     lazy val skelVersion = "0.0.10"
-    lazy val extVersion = "0.0.5"
+    lazy val extVersion = "0.0.9"
     lazy val appVersion = "0.10.2"
     lazy val jarPrefix = ""
     
