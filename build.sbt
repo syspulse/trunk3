@@ -303,6 +303,7 @@ lazy val trunk_eth = (project in file("trunk-eth"))
           libSkelCore,
           libSkelSerde,
           libSkelBlockchainEvm,
+          libSkelBlockchainTron,
           libSkelIngest,          
 
           libCsv,

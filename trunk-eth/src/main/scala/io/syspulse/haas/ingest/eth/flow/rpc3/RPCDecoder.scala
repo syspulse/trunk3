@@ -10,8 +10,9 @@ import com.github.tototoshi.csv._
 import io.syspulse.skel.config._
 import io.syspulse.skel.util.Util
 import io.syspulse.skel.config._
-
 import io.syspulse.skel.ingest._
+
+import io.syspulse.skel.blockchain.tron.TronUtil
 
 import spray.json._
 import DefaultJsonProtocol._
@@ -481,6 +482,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     fmt.charAt(0) match {
       case 'l' => addr.toLowerCase
       case 'u' => addr.toUpperCase
+      case 't' => TronUtil.ethToTron(addr)
       case _ => addr
     }
   }

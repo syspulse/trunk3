@@ -96,7 +96,7 @@ object App extends skel.Server {
         ArgLong('_', "timeout.idle",s"Idle timeout in msec (def: ${d.timeoutIdle})"),
         ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
 
-        ArgString('_', "format.addr",s"Format addresses (def: ${d.formatAddr})"),
+        ArgString('_', "format.addr",s"Format addresses (lower,upper,tron) (def: ${d.formatAddr})"),
         
         ArgString('_', "reorg.flow",s"Reorg engine (def: ${d.reorgFlow})"),
         ArgString('_', "reorg.file",s"Reorg file (def: ${d.reorgFile})"),

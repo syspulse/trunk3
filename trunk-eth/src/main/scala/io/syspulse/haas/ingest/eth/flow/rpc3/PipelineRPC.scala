@@ -111,7 +111,9 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
                 "id": 0
               }""".trim.replaceAll("\\s+","")
 
-            val rsp = { 
+            val rsp = {
+              log.info(s"Latest -> ${uri.uri}")
+
               var rsp:Option[requests.Response] = None
               while(!rsp.isDefined)  {
                 rsp = try {
@@ -129,7 +131,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             rsp.statusCode match {
               case 200 => //
                 val body = rsp.text()
-                log.debug(s"${body}")
+                log.debug(s"body=${body}")
 
                 try {
                   val r = ujson.read(rsp.text())
