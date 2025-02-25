@@ -4,6 +4,9 @@ TX=${2}
 echo $BLOCK >/tmp/BLOCK
 echo $TX >/tmp/TX
 
+shift
+shift
+
 ./run-trunk.sh -e tx.extractor \
    -f http://geth:8545 \
    --block=list:///tmp/BLOCK \

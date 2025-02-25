@@ -1,6 +1,9 @@
 BLOCK_FILE=${1}
 TX_FILE=${2}
 
+shift
+shift
+
 ./run-trunk.sh -e tx.extractor \
    -f http://geth:8545 \
    --block=list://${BLOCK_FILE} \

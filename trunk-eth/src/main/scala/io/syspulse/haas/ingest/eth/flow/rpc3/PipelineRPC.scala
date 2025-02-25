@@ -253,7 +253,8 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
             } else
               blocks
 
-            if(bb.size == 0) {
+            // when retrieving blocks in range, it is not a race
+            if(bb.size == 0 && cursor.blockEnd == Int.MaxValue) {
               // informational
               log.warn(s"Race: ${blocks} -> ${bb}: cursor=${cursor.get()}")
             }
