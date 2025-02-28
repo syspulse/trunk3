@@ -4,7 +4,8 @@ TX_FILE=${2}
 shift
 shift
 
-./run-trunk.sh -e tx.extractor \
+./run-trunk.sh replay \
+   -e tx.extractor \
    -f http://geth:8545 \
    --block=list://${BLOCK_FILE} \
    --filter=file://${TX_FILE} \

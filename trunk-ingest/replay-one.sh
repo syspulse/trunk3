@@ -7,7 +7,8 @@ echo $TX >/tmp/TX
 shift
 shift
 
-./run-trunk.sh -e tx.extractor \
+./run-trunk.sh replay \
+   -e tx.extractor \
    -f http://geth:8545 \
    --block=list:///tmp/BLOCK \
    --filter=file:///tmp/TX \

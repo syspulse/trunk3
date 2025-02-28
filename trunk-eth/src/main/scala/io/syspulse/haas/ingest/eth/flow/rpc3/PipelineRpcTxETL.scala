@@ -165,7 +165,16 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
           )
         })
       )
-    }}.toSeq
+    }}
+    .map(tx => {
+      if( config.cmd == "replay" && config.filter.size > 0) {
+        // replay mode, fix index and count for tx to be recognized by Detectors (must be 1 in 1 block)
+        tx.copy(transaction_index = 0, block = tx.block.copy(transaction_count = 1))
+
+      } else
+        tx
+    })
+    .toSeq
 
     if(receipts.size == b.transactions.size) {
       // commit cursor only if all transactions receipts recevied !

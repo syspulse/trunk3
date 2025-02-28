@@ -649,6 +649,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     
     val txx = b.transactions
     .filter(tx => {
+      // filter tx if fitler is specified
       config.filter.size == 0 || config.filter.contains(tx.hash)
     })
     .map{ tx:RpcTx => {
@@ -693,7 +694,16 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
           )
         }))
       )
-    }}.toSeq
+    }}
+    .map(tx => {
+      if( config.cmd == "replay" && config.filter.size > 0) {
+        // replay mode, fix index and count for tx to be recognized by Detectors (must be 1 in 1 block)
+        tx.copy(i = 0)
+
+      } else
+        tx
+    })
+    .toSeq
 
     // if(receipts.size == b.transactions.size) {
     //   // commit cursor only if all transactions receipts recevied !

@@ -106,6 +106,7 @@ object App extends skel.Server {
 
         ArgCmd("server",s"Server"),
         ArgCmd("stream",s"Ingest pipeline (requires -e <entity>)"),        
+        ArgCmd("replay",s"Replay mode (requires -e <entity>)"),        
         
       ).withExit(1)
     )).withLogging()
@@ -218,7 +219,7 @@ object App extends skel.Server {
 
         (r1,None)
 
-      case "stream" => 
+      case "stream" | "replay" => 
         val pp:Seq[PipelineIngest[_,_,_]] = config.entity.flatMap( e => e match {
           case "raw" =>
             Some(new eth.flow.raw.PipelineRaw(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
