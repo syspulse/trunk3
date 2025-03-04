@@ -92,7 +92,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable](config:C
 
             case "list" :: file :: Nil => 
               val data = os.read(os.Path(file,os.pwd))
-              val list = data.split("[\\n,]").filter(!_.isBlank).map(_.toLong)
+              val list = data.split("[\\n,]").filter(!_.isBlank).map(_.trim.toLong)
               cursor.setList(list.toSeq)
               list.head.toString
 

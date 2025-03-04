@@ -321,12 +321,20 @@ Polling uses diff calculation to check only new Mempool transactions
 
 To replay transactions `trunk` needs to know blocks of these transactions, thus it requires two parameter: 
 
-- `--block=list://${BLOCKS}` - file with block number (file:// is already reserved for block numbers)
+- `--block=list://${BLOCKS}` - file with block number (`file://` is already reserved for block numbers)
 - `--filter=file://${TRANSACTIONS}` - file with a list of transactions (hashes)
 - `--batch=1` - Override default batching
 
 Example:
 
 ```
-./run-trunk.sh -e tx.extractor --block=list://${BLOCK_FILE} --filter=file://${TX_FILE} --batch=1 --block.throttle=5000
+./run-trunk.sh replay -e tx.extractor --block=list://${BLOCK_FILE} --filter=file://${TX_FILE} --batch=1 --block.throttle=5000
 ```
+
+Conveneince Script to convert etherscan CSV export:
+
+```
+./etherscan-to-replay.sh EXPORT.csv
+./replay-file.sh /tmp/BLOCKS /tmp/TX
+```
+

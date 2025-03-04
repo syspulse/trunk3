@@ -10,7 +10,7 @@ shift
    --block=list://${BLOCK_FILE} \
    --filter=file://${TX_FILE} \
    --batch=1 \
-   --block.throttle=1000 \
+   --block.throttle=250 \
    --format=json \
    $@
 
