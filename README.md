@@ -163,13 +163,16 @@ Polling:
 ./run-trunk.sh -e block -f http://geth:8545 --block=latest --logging=WARN --reorg=2 --reorg.flow=reorg1 --throttle=1000
 ```
 
-Websocket (no throttle, no block latest):
+Websocket (no block latest):
+
+__NOTE__: Don't forget about `throttle` (if it is small, it will lag and eventually cause reconnect and losing blocks sequence)
+
+It is especially dangerous for `-> Kafka` and relying on order from Kafka:
 
 ```
-./run-trunk.sh -e block -f ws://geth:8546 --logging=WARN --reorg=2 --reorg.flow=reorg1
+./run-trunk.sh -e block.ws -f ws://geth:8546 --logging=WARN --reorg=2 --reorg.flow=reorg1 --throttle=25
 ```
 
-Reorg supports `block` and `transaction` entity
 
 ----
 

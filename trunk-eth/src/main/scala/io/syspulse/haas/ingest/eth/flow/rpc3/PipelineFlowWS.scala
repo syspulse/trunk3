@@ -95,21 +95,33 @@ abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
 
         val sourceFlow = s0
           .throttle(1,FiniteDuration(config.throttle,TimeUnit.MILLISECONDS))
-          .drop(1)  // drop subscription response message
+          //.drop(1)  // drop subscription response message
           .filter(b => { 
-            // fitler reconnect messages
-            try {
-              val result = ujson.read(b.utf8String).obj("params").obj("result").obj
-              val blockNum = java.lang.Long.decode(result("number").str).toLong
-              val blockHash = result("hash").str
+            val body = b.utf8String
+            val json = ujson.read(body)
 
-              // emulate PipelineRPC
-              log.info(s"--> Vector(${blockNum})")
-              true
+            try {
+              // process subscription messages
+              val resultSubscription = json.obj.get("result")
+              if(resultSubscription.isDefined) {
+              
+                log.info(s"Subscription: '${resultSubscription.get}'")
+                false
+              
+              } else {
+                
+                val result = json.obj("params").obj("result").obj
+                val blockNum = java.lang.Long.decode(result("number").str).toLong
+                val blockHash = result("hash").str
+
+                // emulate PipelineRPC
+                log.info(s"--> Vector(${blockNum})")
+                true
+              }              
 
             } catch {
               case e:Exception => 
-                log.warn(s"failed to parse block (reconnect): '${b.utf8String}'",e)
+                log.warn(s"failed to parse block: '${body}'",e)
                 false
             }
                         
