@@ -167,7 +167,7 @@ Websocket (no block latest):
 
 __NOTE__: Don't forget about `throttle` (if it is small, it will lag and eventually cause reconnect and losing blocks sequence)
 
-It is especially dangerous for `-> Kafka` and relying on order from Kafka:
+It is especially dangerous for `-> Kafka` and relying on order from Kafka for quick L2 (like Arbitrum / ZKSync)
 
 ```
 ./run-trunk.sh -e block.ws -f ws://geth:8546 --logging=WARN --reorg=2 --reorg.flow=reorg1 --throttle=25

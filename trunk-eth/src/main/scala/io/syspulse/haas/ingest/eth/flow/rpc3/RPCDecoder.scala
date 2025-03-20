@@ -539,7 +539,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
                   if(r.result.isDefined) {
                     Some(r.result.get)
                   } else {
-                    log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
+                    log.warn(s"could not get receipt: tx=${r.id}: ${r}")
                     None
                   }
                 }

@@ -110,12 +110,14 @@ val sharedConfigDockerSpark = sharedConfigDocker ++ Seq(
 val sharedConfig = Seq(
     //retrieveManaged := true,  
     organization    := "io.syspulse",
-    scalaVersion    := "2.13.13",
+    scalaVersion    := Dependencies.scala,
     name            := "trunk3",
     version         := appVersion,
 
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:existentials", "-language:implicitConversions", "-language:higherKinds", "-language:reflectiveCalls", "-language:postfixOps"),
-    javacOptions ++= Seq("-target", "1.8", "-source", "1.8"),
+    // javacOptions ++= Seq("-target", "1.8", "-source", "1.8"),
+    javacOptions ++= Seq("-target", "11", "-source", "11"),
+    scalacOptions += "-release:11",
     
     crossVersion := CrossVersion.binary,
     resolvers ++= Seq(
@@ -431,6 +433,8 @@ lazy val trunk_intercept = (project in file("trunk-intercept"))
     
       libraryDependencies ++= 
         Seq(
+          libNashorn,
+          
           libSkelCore,
           libSkelAuthCore,
           //libSkelDSL,
