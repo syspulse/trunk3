@@ -81,8 +81,13 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
     val numEvents = receipts.values.foldLeft(0)((c,r) => c + r.logs.size)
     val numTransfers = b.transactions.foldLeft(0)((c,t) => c + {if(t.input.isEmpty() || t.input == "0x") 0 else 1})
     val numCalls = b.transactions.size - numTransfers
-    log.info(s"Block[${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls},${EthUtil.toLong(b.size)}]")
 
+    val logMsg = s"Block[${block_number},${b.transactions.size},${receipts.size},${numEvents},${numTransfers},${numCalls},${EthUtil.toLong(b.size)}]"
+    if(b.transactions.size == 0)
+      log.warn(logMsg + ": Empty")
+    else 
+      log.info(logMsg)
+    
     if(receipts.size != b.transactions.size) {
       log.error(s"block=${block_number}: transactions=${b.transactions.size} != receipts=${receipts.size}")
       return Seq()
@@ -92,7 +97,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       EthUtil.toLong(b.number),
       b.hash,
       b.parentHash,
-    b.nonce,
+      b.nonce,
       b.sha3Uncles,        
       b.logsBloom,
       b.transactionsRoot,
@@ -112,6 +117,36 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       b.transactions.size,
       b.baseFeePerGas.map(d => EthUtil.toLong(d))
     )
+
+    if(b.transactions.size == 0) {
+      // special case for empty blocks      
+      val tx0 = Tx(
+        hash = "",  
+        nonce = BigInt(0),        
+        transaction_index = 0,
+        from_address = "",
+        to_address = None,
+        value = BigInt(0),
+        gas = 0L,
+        gas_price = BigInt(0),
+        input = "",
+        max_fee_per_gas = None,
+        max_priority_fee_per_gas = None,
+        transaction_type = None,
+        receipt_cumulative_gas_used = 0L,
+        receipt_gas_used = 0L,
+        receipt_contract_address = None,
+        receipt_root = None,
+        receipt_status = None,
+        receipt_effective_gas_price = None,
+
+        block = block,
+        logs = Array.empty
+      )
+
+      return Seq(tx0)
+    }
+
 
     val txx = b.transactions
     .filter(tx => {
