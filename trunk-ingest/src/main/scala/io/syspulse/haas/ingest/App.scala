@@ -100,13 +100,15 @@ object App extends skel.Server {
         
         ArgString('_', "reorg.flow",s"Reorg engine (def: ${d.reorgFlow})"),
         ArgString('_', "reorg.file",s"Reorg file (def: ${d.reorgFile})"),
-
-        ArgLogging(),
+        
         ArgParam("<params>",""),
 
         ArgCmd("server",s"Server"),
         ArgCmd("stream",s"Ingest pipeline (requires -e <entity>)"),        
-        ArgCmd("replay",s"Replay mode (requires -e <entity>)"),        
+        ArgCmd("replay",s"Replay mode (requires -e <entity>)"),
+
+        ArgLogging(),
+        ArgConfig(),
         
       ).withExit(1)
     )).withLogging()

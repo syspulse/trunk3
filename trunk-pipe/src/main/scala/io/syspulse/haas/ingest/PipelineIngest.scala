@@ -48,7 +48,8 @@ import io.syspulse.haas.intercept.ScriptInterceptor
 import io.syspulse.haas.intercept.InterceptResult
 import io.syspulse.blockchain.Blockchain
 
-abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
+abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
+  (config:Config)
   (implicit val fmt:JsonFormat[E],
     parqEncoders0:ParquetRecordEncoder[E],parsResolver0:ParquetSchemaResolver[E]
   )

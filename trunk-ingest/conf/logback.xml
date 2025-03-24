@@ -6,19 +6,19 @@
   <appender name="COLOR" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.err</target>
     <encoder>
-      <pattern>[%date] %highlight([%level]) [%logger{10} %file:%line] %msg%n</pattern>
+      <pattern>[%date] %highlight([%level]) [%thread] [%logger{10} %file:%line] %msg%n</pattern>
       <!--             ^^^^^^^^^^ -->
     </encoder>
   </appender>
   <appender name="STDOUT" target="System.out" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>[%date{ISO8601}] [%level] [%logger] [%thread] [%X{akkaSource}] - %msg%n</pattern>
+      <pattern>[%date{ISO8601}] [%level] [%thread$] [%logger{10}] [%X{akkaSource}] - %msg%n</pattern>
     </encoder>
   </appender>
   <appender name="NOCOLOR" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.err</target>
     <encoder>
-      <pattern>[%date] [%level] [%logger{10} %file:%line] %msg%n</pattern>
+      <pattern>[%date] [%level] [%thread] [%logger{10} %file:%line] %msg%n</pattern>
     </encoder>
   </appender>
   <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
