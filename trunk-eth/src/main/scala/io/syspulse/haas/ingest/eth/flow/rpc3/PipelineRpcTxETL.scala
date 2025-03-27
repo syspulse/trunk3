@@ -89,7 +89,9 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       log.info(logMsg)
     
     if(receipts.size != b.transactions.size) {
-      log.error(s"block=${block_number}: transactions=${b.transactions.size} != receipts=${receipts.size}")
+      log.warn(s"block=${block_number}: transactions=${b.transactions.size} != receipts=${receipts.size}")
+      // it can recover, Polygon shows this behaviour, so don't commit cursor and let Pipeline retry
+      //cursor.commit(block_number)
       return Seq()
     }
 
@@ -144,6 +146,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
         logs = Array.empty
       )
 
+      cursor.commit(block_number)
       return Seq(tx0)
     }
 
