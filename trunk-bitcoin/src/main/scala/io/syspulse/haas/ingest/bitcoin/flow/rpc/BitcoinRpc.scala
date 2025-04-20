@@ -125,7 +125,7 @@ case class RpcBlock(
   chainwork: String,           // Chain work
   nTx: Int,                    // Number of transactions
   previousblockhash: String,   // Previous block hash
-  nextblockhash: String,       // Next block hash
+  nextblockhash: Option[String],  // Next block hash
   strippedsize: Int,          // Stripped size
   size: Int,                   // Block size
   weight: Int,                 // Block weight
@@ -305,6 +305,12 @@ class BitcoinRpc(uri: String)(implicit system: ActorSystem) {
         } else {
           BigInt(0)
         }
+
+        val fee = if(t.isCoinbase()) {
+          Some(BigInt(0))
+        } else {
+          Some(inputValue - totalValue)
+        }
         
         Tx(
           ts = ts,
@@ -313,7 +319,7 @@ class BitcoinRpc(uri: String)(implicit system: ActorSystem) {
           from = from,
           to = to,
           v = totalValue,  // Total of ALL outputs
-          fee = Some(inputValue - totalValue),
+          fee = fee,
           block = b,
           i = Some(i)
         )

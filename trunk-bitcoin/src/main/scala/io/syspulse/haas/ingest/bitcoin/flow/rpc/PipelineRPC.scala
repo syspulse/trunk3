@@ -328,11 +328,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
   def askBlocks(uri:BitcoinURI,blockHashes:Seq[String]):Seq[String] = {    
     val url = uri.url
+
+    // type 3: contain prevOut
     val blocksReq = blockHashes
       .map(blockHash => {
         s"""{
             "jsonrpc":"1.0","method":"getblock",
-            "params":["${blockHash}",0],
+            "params":["${blockHash}",3],
             "id":0
           }""".trim.replaceAll("\\s+","")  
       })
