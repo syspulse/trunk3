@@ -42,15 +42,15 @@ import io.syspulse.skel.serde.Parq._
 
 object ParqRpcScriptPubKey extends ParqIgnore[RpcScriptPubKey]
 object ParqRpcScriptSig extends ParqIgnore[RpcScriptSig]
-object ParqRpcTransactionInput extends ParqIgnore[RpcTransactionInput]
-object ParqRpcTransactionOutput extends ParqIgnore[RpcTransactionOutput]
+object ParqRpcVin extends ParqIgnore[RpcVin]
+object ParqRpcVout extends ParqIgnore[RpcVout]
 object ParqRpcTransaction extends ParqIgnore[RpcTransaction]
 object ParqRpcBlock extends ParqIgnore[RpcBlock]
 
 import ParqRpcBlock._ 
 import ParqRpcTransaction._
-import ParqRpcTransactionInput._
-import ParqRpcTransactionOutput._
+import ParqRpcVin._
+import ParqRpcVout._
 import ParqRpcScriptPubKey._
 import ParqRpcScriptSig._
 
@@ -77,7 +77,7 @@ class PipelineRpcBlockMini(config:Config) extends PipelineRPC[RpcBlock,RpcBlock,
     val outBlock = block.copy(
       tx = block.tx.map(tx => tx.copy(
         vin = tx.vin.map(vin => vin.copy(
-          txinwitness = Some(Seq("0x"))
+          txinwitness = Some(Seq("0x0"))
         ))
       ))
     )

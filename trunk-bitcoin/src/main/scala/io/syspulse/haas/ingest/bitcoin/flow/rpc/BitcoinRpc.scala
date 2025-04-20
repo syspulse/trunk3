@@ -36,14 +36,26 @@ case class RpcScriptSig(
   hex: String                    // Hex representation
 )
 
-// Block Transaction Input (vin)
-case class RpcTransactionInput(
+// New case class for prevout
+case class RpcPrevOut(
+  generated: Boolean,
+  height: Int,
+  value: Double,           // Value in BTC (changed from BigDecimal)
+  scriptPubKey: RpcScriptPubKey
+) {
+  // Convert BTC to satoshis
+  def valueAsSatoshis: BigInt = BigInt((value * 100000000L).toLong)
+}
+
+// Update RpcTransactionInput to include prevout
+case class RpcVin(
   txid: Option[String],          // Previous tx hash
   vout: Option[Int],            // Output index in previous tx
   coinbase: Option[String],      // Coinbase data (only for coinbase txs)
   scriptSig: Option[RpcScriptSig],  // Script signature
   txinwitness: Option[Seq[String]], // Witness data
-  sequence: Long                 // Sequence number
+  sequence: Long,                // Sequence number
+  prevout: Option[RpcPrevOut]   // Previous output info
 )
 
 // Script Public Key
@@ -56,11 +68,14 @@ case class RpcScriptPubKey(
 )
 
 // Transaction Output (vout)
-case class RpcTransactionOutput(
-  value: BigInt,            // Value in BTC
-  n: Int,                       // Output index
+case class RpcVout(
+  value: Double,            // Value in BTC (changed from BigInt)
+  n: Int,                  // Output index
   scriptPubKey: RpcScriptPubKey    // Output script
-)
+) {
+  // Convert BTC to satoshis (1 BTC = 100_000_000 satoshis)
+  def valueAsSatoshis: BigInt = BigInt((value * 100000000L).toLong)
+}
 
 // Transaction
 case class RpcTransaction(
@@ -71,8 +86,8 @@ case class RpcTransaction(
   vsize: Int,                   // Virtual size
   weight: Int,                  // Weight
   locktime: Long,               // Lock time
-  vin: Seq[RpcTransactionInput],   // Inputs
-  vout: Seq[RpcTransactionOutput], // Outputs
+  vin: Seq[RpcVin],   // Inputs
+  vout: Seq[RpcVout], // Outputs
   fee: Option[BigInt]           // Transaction fee (if available)
 ) extends Ingestable {
   def id = txid
@@ -86,11 +101,11 @@ case class RpcTransaction(
   }
 
   def getTotalOutputValue(): BigInt = {
-    vout.map(_.value).sum
+    vout.map(_.valueAsSatoshis).sum
   }
 
   def getOutputsWithAddresses(): Seq[(String, BigInt)] = {
-    vout.flatMap(out => out.scriptPubKey.address.map(addr => (addr, out.value)))
+    vout.flatMap(out => out.scriptPubKey.address.map(addr => (addr, out.valueAsSatoshis)))
   }
 }
 
@@ -137,11 +152,14 @@ object RpcJsonProtocol extends DefaultJsonProtocol {
   implicit val scriptSigFormat: RootJsonFormat[RpcScriptSig] = jsonFormat2(RpcScriptSig)
   implicit val scriptPubKeyFormat: RootJsonFormat[RpcScriptPubKey] = jsonFormat5(RpcScriptPubKey)
   
+  // Format for PrevOut
+  implicit val prevOutFormat: RootJsonFormat[RpcPrevOut] = jsonFormat4(RpcPrevOut.apply)
+  
   // Format for TransactionInput with optional fields
-  implicit val transactionInputFormat: RootJsonFormat[RpcTransactionInput] = jsonFormat6(RpcTransactionInput)
+  implicit val transactionInputFormat: RootJsonFormat[RpcVin] = jsonFormat7(RpcVin.apply)
 
   // Format for TransactionOutput
-  implicit val transactionOutputFormat: RootJsonFormat[RpcTransactionOutput] = jsonFormat3(RpcTransactionOutput)
+  implicit val transactionOutputFormat: RootJsonFormat[RpcVout] = jsonFormat3(RpcVout)
 
   // Format for Transaction with optional fee field
   implicit val transactionFormat: RootJsonFormat[RpcTransaction] = jsonFormat10(RpcTransaction)
@@ -265,11 +283,28 @@ class BitcoinRpc(uri: String)(implicit system: ActorSystem) {
         val from = if(t.isCoinbase()) {
           "COINBASE"
         } else {
-          t.vin.headOption.flatMap(_.txid).getOrElse("UNKNOWN")
+          t.vin.headOption.flatMap(vin => 
+            vin.prevout.flatMap(_.scriptPubKey.address)
+              .orElse(vin.txid)
+          ).getOrElse("UNKNOWN")
         }
 
-        // Get first output address, fallback to "UNKNOWN" if not available
-        val to = t.vout.headOption.flatMap(_.scriptPubKey.address).getOrElse("UNKNOWN")
+        // Get total output value (sum of all outputs)
+        val totalValue = t.getTotalOutputValue()
+
+        // Find the recipient (largest output)
+        val to = t.vout
+          .flatMap(out => out.scriptPubKey.address.map(addr => (addr, out.valueAsSatoshis)))
+          .maxByOption(_._2)
+          .map(_._1)
+          .getOrElse("UNKNOWN")
+
+        // Calculate total input value from prevouts
+        val inputValue = if(!t.isCoinbase()) {
+          t.vin.flatMap(_.prevout.map(_.valueAsSatoshis)).sum
+        } else {
+          BigInt(0)
+        }
         
         Tx(
           ts = ts,
@@ -277,12 +312,12 @@ class BitcoinRpc(uri: String)(implicit system: ActorSystem) {
           hash = t.hash,
           from = from,
           to = to,
-          v = t.vout.headOption.map(_.value).getOrElse(BigInt(0)),
-          fee = t.fee,
+          v = totalValue,  // Total of ALL outputs
+          fee = Some(inputValue - totalValue),
           block = b,
           i = Some(i)
         )
-      }}.toIndexedSeq  // Convert view back to concrete sequence
+      }}.toIndexedSeq
     } catch {
       case e: Exception =>
         log.error(s"failed to decode block: ${e.getMessage}")

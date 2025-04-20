@@ -345,7 +345,9 @@ object App extends skel.Server {
           // ICP Ledger API
           case "block.btc" =>
             Some(new bitcoin.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "block.btc.mini" =>
+          case "tx.btc" =>
+            Some(new bitcoin.flow.rpc.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
+          case "block.mini.btc" =>
             import io.syspulse.haas.ingest.bitcoin.flow.rpc.RpcJsonProtocol._            
             Some(new bitcoin.flow.rpc.PipelineRpcBlockMini(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))            
 
