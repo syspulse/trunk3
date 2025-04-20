@@ -30,6 +30,11 @@ case class BitcoinRpcResponse(
   id: String
 )
 
+// Script Signature
+case class RpcScriptSig(
+  asm: String,                   // Assembly representation
+  hex: String                    // Hex representation
+)
 
 // Block Transaction Input (vin)
 case class RpcTransactionInput(
@@ -41,19 +46,6 @@ case class RpcTransactionInput(
   sequence: Long                 // Sequence number
 )
 
-// Script Signature
-case class RpcScriptSig(
-  asm: String,                   // Assembly representation
-  hex: String                    // Hex representation
-)
-
-// Transaction Output (vout)
-case class RpcTransactionOutput(
-  value: BigInt,            // Value in BTC
-  n: Int,                       // Output index
-  scriptPubKey: RpcScriptPubKey    // Output script
-)
-
 // Script Public Key
 case class RpcScriptPubKey(
   asm: String,                  // Assembly representation
@@ -61,6 +53,13 @@ case class RpcScriptPubKey(
   hex: String,                  // Hex representation
   address: Option[String],      // Bitcoin address
   `type`: String               // Script type
+)
+
+// Transaction Output (vout)
+case class RpcTransactionOutput(
+  value: BigInt,            // Value in BTC
+  n: Int,                       // Output index
+  scriptPubKey: RpcScriptPubKey    // Output script
 )
 
 // Transaction
@@ -77,9 +76,7 @@ case class RpcTransaction(
   fee: Option[BigInt]           // Transaction fee (if available)
 ) extends Ingestable {
   def id = txid
-  def ts = System.currentTimeMillis()
-  def uid = txid
-
+  
   def getToAddresses(): Seq[String] = {
     vout.flatMap(_.scriptPubKey.address)
   }
