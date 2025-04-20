@@ -22,6 +22,7 @@ import io.syspulse.haas.ingest.starknet
 import io.syspulse.haas.ingest.vechain
 import io.syspulse.haas.ingest.stellar
 import io.syspulse.haas.ingest.solana
+import io.syspulse.haas.ingest.bitcoin
 
 import io.syspulse.haas.intercept.store._
 import io.syspulse.haas.intercept.server.InterceptRoutes
@@ -340,6 +341,10 @@ object App extends skel.Server {
 
           case "mempool.hash" | "ws.mempool.hash" => 
             Some(new eth.flow.rpc3.PipelineWsMempoolHash(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+
+          // ICP Ledger API
+          case "block.btc" =>
+            Some(new bitcoin.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

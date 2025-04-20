@@ -30,7 +30,8 @@ case class Config(
   delimiter:String = "\n", // use "" for http call  
   // Exception in thread "main" akka.stream.scaladsl.Framing$FramingException: Read 1048858 bytes which is more than 1048576 without seeing a line terminator
   // It does not affect: akka.http.parsing.max-chunk-size = 1m
-  buffer:Int = 5 * 1024*1024, 
+  // Bitcoin has very large blocks (>100M) due to witness data
+  buffer:Int = 5 * 1024*1024,
   throttle:Long = 5000L,  
   format:String = "",
   filter:Seq[String] = Seq(),

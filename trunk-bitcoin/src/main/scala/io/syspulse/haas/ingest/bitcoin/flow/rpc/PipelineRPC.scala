@@ -1,4 +1,4 @@
-package io.syspulse.haas.ingest.eth.flow.rpc3
+package io.syspulse.haas.ingest.bitcoin.flow.rpc
 
 import java.util.concurrent.atomic.AtomicLong
 import io.syspulse.skel.ingest.flow.Flows
@@ -34,12 +34,8 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.syspulse.haas.ingest.eth.flow.rpc3._
-import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
-
-import io.syspulse.haas.ingest.eth.EthURI
 import io.syspulse.haas.ingest.PipelineIngest
-import io.syspulse.haas.ingest.eth
+import io.syspulse.haas.ingest.bitcoin
 
 import io.syspulse.haas.ingest.Config
 
@@ -52,6 +48,9 @@ import akka.stream.scaladsl.RestartSource
 
 import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.CursorBlock
+
+import io.syspulse.haas.ingest.bitcoin.flow.rpc.BitcoinRpc
+import io.syspulse.haas.ingest.bitcoin.BitcoinURI
 import io.syspulse.haas.reorg.{ReorgBlock,ReorgBlock1,ReorgBlock2}
 
 // ATTENTION !!!
@@ -59,25 +58,23 @@ import io.syspulse.haas.reorg.{ReorgBlock,ReorgBlock1,ReorgBlock2}
 abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
     (config:Config)
     (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
-  extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) 
-  with RPCDecoder[E] {
+  extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) {
 
-  import EthRpcJson._
+  protected val log = Logger(getClass)
 
-  val cursor = new CursorBlock("BLOCK-eth")(config)
+  val cursor = new CursorBlock("BLOCK-bitcoin")(config)
   
   val reorg = config.reorgFlow match {
-    case "reorg1" => new ReorgBlock1(config.blockReorg)
-    case "reorg2" => new ReorgBlock2(config.blockReorg)
     case _ => new ReorgBlock2(config.blockReorg)
   }
 
-  implicit val uri = EthURI(config.feed,config.apiToken)
-      
+  implicit val uri = BitcoinURI(config.feed)
+  implicit val rpc = new BitcoinRpc(uri.url)
+
   // ----- Source ----------------------------------------------------------------------------------------------------------------
   override def source(feed:String) = {
     feed.split("://").toList match {
-      case "http" :: _ | "https" :: _ | "eth" :: _  =>         
+      case "http" :: _ | "https" :: _ | "bitcoin" :: _  =>
         
         val blockStr = 
           (config.block.split("://").toList match {
@@ -108,54 +105,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
         val blockStart = blockStr.strip match {
           case "latest" =>
-            val json = s"""{
-                "jsonrpc":"2.0","method":"eth_blockNumber",
-                "params":[],
-                "id": 0
-              }""".trim.replaceAll("\\s+","")
-
-            val rsp = {
-              log.info(s"Latest -> ${uri.uri}")
-
-              var rsp:Option[requests.Response] = None
-              while(!rsp.isDefined)  {
-                rsp = try {
-                  Some(requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json")))
-                } catch {
-                  case e:Exception => 
-                    log.error(s"request latest block failed -> ${uri.uri}",e)
-                    Thread.sleep(config.throttle)
-                    None
-                }              
-              } 
-              rsp.get
-            }
-            
-            rsp.statusCode match {
-              case 200 => //
-                val body = rsp.text()
-                log.debug(s"body=${body}")
-
-                try {
-                  val r = ujson.read(rsp.text())
-                  java.lang.Long.decode(r.obj("result").str).toLong
-
-                } catch {
-                  case e:Exception =>
-                    log.error(s"failed to get block: ${body}",e)
-                    sys.exit(3)
-                    0
-                }
-              case _ => 
-                log.error(s"failed to get latest block: ${rsp}")
-                sys.exit(3)
-                0
-            }            
+            askLastBlock(uri)            
 
           case hex if hex.startsWith("0x") =>
             java.lang.Long.parseLong(hex.drop(2),16).toLong
+
           case dec =>
-            dec.toLong
+            dec.toLong            
         }
         
         val blockEnd = config.blockEnd match {
@@ -177,7 +133,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           FiniteDuration(10,TimeUnit.MILLISECONDS), 
           //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
           FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
-          s"${uri.uri}"
+          s"${uri.url}"
         )
 
         // ----- Reorg Subflow -----------------------------------------------------------------------------
@@ -188,34 +144,14 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
           } else true
         }
-                
+
         // ------- Flow ------------------------------------------------------------------------------------
         val sourceFlow = sourceTick
           .map(h => {
             log.debug(s"Cron --> ${h}")
 
             // request latest block to know where we are from current            
-            val json = s"""{
-                "jsonrpc":"2.0","method":"eth_blockNumber",
-                "params":[],
-                "id": 0
-              }""".trim.replaceAll("\\s+","")
-
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            val body = rsp.text()
-            //log.info(s"rsp=${rsp.statusCode}: ${body}")
-            
-            rsp.statusCode match {
-              case 200 => //
-                log.debug(s"${body}")
-              case _ => 
-                // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                throw new RetryException("")
-            }
-            
-            val r = ujson.read(body)
-            val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
+            val lastBlock = askLastBlock(uri)
             
             log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}, reorg=${config.blockReorg}")
             lastBlock - config.blockLag
@@ -244,12 +180,6 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           .map(blocks => {
             
             val bb = if(config.blockReorg == 0) {
-              // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
-              // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
-              // duplicates since commit is not changing. 
-              // Example: 
-              // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
-              // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
               blocks
               .distinct
               .filter(b => b <= blockEnd && b >= cursor.get())                
@@ -269,49 +199,18 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           })
           .map(blocks => {
             log.info(s"--> ${blocks}")
-            
-            // if limit is specified, take the last limit
-            val blocksReq = (if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks)
-              .map(block => {
-                val blockHex = s"0x${block.toHexString}"
-                s"""{
-                    "jsonrpc":"2.0","method":"eth_getBlockByNumber",
-                    "params":["${blockHex}",true],
-                    "id":0
-                  }""".trim.replaceAll("\\s+","")  
-              })
 
-            // if only 1 tx, don't batch (to be compatible with some weird RPC which don't support batch)
-            val json = if(blocks.size == 1) 
-              blocksReq.head 
-            else 
-              s"""[${blocksReq.mkString(",")}]"""
-
-            try {
-              val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))                        
-              val body = rsp.text()
-              
-              rsp.statusCode match {
-                case 200 => //
-                  log.trace(s"${body}")
-                case _ => 
-                  // retry
-                  log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                  throw new RetryException(s"${rsp.statusCode}")
-              }
-                              
-              val batch = if(blocks.size == 1)
-                decodeSingle(body)
-              else
-                decodeBatch(body)
-              
-              batch
-
-            } catch {
-              case e:Exception =>
-                log.error(s"failed to get batch: '${json}'",e)
-                Seq()
+            val blockHashes = {
+              askBlockHashes(uri,if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks)
             }
+
+            // if limit is specified, take the last limit
+            val batch = {
+              askBlocks(uri,blockHashes)
+            }
+              
+            batch
+
           })
           .log(s"${feed}")
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
@@ -323,7 +222,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           .map(b => ByteString(b))
       
         val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>
-          log.info(s"connect -> ${uri.uri}")
+          log.info(s"Connect -> ${uri.url}")
           sourceFlow
         }
 
@@ -342,5 +241,134 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
     jsonBatch.arr.map(a => a.toString()).toSeq
   }
 
+  def askLastBlock(uri:BitcoinURI):Long = {
+    val url = uri.url
+    val json = s"""{
+        "jsonrpc":"1.0","method":"getblockchaininfo",
+        "params":[],
+        "id": 0
+      }""".trim.replaceAll("\\s+","")
+
+    log.debug(s"${json} -> ${url}")
+
+    val rsp = requests.post(url, data = json,headers = Map("content-type" -> "application/json"))
+    val body = rsp.text()
+    //log.info(s"rsp=${rsp.statusCode}: ${body}")
+    
+    rsp.statusCode match {
+      case 200 => //
+        log.debug(s"${body}")
+      case _ => 
+        // retry
+        log.error(s"RPC error: ${rsp.statusCode}: ${body}")
+        throw new RetryException("")
+    }
+    
+    try {
+      val r = ujson.read(rsp.text())
+      val result = r.obj("result")
+      val lastBlockHash = result.obj("bestblockhash").str
+      val lastBlock = result.obj("blocks").num
+
+      lastBlock.toLong
+    } catch {
+      case e:Exception =>
+        log.error(s"failed to get last block: ${body}",e)
+        throw e
+    }
+  }
+
+  def askBlockHashes(uri:BitcoinURI,blocks:Seq[Long]):Seq[String] = {    
+    val url = uri.url
+    val blocksReq =blocks
+      .map(block => {
+        s"""{
+            "jsonrpc":"1.0","method":"getblockhash",
+            "params":[${block}],
+            "id":0
+          }""".trim.replaceAll("\\s+","")  
+      })
+
+    // if only 1 tx, don't batch (to be compatible with some weird RPC which don't support batch)
+    val json = if(blocks.size == 1) 
+      blocksReq.head 
+    else 
+      s"""[${blocksReq.mkString(",")}]"""    
+
+    try {
+      log.debug(s"${json} -> ${url}")
+
+      val rsp = requests.post(url, data = json,headers = Map("content-type" -> "application/json"))                        
+      val body = rsp.text()
+      
+      rsp.statusCode match {
+        case 200 => //
+          log.trace(s"${body}")
+        case _ => 
+          // retry
+          log.error(s"failed to get hashes: ${rsp.statusCode}: ${body}")
+          throw new RetryException(s"${rsp.statusCode}")
+      }
+                      
+      val batch = if(blocks.size == 1)
+        decodeSingle(body)
+      else
+        decodeBatch(body)
+      
+      batch.map(b => {
+        ujson.read(b).obj("result").str
+      }).toSeq      
+
+    } catch {
+      case e:Exception =>
+        log.error(s"failed to get hashes: '${json}'",e)
+        Seq()
+    }
+  }
+
+  def askBlocks(uri:BitcoinURI,blockHashes:Seq[String]):Seq[String] = {    
+    val url = uri.url
+    val blocksReq = blockHashes
+      .map(blockHash => {
+        s"""{
+            "jsonrpc":"1.0","method":"getblock",
+            "params":["${blockHash}",0],
+            "id":0
+          }""".trim.replaceAll("\\s+","")  
+      })
+
+    // if only 1 tx, don't batch (to be compatible with some weird RPC which don't support batch)
+    val json = if(blockHashes.size == 1) 
+      blocksReq.head 
+    else 
+      s"""[${blocksReq.mkString(",")}]"""
+    
+    try {
+      log.debug(s"${json} -> ${url}")
+      val rsp = requests.post(url, data = json,headers = Map("content-type" -> "application/json"))                        
+      val body = rsp.text()
+      
+      rsp.statusCode match {
+        case 200 => //
+          log.trace(s"${body}")
+        case _ => 
+          // retry
+          log.error(s"failed to get blocks: ${rsp.statusCode}: ${body}")
+          throw new RetryException(s"${rsp.statusCode}")
+      }
+                      
+      val batch = if(blockHashes.size == 1)
+        decodeSingle(body)
+      else
+        decodeBatch(body)
+      
+      batch
+
+    } catch {
+      case e:Exception =>
+        log.error(s"failed to get blocks: '${json}'",e)
+        Seq()
+    }
+  }
     
 }

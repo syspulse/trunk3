@@ -453,6 +453,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
     trunk_stark,
     trunk_stellar,
     trunk_solana,
+    trunk_bitcoin,
 
     trunk_intercept
   )
@@ -508,4 +509,20 @@ lazy val trunk_stat = (project in file("trunk-stat"))
       ),
      
   )
+
+lazy val trunk_bitcoin = (project in file("trunk-bitcoin"))
+  .dependsOn(trunk_core, trunk_pipe)
+  .disablePlugins(sbtassembly.AssemblyPlugin)
+  .settings (
+      sharedConfig,
+      name := "trunk-bitcoin",
+      libraryDependencies ++= 
+        Seq(
+          libSkelCore,
+          libSkelIngest,
+          
+          libAkkaHttpSpray,
+          libScalaTest % "test"
+        ),
+    )
 
