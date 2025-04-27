@@ -276,6 +276,21 @@ class BitcoinRpc(uri: String)(implicit system: ActorSystem) {
         i = block.height,
         hash = block.hash,
         phash = block.previousblockhash,        
+        
+        c = block.confirmations,
+        ver = block.version,
+        merkle = block.merkleroot,
+        ts_m = block.mediantime,
+        nonce = block.nonce,
+        bits = block.bits,
+        d = block.difficulty,
+        cwork = block.chainwork,
+        n = block.nTx,
+        nhash = block.nextblockhash,
+        ssz = block.strippedsize,
+        sz = block.size,
+        w = block.weight,
+        tx = None
       )
       
       block.tx.view.zipWithIndex.map { case (t,i) => {
@@ -320,6 +335,13 @@ class BitcoinRpc(uri: String)(implicit system: ActorSystem) {
           to = to,
           v = totalValue,  // Total of ALL outputs
           fee = fee,
+          
+          ver = t.version,
+          sz = t.size,
+          vsz = t.vsize,
+          w = t.weight,
+          ts_l = t.locktime,
+          
           block = b,
           i = Some(i)
         )

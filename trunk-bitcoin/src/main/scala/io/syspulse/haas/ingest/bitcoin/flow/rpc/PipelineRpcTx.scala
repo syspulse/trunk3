@@ -30,18 +30,18 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import io.syspulse.haas.ingest.bitcoin.flow.rpc.RpcBlock
 import io.syspulse.haas.ingest.bitcoin.flow.rpc.RpcJsonProtocol._
-import io.syspulse.haas.ingest.bitcoin.{Block}
+import io.syspulse.haas.ingest.bitcoin.{Tx}
 import io.syspulse.haas.ingest.bitcoin.BitcoinJson._
 
 import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.ingest.Config
 
-abstract class PipelineRpcBlock[E <: skel.Ingestable](config:Config)
+abstract class PipelineRpcTx[E <: skel.Ingestable](config:Config)
   (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineRPC[RpcBlock,RpcBlock,E](config) {  
 
-  def apiSuffix():String = s"/block"
+  def apiSuffix():String = s"/tx"
 
   def parse(data:String):Seq[RpcBlock] = {
     rpc.parseBlock(data) match {
@@ -63,39 +63,16 @@ abstract class PipelineRpcBlock[E <: skel.Ingestable](config:Config)
   // }
 }
 
-class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
 
-  def transform(block: RpcBlock): Seq[Block] = {
-        
-    val b = block
-    if(config.filter.size != 0 && config.filter.contains(b.hash)) {
+class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
+
+  def transform(block: RpcBlock): Seq[Tx] = {
+    if(config.filter.size != 0 && config.filter.contains(block.hash)) {
       return Seq()
     }
 
-    val blk = Block(
-      ts = b.time * 1000L,
-      i = b.height,
-      hash = b.hash,
-      phash = b.previousblockhash,      
-      c = b.confirmations,
-      ver = b.version,
-      merkle = b.merkleroot,
-      ts_m = b.mediantime,
-      nonce = b.nonce,
-      bits = b.bits,
-      d = b.difficulty,
-      cwork = b.chainwork,
-      n = b.nTx,
-      nhash = b.nextblockhash,
-      ssz = b.strippedsize,
-      sz = b.size,
-      w = b.weight,
-      tx = None
-    )
-    
-    // commit cursor
-    cursor.commit(b.height)
-
-    Seq(blk)
-  }    
+    // Use the existing decodeBlock method which already has all the logic
+    // for transaction processing including prevout handling
+    rpc.decodeBlock(block.toJson.toString)
+  }
 }

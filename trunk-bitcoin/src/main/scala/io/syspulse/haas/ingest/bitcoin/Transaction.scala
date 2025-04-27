@@ -3,7 +3,7 @@ package io.syspulse.haas.ingest.bitcoin
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
-case class Tx(  
+case class Transaction(  
   ts:Long,          // timestamp (millisec)
   txid:String,      // txid 
   hash:String,      // transaction hash
@@ -18,8 +18,6 @@ case class Tx(
   vsz: Int,                // Virtual size
   w: Int,                  // Weight
   ts_l: Long,              // Lock time
-
-  block:Block, 
   
   i:Option[Long] = None,  // transaction index in Block
 

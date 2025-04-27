@@ -11,6 +11,7 @@ object BitcoinJson extends DefaultJsonProtocol //with JsonCommon
 {
   import DefaultJsonProtocol._
   
-  implicit val jf_btc_block = jsonFormat4(Block)
-  implicit val jf_btc_tx = jsonFormat9(Tx)   
+  implicit val jf_btc_trx = jsonFormat13(Transaction)
+  implicit val jf_btc_block = jsonFormat18(Block)  
+  implicit val jf_btc_tx = jsonFormat14(Tx)   
 }
