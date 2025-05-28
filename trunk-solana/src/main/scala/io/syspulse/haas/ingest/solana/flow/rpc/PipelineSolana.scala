@@ -80,6 +80,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
           case "latest" =>
             val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id":1}"""
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
+            log.debug(s"${json} -> ${uri.uri}")
+            
             val rsp = requests.post(uri.uri,
               headers = Seq(("Content-Type","application/json")),
               data = json
@@ -131,6 +133,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             val blockHex = "latest"
             val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id": 0}""".trim.replaceAll("\\s+","")
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
+            log.debug(s"${json} -> ${uri.uri}")
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             
             rsp.statusCode match {
@@ -181,16 +184,21 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
           .map(blocks => {
             log.info(s"--> ${blocks}")
             
-            val blocksReq = blocks.map(block => {              
-              // ATTENTION: block is slot !!!
-              s"""{
-                  "jsonrpc":"2.0","method":"getBlock\",
-                  "params":[${block},{"encoding":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }],
-                  "id":0
-                }""".trim.replaceAll("\\s+","")
-            })
+            val blocksReq = blocks
+              .takeRight(if(config.blockLimit > 0) config.blockLimit else blocks.size)
+              .map(block => {              
+                // ATTENTION: block is slot !!!
+                s"""{
+                    "jsonrpc":"2.0","method":"getBlock",
+                    "params":[${block},{"encoding":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }],
+                    "id":0
+                  }""".trim.replaceAll("\\s+","")
+              })
+            
                         
-            val json = s"""[${blocksReq.mkString(",")}]"""
+            val json = if(config.blockLimit > 1) s"""[${blocksReq.mkString(",")}]""" else blocksReq.head
+
+            log.debug(s"${json} -> ${uri.uri}")
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))            
             val body = rsp.text()
             
@@ -204,7 +212,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
                 throw new RetryException("")
             }
             
-            val batch = decodeBatch(body)
+            // val batch = decodeBatch(body)
+            val batch = if(config.blockLimit > 1) decodeBatch(body) else decodeSingle(body)
             batch
           })
           .log(s"${feed}")
