@@ -67,12 +67,31 @@ abstract class PipelineRpcTx[E <: skel.Ingestable](config:Config)
 class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
 
   def transform(block: RpcBlock): Seq[Tx] = {
+    
     if(config.filter.size != 0 && config.filter.contains(block.hash)) {
       return Seq()
     }
 
     // Use the existing decodeBlock method which already has all the logic
     // for transaction processing including prevout handling
-    rpc.decodeBlock(block.toJson.toString)
+    val txs = try {
+
+      val logMsg = s"Block[${block.height},${block.nTx}]"
+      if(block.nTx == 0)
+        log.warn(logMsg + ": Empty")
+      else 
+        log.info(logMsg)
+
+      rpc.decodeBlock(block.toJson.toString)
+    } catch {
+      case e: Throwable => 
+        log.error(s"${block.height}: failed to decode block: ${e.getMessage}")
+        Seq.empty
+    }
+
+    // commit cursor even if failed to decode block
+    cursor.commit(block.height)
+
+    txs
   }
 }

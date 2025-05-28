@@ -348,8 +348,8 @@ class BitcoinRpc(uri: String)(implicit system: ActorSystem) {
       }}.toIndexedSeq
     } catch {
       case e: Exception =>
-        log.error(s"failed to decode block: ${e.getMessage}")
-        Seq.empty
+        //log.error(s"failed to decode block: ${e.getMessage}")
+        throw e
     }
   }
 }
