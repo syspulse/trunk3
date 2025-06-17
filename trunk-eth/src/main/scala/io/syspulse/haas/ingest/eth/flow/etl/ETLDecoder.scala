@@ -71,7 +71,7 @@ trait ETLDecoder[T] extends Decoder[T,EthBlock,EthTransaction,EthTokenTransfer,E
 
                  Seq(EthBlock(
                     number.toLong,
-                    hash,parent_hash, nonce, 
+                    hash,parent_hash, Option(nonce), 
                     sha3_uncles,logs_bloom,
                     transactions_root,state_root, receipts_root,
                     miner, 

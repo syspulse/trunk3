@@ -7,7 +7,7 @@ case class Block(
   i:Long,       // block number
   hash:String,  // block hash
   phash:String, // parent hash
-  non:String,   // noce
+  non:Option[String],   // nonce
   uncl:String,  // uncles
   bloom:String, // bloom filter
 

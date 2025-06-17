@@ -46,7 +46,7 @@ import io.syspulse.ext.core.ExtractorJson._
 import io.syspulse.haas.intercept.Script
 import io.syspulse.haas.intercept.ScriptInterceptor
 import io.syspulse.haas.intercept.InterceptResult
-import io.syspulse.blockchain.Blockchain
+import io.syspulse.skel.blockchain.Blockchain
 
 abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
   (config:Config)

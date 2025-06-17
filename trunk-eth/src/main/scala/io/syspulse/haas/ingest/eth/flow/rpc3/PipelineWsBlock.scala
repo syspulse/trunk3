@@ -101,7 +101,7 @@ abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
       EthUtil.toLong(b.number),
       b.hash,
       b.parentHash,
-      b.nonce.getOrElse(""),         
+      b.nonce,
       b.sha3Uncles,        
       b.logsBloom,
       b.transactionsRoot,

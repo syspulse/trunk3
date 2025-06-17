@@ -75,7 +75,7 @@ abstract class PipelineETLTx[E <: skel.Ingestable](config:Config)
       tx.block.hash,
       
       tx.block.parent_hash,
-      tx.block.nonce,
+      Option(tx.block.nonce),
       tx.block.sha3_uncles,
       tx.block.logs_bloom,
       tx.block.transactions_root,

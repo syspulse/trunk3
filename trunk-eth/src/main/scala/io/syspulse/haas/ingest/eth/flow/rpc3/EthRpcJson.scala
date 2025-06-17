@@ -148,8 +148,8 @@ case class RpcBlockResult(
   gasUsed:String,
   timestamp:String,
   extraData:String,
-  mixHash:String,
-  nonce:String,
+  mixHash:Option[String], // not supported by all EVM (Rootstock)
+  nonce:Option[String], // not supported by all EVM (Rootstock)
   baseFeePerGas:Option[String],
   withdrawalsRoot: Option[String],
   totalDifficulty: Option[String],
@@ -179,7 +179,7 @@ case class RpcLog(
   transactionIndex:String,
   blockHash:String,
   logIndex:String,
-  removed:Boolean
+  removed:Option[Boolean] // not supported by all EVM (Rootstock)
 )
 
 

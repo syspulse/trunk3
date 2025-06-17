@@ -64,7 +64,7 @@ trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx]
 
                  Seq(Block(
                     number.toLong,
-                    hash,parent_hash, nonce, 
+                    hash,parent_hash, Option(nonce), 
                     sha3_uncles,logs_bloom,
                     transactions_root,state_root, receipts_root,
                     miner, BigInt(difficulty), Some(BigInt(total_difficulty)),

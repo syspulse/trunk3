@@ -13,7 +13,7 @@ case class EthBlock(
   number:Long,
   hash:String,  
   parent_hash:String,
-  nonce:String,
+  nonce:Option[String],
   sha3_uncles:String,
   logs_bloom:String,
   transactions_root:String,
