@@ -37,6 +37,7 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
 
   private var cursor = CursorFile(file)
   private var current:Long = 0
+  private var lastBlock:Long = 0
   var blockStart:Long = 0
   var blockEnd:Long = Int.MaxValue
   var blockList:Seq[Long] = Seq() // special option to read only the list of blocks
@@ -58,7 +59,7 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   def setFile(newStateFile:String) = this.synchronized {
     if(newStateFile.isBlank())
       this
-    else
+    else 
       cursor = CursorFile(newStateFile)
       
     this
@@ -78,7 +79,7 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
       if(blockList.size > 0) {
         // if list is specified, init it
         blockListIndex = 0
-        this.current = blockList(blockListIndex)
+        this.current = blockList(blockListIndex)        
         this.blockStart = blockList(blockListIndex)
         this.blockEnd = blockList.last
       } else {
@@ -112,7 +113,12 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
       current + 1
   }
 
+  def last():Long = this.synchronized {
+    lastBlock
+  }
+
   def commit(block:Long) = this.synchronized {
+    lastBlock = block
     if(blockList.size > 0) {
       current = block
       blockListIndex = blockList.indexOf(block) + 1

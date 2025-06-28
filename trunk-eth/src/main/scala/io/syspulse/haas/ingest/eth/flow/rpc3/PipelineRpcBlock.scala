@@ -66,13 +66,16 @@ class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
 
   def transform(block: RpcBlock): Seq[Block] = {
     val b = block.result.get
-    
+    val blockNumner = EthUtil.toLong(b.number)
+
     if(config.filter.size != 0 && config.filter.contains(b.hash)) {
       return Seq()
     }
 
+    log.info(s"Block[${blockNumner},${b.transactions.size}]")
+
     val blk = Block(
-      EthUtil.toLong(b.number),
+      blockNumner,
       b.hash,
       b.parentHash,
       b.nonce,
@@ -97,7 +100,7 @@ class PipelineBlock(config:Config) extends PipelineRpcBlock[Block](config) {
     )
     
     // commit cursor
-    cursor.commit(EthUtil.toLong(b.number))
+    cursor.commit(blockNumner)
 
     Seq(blk)
   }    

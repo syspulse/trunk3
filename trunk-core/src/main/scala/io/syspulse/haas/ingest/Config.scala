@@ -48,6 +48,7 @@ case class Config(
   blockLag:Int = 0, // lag
   blockReorg:Int = 0, // number of block reorgs
   blockLimit:Int = 0,     // how many blocks to take from batch. Can be used to limit when RPC is 429 throttled. 
+                          // this just cuts the batch and skips (forgets blocks !!!)
 
   receiptBatch:Int = -1,      // max receipt batch size
   receiptThrottle:Long = 1000L, // throttle between receipts batches within the single block

@@ -3,6 +3,7 @@ package io.syspulse.haas.ingest.eth.flow.rpc3
 import java.util.concurrent.atomic.AtomicLong
 import io.syspulse.skel.ingest.flow.Flows
 
+import scala.util.{Success,Failure}
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
 import com.typesafe.scalalogging.Logger
@@ -53,6 +54,8 @@ import akka.stream.scaladsl.RestartSource
 import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.CursorBlock
 import io.syspulse.haas.reorg.{ReorgBlock,ReorgBlock1,ReorgBlock2}
+import akka.stream.Attributes
+import akka.stream.OverflowStrategy
 
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
@@ -178,7 +181,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
           FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
           s"${uri.uri}"
-        )
+        )        
 
         // ----- Reorg Subflow -----------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
@@ -217,13 +220,14 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             val r = ujson.read(body)
             val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
             
-            log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}, reorg=${config.blockReorg}")
+            val currentBlock = cursor.get()
+            log.info(s"Cursor ==> last=${lastBlock}, current=${currentBlock}, distance=${lastBlock - currentBlock}, lag=${config.blockLag}, reorg=${config.blockReorg}")
             lastBlock - config.blockLag
           })
           .mapConcat(lastBlock => {
             // ATTENTION:
             // lag and reorg are not compatible !
-                        
+
             val bb = 
               if(cursor.blockList.size > 0) {
                 // selected list
@@ -240,9 +244,12 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             
             bb
           })          
-          .groupedWithin(config.blockBatch,FiniteDuration(1L,TimeUnit.MILLISECONDS)) // batch limiter 
+          // .buffer(config.blockBatch, OverflowStrategy.backpressure)  // Apply backpressure to Source.tick
+          .grouped(config.blockBatch)
+          //.groupedWithin(config.blockBatch, FiniteDuration(1L, TimeUnit.MILLISECONDS))
+          // .grouped(1)
           .map(blocks => {
-            
+
             val bb = if(config.blockReorg == 0) {
               // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
               // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
@@ -251,27 +258,44 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
               // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
               blocks
-              .distinct
-              .filter(b => b <= blockEnd && b >= cursor.get())                
+                .distinct
+                .filter(b => b <= blockEnd && b >= cursor.get())
             } else
               blocks
 
             // when retrieving blocks in range, it is not a race
             if(bb.size == 0 && cursor.blockEnd == Int.MaxValue) {
               // informational
-              log.warn(s"Race: ${blocks} -> ${bb}: cursor=${cursor.get()}")
+              log.warn(s">>>> Race: ${blocks} -> ${bb}: cursor=${cursor.get()}")
             }
+            
             bb
           })
           .filter(_.size > 0)       // due to parallelization and slow downstream processing, race is possible and empty list is passed
           .takeWhile(blocks => {    // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0            
           })
-          .map(blocks => {
-            log.info(s"--> ${blocks}")
+          .map(blocks0 => {
+            log.info(s"--> ${blocks0}")
+
+            val blocks1 = if(cursor.last() != 0) 
+              blocks0.filter(_ > cursor.last())
+            else
+              blocks0
             
+            val blocks = if(blocks1.size != blocks0.size && cursor.last() != 0) {
+              val blocksOld = blocks0.filter(_ < cursor.last())
+              log.warn(s">>>> PAST=${blocksOld}: last=${cursor.last()}")
+              blocks1
+            } else
+              blocks1
+            
+
             // if limit is specified, take the last limit
-            val blocksReq = (if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks)
+            val blockForget = if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks
+
+            val ts0 = System.currentTimeMillis()
+            val blocksReq = blockForget
               .map(block => {
                 val blockHex = s"0x${block.toHexString}"
                 s"""{
@@ -305,6 +329,9 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               else
                 decodeBatch(body)
               
+              val ts1 = System.currentTimeMillis()
+              log.info(s"--> ${blocks0} ${ts1 - ts0}ms")
+
               batch
 
             } catch {
@@ -312,16 +339,23 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                 log.error(s"failed to get batch: '${json}'",e)
                 Seq()
             }
-          })
-          .log(s"${feed}")
+          })          
+          // .log(s"Source: feed=${feed}")
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
+          .log(s"Source: feed=${feed}")
+          .addAttributes(
+            Attributes.logLevels(
+              onElement = Attributes.LogLevels.Off,
+              onFinish = Attributes.LogLevels.Warning,
+              onFailure = Attributes.LogLevels.Error))
           .mapConcat(batch => batch)
           .filter(
             // it must return True to continue processing or false (when duplicated due to reorg algo)
             reorgFlow
           )
-          .map(b => ByteString(b))
+          .map(b => ByteString(b))          
       
+        // restarter for source 
         val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>
           log.info(s"connect -> ${uri.uri}")
           sourceFlow
@@ -333,6 +367,14 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
     }
   }
 
+  // override def sink() = {
+  //   super
+  //   .sink()
+  //   .recover {
+  //     case e: RuntimeException => e.getMessage
+  //   }
+  // }
+
   def decodeSingle(rsp:String):Seq[String] = Seq(rsp)
 
   def decodeBatch(rsp:String):Seq[String] = {
@@ -341,6 +383,5 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
     val jsonBatch = ujson.read(rsp)
     jsonBatch.arr.map(a => a.toString()).toSeq
   }
-
     
 }
