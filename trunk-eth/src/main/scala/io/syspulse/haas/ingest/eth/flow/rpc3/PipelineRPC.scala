@@ -56,6 +56,7 @@ import io.syspulse.haas.ingest.CursorBlock
 import io.syspulse.haas.reorg.{ReorgBlock,ReorgBlock1,ReorgBlock2}
 import akka.stream.Attributes
 import akka.stream.OverflowStrategy
+import scala.concurrent.Future
 
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
@@ -176,13 +177,6 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                    
         log.info(s"cursor: ${cursor}")        
 
-        val sourceTick = Source.tick(
-          FiniteDuration(10,TimeUnit.MILLISECONDS), 
-          //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
-          FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
-          s"${uri.uri}"
-        )        
-
         // ----- Reorg Subflow -----------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
           if(config.blockReorg > 0 ) { 
@@ -193,37 +187,54 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
         }
                 
         // ------- Flow ------------------------------------------------------------------------------------
-        val sourceFlow = sourceTick
-          .map(h => {
-            log.debug(s"Cron --> ${h}")
-
-            // request latest block to know where we are from current            
-            val json = s"""{
-                "jsonrpc":"2.0","method":"eth_blockNumber",
-                "params":[],
-                "id": 0
-              }""".trim.replaceAll("\\s+","")
-
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            val body = rsp.text()
-            //log.info(s"rsp=${rsp.statusCode}: ${body}")
+        val sourceFlow = 
+          // Use unfoldAsync to create a backpressure-aware source
+          // This ensures the source only generates elements when downstream is ready
+          Source.unfoldAsync(0L) { lastProcessedTime =>
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastProcess = currentTime - lastProcessedTime
             
-            rsp.statusCode match {
-              case 200 => //
-                log.debug(s"${body}")
-              case _ => 
-                // retry
-                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                throw new RetryException("")
+            if (timeSinceLastProcess >= config.throttle) {
+              // It's time to process the next batch
+              log.debug(s"Cron --> ${uri.uri}")
+
+              // request latest block to know where we are from current            
+              val json = s"""{
+                  "jsonrpc":"2.0","method":"eth_blockNumber",
+                  "params":[],
+                  "id": 0
+                }""".trim.replaceAll("\\s+","")
+
+              val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
+              val body = rsp.text()
+              //log.info(s"rsp=${rsp.statusCode}: ${body}")
+              
+              rsp.statusCode match {
+                case 200 => //
+                  log.debug(s"${body}")
+                case _ => 
+                  // retry
+                  log.error(s"RPC error: ${rsp.statusCode}: ${body}")
+                  throw new RetryException("")
+              }
+              
+              val r = ujson.read(body)
+              val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
+              
+              val currentBlock = cursor.get()
+              log.info(s"Cursor: last=${lastBlock}, current=${currentBlock}, distance=${lastBlock - currentBlock}, lag=${config.blockLag}, reorg=${config.blockReorg}")
+              
+              // Return the next state and the data to emit
+              // The downstream will pull this when ready, enforcing backpressure
+              Future.successful(Some((currentTime, lastBlock - config.blockLag)))
+            } else {
+              // Not enough time has passed, wait a bit more
+              // Use a simple delay that respects backpressure
+              Thread.sleep(10) // Small sleep to avoid busy waiting
+              Future.successful(Some((lastProcessedTime, null)))
             }
-            
-            val r = ujson.read(body)
-            val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
-            
-            val currentBlock = cursor.get()
-            log.info(s"Cursor ==> last=${lastBlock}, current=${currentBlock}, distance=${lastBlock - currentBlock}, lag=${config.blockLag}, reorg=${config.blockReorg}")
-            lastBlock - config.blockLag
-          })
+          }
+          .filter(_ != null) // Filter out null values from timing checks
           .mapConcat(lastBlock => {
             // ATTENTION:
             // lag and reorg are not compatible !
@@ -242,10 +253,11 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                 reorg.range(cursor.get(),lastBlock)
               }
             
-            bb
+            //bb
+            bb.grouped(config.blockBatch)
           })          
           // .buffer(config.blockBatch, OverflowStrategy.backpressure)  // Apply backpressure to Source.tick
-          .grouped(config.blockBatch)
+          //.grouped(config.blockBatch)
           //.groupedWithin(config.blockBatch, FiniteDuration(1L, TimeUnit.MILLISECONDS))
           // .grouped(1)
           .map(blocks => {
@@ -271,7 +283,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             
             bb
           })
-          .filter(_.size > 0)       // due to parallelization and slow downstream processing, race is possible and empty list is passed
+          .filter(_.size > 0)       // can be empty due no new elements from RPC
           .takeWhile(blocks => {    // limit flow by the specified end block
             blocks.filter(_ <= blockEnd).size > 0            
           })
