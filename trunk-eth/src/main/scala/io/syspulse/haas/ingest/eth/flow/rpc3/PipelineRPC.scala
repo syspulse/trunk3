@@ -177,6 +177,17 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                    
         log.info(s"cursor: ${cursor}")        
 
+        val sourceTick = Source.tick(
+          FiniteDuration(10,TimeUnit.MILLISECONDS), 
+          //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
+          FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
+          s"${uri.uri}"
+        )
+        .conflate((lastMessage, newMessage) => newMessage)
+
+        // val sourceTick = Source.repeat(())
+        //   .throttle(1, FiniteDuration(config.throttle,TimeUnit.MILLISECONDS))          
+        
         // ----- Reorg Subflow -----------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
           if(config.blockReorg > 0 ) { 
@@ -188,54 +199,39 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                 
         // ------- Flow ------------------------------------------------------------------------------------
         val sourceFlow = 
-          // Use unfoldAsync to create a backpressure-aware source
-          // This ensures the source only generates elements when downstream is ready
-          Source.unfoldAsync(0L) { lastProcessedTime =>
-            val currentTime = System.currentTimeMillis()
-            val timeSinceLastProcess = currentTime - lastProcessedTime
+          sourceTick
+          .map(h => {
+            log.debug(s"Cron --> ${h}")
+
+            // request latest block to know where we are from current            
+            val json = s"""{
+                "jsonrpc":"2.0","method":"eth_blockNumber",
+                "params":[],
+                "id": 0
+              }""".trim.replaceAll("\\s+","")
+
+            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
+            val body = rsp.text()
+            //log.info(s"rsp=${rsp.statusCode}: ${body}")
             
-            if (timeSinceLastProcess >= config.throttle) {
-              // It's time to process the next batch
-              log.debug(s"Cron --> ${uri.uri}")
-
-              // request latest block to know where we are from current            
-              val json = s"""{
-                  "jsonrpc":"2.0","method":"eth_blockNumber",
-                  "params":[],
-                  "id": 0
-                }""".trim.replaceAll("\\s+","")
-
-              val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-              val body = rsp.text()
-              //log.info(s"rsp=${rsp.statusCode}: ${body}")
-              
-              rsp.statusCode match {
-                case 200 => //
-                  log.debug(s"${body}")
-                case _ => 
-                  // retry
-                  log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                  throw new RetryException("")
-              }
-              
-              val r = ujson.read(body)
-              val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
-              
-              val currentBlock = cursor.get()
-              log.info(s"Cursor: last=${lastBlock}, current=${currentBlock}, distance=${lastBlock - currentBlock}, lag=${config.blockLag}, reorg=${config.blockReorg}")
-              
-              // Return the next state and the data to emit
-              // The downstream will pull this when ready, enforcing backpressure
-              Future.successful(Some((currentTime, lastBlock - config.blockLag)))
-            } else {
-              // Not enough time has passed, wait a bit more
-              // Use a simple delay that respects backpressure
-              Thread.sleep(10) // Small sleep to avoid busy waiting
-              Future.successful(Some((lastProcessedTime, null)))
+            rsp.statusCode match {
+              case 200 => //
+                log.debug(s"${body}")
+              case _ => 
+                // retry
+                log.error(s"RPC error: ${rsp.statusCode}: ${body}")
+                throw new RetryException("")
             }
-          }
-          .filter(_ != null) // Filter out null values from timing checks
-          .mapConcat(lastBlock => {
+            
+            val r = ujson.read(body)
+            val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
+            
+            val currentBlock = cursor.get()
+            log.info(s"Cursor: last=${lastBlock}, current=${currentBlock}, distance=${lastBlock - currentBlock}, lag=${config.blockLag}, reorg=${config.blockReorg}")
+            
+            lastBlock - config.blockLag
+          })
+          .map(lastBlock => {
             // ATTENTION:
             // lag and reorg are not compatible !
 
@@ -254,102 +250,116 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               }
             
             //bb
-            bb.grouped(config.blockBatch)
+            //bb.grouped(config.blockBatch)
+            bb.take(config.blockBatch)
           })          
-          // .buffer(config.blockBatch, OverflowStrategy.backpressure)  // Apply backpressure to Source.tick
-          //.grouped(config.blockBatch)
-          //.groupedWithin(config.blockBatch, FiniteDuration(1L, TimeUnit.MILLISECONDS))
-          // .grouped(1)
-          .map(blocks => {
+          //.groupedWithin(config.blockBatch, FiniteDuration(1L, TimeUnit.MILLISECONDS))          
+          // .map(blocks => {
+          //   log.info(s"-> ${blocks}")
 
-            val bb = if(config.blockReorg == 0) {
-              // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
-              // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
-              // duplicates since commit is not changing. 
-              // Example: 
-              // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
-              // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
-              blocks
-                .distinct
-                .filter(b => b <= blockEnd && b >= cursor.get())
-            } else
-              blocks
+          //   val bb = if(config.blockReorg == 0) {
+          //     // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
+          //     // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
+          //     // duplicates since commit is not changing. 
+          //     // Example: 
+          //     // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
+          //     // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
+          //     blocks
+          //       .distinct
+          //       .filter(b => b <= blockEnd && b >= cursor.get())
+          //   } else
+          //     blocks
 
-            // when retrieving blocks in range, it is not a race
-            if(bb.size == 0 && cursor.blockEnd == Int.MaxValue) {
-              // informational
-              log.warn(s">>>> Race: ${blocks} -> ${bb}: cursor=${cursor.get()}")
-            }
+          //   // when retrieving blocks in range, it is not a race
+          //   if(bb.size == 0 && cursor.blockEnd == Int.MaxValue) {
+          //     // informational
+          //     log.warn(s">>>> Race: ${blocks} -> ${bb}: cursor=${cursor.get()}")
+          //   }
             
-            bb
-          })
-          .filter(_.size > 0)       // can be empty due no new elements from RPC
-          .takeWhile(blocks => {    // limit flow by the specified end block
-            blocks.filter(_ <= blockEnd).size > 0            
+          //   bb
+          // })
+          // .filter(_.size > 0)       // can be empty due no new elements from RPC
+          // .takeWhile(blocks => {    // limit flow by the specified end block
+          //   blocks.filter(_ <= blockEnd).size > 0            
+          // })
+
+          // limit flow by the specified end block
+          .takeWhile(blocks => {
+            //blocks.filter(_ <= blockEnd).size > 0
+            blockEnd == Long.MaxValue ||
+            blocks.size == 0 ||              
+            blocks.find(_ <= blockEnd).isDefined
+            
           })
           .map(blocks0 => {
-            log.info(s"--> ${blocks0}")
+            if(blocks0.size == 0) {
+              Seq.empty
+            } else {
+              log.info(s"--> ${blocks0.toVector}")
 
-            val blocks1 = if(cursor.last() != 0) 
-              blocks0.filter(_ > cursor.last())
-            else
-              blocks0
-            
-            val blocks = if(blocks1.size != blocks0.size && cursor.last() != 0) {
-              val blocksOld = blocks0.filter(_ < cursor.last())
-              log.warn(s">>>> PAST=${blocksOld}: last=${cursor.last()}")
-              blocks1
-            } else
-              blocks1
-            
-
-            // if limit is specified, take the last limit
-            val blockForget = if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks
-
-            val ts0 = System.currentTimeMillis()
-            val blocksReq = blockForget
-              .map(block => {
-                val blockHex = s"0x${block.toHexString}"
-                s"""{
-                    "jsonrpc":"2.0","method":"eth_getBlockByNumber",
-                    "params":["${blockHex}",true],
-                    "id":0
-                  }""".trim.replaceAll("\\s+","")  
-              })
-
-            // if only 1 tx, don't batch (to be compatible with some weird RPC which don't support batch)
-            val json = if(blocks.size == 1) 
-              blocksReq.head 
-            else 
-              s"""[${blocksReq.mkString(",")}]"""
-
-            try {
-              val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))                        
-              val body = rsp.text()
-              
-              rsp.statusCode match {
-                case 200 => //
-                  log.trace(s"${body}")
-                case _ => 
-                  // retry
-                  log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-                  throw new RetryException(s"${rsp.statusCode}")
-              }
-                              
-              val batch = if(blocks.size == 1)
-                decodeSingle(body)
+              val blocks1 = if(cursor.last() != 0) 
+                blocks0.filter(_ > cursor.last())
               else
-                decodeBatch(body)
+                blocks0
               
-              val ts1 = System.currentTimeMillis()
-              log.info(s"--> ${blocks0} ${ts1 - ts0}ms")
+              val blocks = if(blocks1.size != blocks0.size && cursor.last() != 0) {
+                val blocksOld = blocks0.filter(_ < cursor.last())
+                log.warn(s">>>> PAST=${blocksOld}: last=${cursor.last()}")
+                blocks1
+              } else
+                blocks1
+              
+
+              // if limit is specified, take the last limit
+              val blockForget = if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks
+
+              val ts0 = System.currentTimeMillis()
+              val blocksReq = blockForget
+                .map(block => {
+                  val blockHex = s"0x${block.toHexString}"
+                  s"""{
+                      "jsonrpc":"2.0","method":"eth_getBlockByNumber",
+                      "params":["${blockHex}",true],
+                      "id":0
+                    }""".trim.replaceAll("\\s+","")  
+                })
+
+              // if only 1 tx, don't batch (to be compatible with some weird RPC which don't support batch)
+              val json = if(blocks.size == 1) 
+                blocksReq.head 
+              else 
+                s"""[${blocksReq.mkString(",")}]"""
+
+              val batch = try {
+                val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))                        
+                val body = rsp.text()
+                
+                rsp.statusCode match {
+                  case 200 => //
+                    log.trace(s"${body}")
+                  case _ => 
+                    // retry
+                    log.error(s"RPC error: ${rsp.statusCode}: ${body}")
+                    throw new RetryException(s"${rsp.statusCode}")
+                }
+                                
+                val batch = if(blocks.size == 1)
+                  decodeSingle(body)
+                else
+                  decodeBatch(body)
+                
+                val ts1 = System.currentTimeMillis()
+                log.info(s"--> ${blocks0.toVector} ${ts1 - ts0}ms")
+
+                batch
+
+              } catch {
+                case e:Exception =>
+                  log.error(s"failed to get batch: '${json}'",e)
+                  Seq()
+              }
 
               batch
-
-            } catch {
-              case e:Exception =>
-                log.error(s"failed to get batch: '${json}'",e)
-                Seq()
             }
           })          
           // .log(s"Source: feed=${feed}")
@@ -360,11 +370,15 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               onElement = Attributes.LogLevels.Off,
               onFinish = Attributes.LogLevels.Warning,
               onFailure = Attributes.LogLevels.Error))
-          .mapConcat(batch => batch)
-          .filter(
-            // it must return True to continue processing or false (when duplicated due to reorg algo)
-            reorgFlow
-          )
+          // range -> blocks stream
+          // process reorgs here
+          .mapConcat(batch => {
+            batch
+              .filter(b => reorgFlow(b))
+          }) 
+          // .filter(
+          //   reorgFlow
+          // )
           .map(b => ByteString(b))          
       
         // restarter for source 
