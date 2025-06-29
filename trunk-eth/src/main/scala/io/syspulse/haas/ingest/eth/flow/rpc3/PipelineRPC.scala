@@ -257,7 +257,9 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             blocks.find(_ <= blockEnd).isDefined
             
           })
-          .map(blocks0 => {
+          .map(blocks => {
+            // filter until the last block
+            val blocks0 = blocks.filter(_ <= blockEnd)
             if(blocks0.size == 0) {
               Seq.empty
             } else {
@@ -268,13 +270,16 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               else
                 blocks0
               
-              val blocks = if(blocks1.size != blocks0.size && cursor.last() != 0) {
+              val blocks2 = if(blocks1.size != blocks0.size && cursor.last() != 0) {
                 val blocksOld = blocks0.filter(_ < cursor.last())
                 log.warn(s">>>> PAST=${blocksOld}: last=${cursor.last()}")
                 blocks1
               } else
                 blocks1
+
+              val blocks = blocks2
               
+              // log.info(s"--> ${blocks.toVector}")
 
               // if limit is specified, take the last limit
               val blockForget = if(config.blockLimit > 0) blocks.takeRight(config.blockLimit) else blocks
