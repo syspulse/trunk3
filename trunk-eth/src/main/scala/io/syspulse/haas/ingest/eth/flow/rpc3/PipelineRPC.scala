@@ -182,11 +182,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
           FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
           s"${uri.uri}"
-        )
-        .conflate((lastMessage, newMessage) => newMessage)
-
-        // val sourceTick = Source.repeat(())
-        //   .throttle(1, FiniteDuration(config.throttle,TimeUnit.MILLISECONDS))          
+        )        
         
         // ----- Reorg Subflow -----------------------------------------------------------------------------
         val reorgFlow = (lastBlock:String) => {
@@ -211,8 +207,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               }""".trim.replaceAll("\\s+","")
 
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-            val body = rsp.text()
-            //log.info(s"rsp=${rsp.statusCode}: ${body}")
+            val body = rsp.text()            
             
             rsp.statusCode match {
               case 200 => //
@@ -249,39 +244,10 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                 reorg.range(cursor.get(),lastBlock)
               }
             
-            //bb
-            //bb.grouped(config.blockBatch)
-            bb.take(config.blockBatch)
-          })          
-          //.groupedWithin(config.blockBatch, FiniteDuration(1L, TimeUnit.MILLISECONDS))          
-          // .map(blocks => {
-          //   log.info(s"-> ${blocks}")
-
-          //   val bb = if(config.blockReorg == 0) {
-          //     // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
-          //     // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
-          //     // duplicates since commit is not changing. 
-          //     // Example: 
-          //     // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
-          //     // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
-          //     blocks
-          //       .distinct
-          //       .filter(b => b <= blockEnd && b >= cursor.get())
-          //   } else
-          //     blocks
-
-          //   // when retrieving blocks in range, it is not a race
-          //   if(bb.size == 0 && cursor.blockEnd == Int.MaxValue) {
-          //     // informational
-          //     log.warn(s">>>> Race: ${blocks} -> ${bb}: cursor=${cursor.get()}")
-          //   }
-            
-          //   bb
-          // })
-          // .filter(_.size > 0)       // can be empty due no new elements from RPC
-          // .takeWhile(blocks => {    // limit flow by the specified end block
-          //   blocks.filter(_ <= blockEnd).size > 0            
-          // })
+            bb.grouped(config.blockBatch)
+            //bb.take(config.blockBatch)
+          })
+          .mapConcat(bb => bb)
 
           // limit flow by the specified end block
           .takeWhile(blocks => {
@@ -370,15 +336,14 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               onElement = Attributes.LogLevels.Off,
               onFinish = Attributes.LogLevels.Warning,
               onFailure = Attributes.LogLevels.Error))
-          // range -> blocks stream
-          // process reorgs here
+          // range -> blocks stream          
           .mapConcat(batch => {
             batch
-              .filter(b => reorgFlow(b))
+              .filter(b => 
+                // process reorgs here
+                reorgFlow(b)
+              )
           }) 
-          // .filter(
-          //   reorgFlow
-          // )
           .map(b => ByteString(b))          
       
         // restarter for source 
