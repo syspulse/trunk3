@@ -108,9 +108,10 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               block
 
             case _ => 
-              // just a block
-              cursor.setList(Seq(config.block.toLong))
-              config.block
+              // supports a list of blocks
+              val bb = config.block.split(",").map(_.trim.toLong).toSeq
+              cursor.setList(bb)
+              bb.head.toString
           })
 
         val blockStart = blockStr.strip match {
