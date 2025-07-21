@@ -75,7 +75,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
   override def source(feed:String) = {
     feed.split("://").toList match {
       case "http" :: _ | "https" :: _ | "bitcoin" :: _  =>
-        
+
         val blockStr = 
           (config.block.split("://").toList match {
             // start from latest and save to file
@@ -100,7 +100,10 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             case block :: file :: Nil => cursor.setFile(file).read(); 
               block
 
-            case _ => config.block
+            case _ => 
+              // just a block
+              cursor.setList(Seq(config.block.toLong))
+              config.block
           })
 
         val blockStart = blockStr.strip match {
@@ -122,8 +125,10 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           case hex if hex.startsWith("0x") =>
             java.lang.Long.parseLong(hex,16).toInt
           case _ @ dec =>
-            dec.toInt
+            dec.toLong
         }
+
+        
 
         cursor.init(blockStart - config.blockLag, blockEnd)
                    

@@ -107,7 +107,10 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             case block :: file :: Nil => cursor.setFile(file).read(); 
               block
 
-            case _ => config.block
+            case _ => 
+              // just a block
+              cursor.setList(Seq(config.block.toLong))
+              config.block
           })
 
         val blockStart = blockStr.strip match {
@@ -170,7 +173,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           case hex if hex.startsWith("0x") =>
             java.lang.Long.parseLong(hex,16).toInt
           case _ @ dec =>
-            dec.toInt
+            dec.toLong
         }
 
         cursor.init(blockStart - config.blockLag, blockEnd)
@@ -247,6 +250,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             bb.grouped(config.blockBatch)
             //bb.take(config.blockBatch)
           })
+          // flatted seq of batchs to stream of batches
           .mapConcat(bb => bb)
 
           // limit flow by the specified end block
