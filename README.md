@@ -327,7 +327,18 @@ Polling uses diff calculation to check only new Mempool transactions
 
 ## Replay
 
-### Replaying previous transactions
+### Replaying previous blocks
+
+Simple replay from specific block until it catches the head
+
+`--batch` - controls how many block to proccess
+`--block.throttle` throttles between batches in this case
+
+```
+./run-trunk.sh -e tx -f http://geth:8545 --block=23032252  --block.throttle=1000 --batch=1 --format=json
+```
+
+### Replay specific transactions
 
 To replay transactions `trunk` needs to know blocks of these transactions, thus it requires two parameter: 
 

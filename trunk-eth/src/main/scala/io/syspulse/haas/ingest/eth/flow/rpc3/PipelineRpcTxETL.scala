@@ -201,7 +201,9 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
             r.data,
             r.topics
           )
-        })
+        }),
+
+        sim = config.sim
       )
     }}
     .map(tx => {

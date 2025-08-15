@@ -147,7 +147,9 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
             r.data,
             r.topics
           )
-        })
+        }),
+
+        sim = config.sim
       )
     }}
     .map(tx => {

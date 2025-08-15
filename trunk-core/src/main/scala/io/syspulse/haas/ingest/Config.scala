@@ -78,6 +78,8 @@ case class Config(
   reorgFlow:String = "reorg1",  // 1 - Old Reorg Flow (duplicates), 2 - New Reorg Flow
   reorgFile:String = "",  // file to dump reorgs log
 
+  sim:Option[String] = None, // simulation mode with specifi target (cid:1245 / addr:0x0001 / did:88764). Used by Ext/Sentinel
+
   cmd:String = "stream",
   params: Seq[String] = Seq(),
   c:Seq[String] = Seq()

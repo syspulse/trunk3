@@ -30,7 +30,9 @@ case class Tx(
   p0: Option[BigInt],       // price Effective
 
   block:Block,
-  logs: Array[EventTx]
+  logs: Array[EventTx],
+
+  sim:Option[String] = None, // sim
 
   //timestamp:Option[Long]
 ) extends Ingestable {

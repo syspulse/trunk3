@@ -38,7 +38,7 @@ object App extends skel.Server {
       new ConfigurationAkka,
       new ConfigurationProp,
       new ConfigurationEnv, 
-      new ConfigurationArgs(args,"trunk-ingest","",
+      new ConfigurationArgs(args,"trunk3","0.14.0",
         ArgString('h', "http.host",s"listen host (def: ${d.host})"),
         ArgInt('p', "http.port",s"listern port (def: ${d.port})"),
         ArgString('u', "http.uri",s"api uri (def: ${d.uri})"),
@@ -101,6 +101,8 @@ object App extends skel.Server {
         
         ArgString('_', "reorg.flow",s"Reorg engine (def: ${d.reorgFlow})"),
         ArgString('_', "reorg.file",s"Reorg file (def: ${d.reorgFile})"),
+
+        ArgString('_', "sim",s"Simulation mode (def: ${d.sim})"),
         
         ArgParam("<params>",""),
 
@@ -141,7 +143,7 @@ object App extends skel.Server {
       freq = c.getLong("freq").getOrElse(d.freq),
       delimiter = c.getString("delimiter").getOrElse(d.delimiter),
       buffer = c.getInt("buffer").getOrElse(d.buffer),
-      throttle = c.getLong("throttle").getOrElse(d.throttle),     
+      throttle = c.getLong("throttle").getOrElse(d.throttle),
       format = c.getString("format").getOrElse(d.format),
 
       filter = c.getListString("filter",d.filter).map(_.toLowerCase()),
@@ -178,6 +180,8 @@ object App extends skel.Server {
       
       reorgFlow = c.getString("reorg.flow").getOrElse(d.reorgFlow),
       reorgFile = c.getString("reorg.file").getOrElse(d.reorgFile),
+
+      sim = c.getSmartString("sim"),
       
       cmd = c.getCmd().getOrElse(d.cmd),      
       params = c.getParams(),

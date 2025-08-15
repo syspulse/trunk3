@@ -29,7 +29,9 @@ case class Tx(
   receipt_effective_gas_price:Option[BigInt],
 
   block:Block,
-  logs:Array[LogTx]
+  logs:Array[LogTx],
+  
+  sim:Option[String] = None, // sim
   
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(hash)

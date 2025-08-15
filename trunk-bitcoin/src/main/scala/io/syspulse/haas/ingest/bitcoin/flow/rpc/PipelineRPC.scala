@@ -101,7 +101,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               block
 
             case _ => 
-              val bb = config.block.split(",").map(_.trim.toLong).toSeq
+              val bb = config.block.split(",").map(_.trim.toLong).sorted.toSeq
               cursor.setList(bb)
               bb.head.toString
           })

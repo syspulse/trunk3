@@ -13,5 +13,5 @@ import io.syspulse.haas.ingest.eth.EventJson
 object TxJson extends DefaultJsonProtocol {
   import BlockJson._
   import EventJson._
-  implicit val jf_tx = jsonFormat20(Tx.apply _)  
+  implicit val jf_tx = jsonFormat21(Tx.apply _)  
 }

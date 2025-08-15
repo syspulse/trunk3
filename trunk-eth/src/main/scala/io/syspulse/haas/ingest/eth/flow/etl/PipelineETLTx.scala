@@ -99,7 +99,9 @@ abstract class PipelineETLTx[E <: skel.Ingestable](config:Config)
       e.address, 
       e.data,
       e.topics,
-    ))
+    )),
+
+    sim = config.sim
   )
 
 }

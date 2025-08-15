@@ -86,9 +86,11 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
         val blockStr = 
           (config.block.split("://").toList match {
             // start from latest and save to file
-            case "latest" :: file :: Nil => cursor.setFile(file).read()
+            case "latest" :: file :: Nil => 
+              cursor.setFile(file).read()
               "latest"
-            case "last" :: file :: Nil => cursor.setFile(file).read()
+            case "last" :: file :: Nil => 
+              cursor.setFile(file).read()
               "latest"
             case "latest" :: Nil =>  // use default file
               cursor.setFile("").read()
@@ -109,8 +111,11 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
             case _ => 
               // supports a list of blocks
-              val bb = config.block.split(",").map(_.trim.toLong).toSeq
-              cursor.setList(bb)
+              val bb = config.block.split(",").map(_.trim.toLong).sorted.toSeq
+              
+              if(bb.size > 1) 
+                cursor.setList(bb)
+
               bb.head.toString
           })
 

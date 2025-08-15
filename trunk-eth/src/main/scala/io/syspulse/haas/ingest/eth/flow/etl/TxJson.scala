@@ -14,5 +14,5 @@ import io.syspulse.skel.service.JsonCommon
 object TxJson extends DefaultJsonProtocol { //JsonCommon {
   implicit val jf_etl_block = jsonFormat19(Block.apply _)  
   implicit val jf_etl_logtx = jsonFormat4(LogTx.apply _)  
-  implicit val jf_etl_tx = jsonFormat20(Tx.apply _)  
+  implicit val jf_etl_tx = jsonFormat21(Tx.apply _)  
 }

@@ -21,18 +21,29 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
 
     def read():String = this.synchronized {
       // can be string lile ("latest")
-      os.read(os.Path(stateFile,os.pwd))
+      try {
+        os.read(os.Path(stateFile,os.pwd))
+      } catch {
+        case e:Exception =>
+          log.warn(s"failed to read cursor: ${stateFile}: ${e.getMessage}")
+          ""
+      }
     }
 
     def write(current:Long) = this.synchronized {
-      os.write.over(os.Path(stateFile,os.pwd),current.toString)    
+      try {
+        os.write.over(os.Path(stateFile,os.pwd),current.toString)    
+      } catch {
+        case e:Exception =>
+          log.warn(s"failed to write cursor: ${stateFile}: ${e.getMessage}")
+      }
     }
   }
   
 
   override def toString() = if(blockList.size > 0)
-    s"${current} [${blockList.mkString(",")}] (${file})"
-  else
+    s"${current} [${blockList.mkString(",")}] : ${blockEnd} (${file})"
+    else
     s"${current} [${blockStart} : ${blockEnd}] (${file})"
 
   private var cursor = CursorFile(file)
@@ -81,7 +92,10 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
         blockListIndex = 0
         this.current = blockList(blockListIndex)        
         this.blockStart = blockList(blockListIndex)
+        
+        // ATTENTION: This logic may change
         this.blockEnd = blockList.last
+        //this.blockEnd = blockEnd
       } else {
         this.current = blockStart
         this.blockStart = blockStart
