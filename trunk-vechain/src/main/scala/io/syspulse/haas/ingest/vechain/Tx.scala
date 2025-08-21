@@ -23,7 +23,7 @@ case class Tx(
   nonce:String,     // nonce
   
   gas:BigInt,       // gas 
-  pric:Long,        // gas_coefficient
+  pric:Option[Long], // gas_coefficient
   
   data:String,      // calldata
 

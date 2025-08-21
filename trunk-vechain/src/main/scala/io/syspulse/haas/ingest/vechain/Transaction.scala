@@ -14,7 +14,7 @@ case class Transaction(
   nonce:String,     // nonce
   
   gas:BigInt,         // gas 
-  pric:Long,           // gas coefficient
+  pric:Option[Long],  // gas coefficient
   
   data:String,      // calldata
 
