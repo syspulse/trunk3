@@ -108,7 +108,8 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
         val blockStart = blockStr.strip match {
           case "latest" =>
-            askLastBlock(uri)            
+            log.info(s"Latest -> ${uri.url}")
+            askLastBlock(uri) 
 
           case hex if hex.startsWith("0x") =>
             java.lang.Long.parseLong(hex.drop(2),16).toLong
@@ -246,7 +247,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
     jsonBatch.arr.map(a => a.toString()).toSeq
   }
 
-  def askLastBlock(uri:BitcoinURI):Long = {
+  def askLastBlock(uri:BitcoinURI,retry:Int = Int.MaxValue):Long = {
     val url = uri.url
     val json = s"""{
         "jsonrpc":"1.0","method":"getblockchaininfo",
@@ -256,31 +257,45 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
     log.debug(s"${json} -> ${url}")
 
-    val rsp = requests.post(url, data = json,headers = Map("content-type" -> "application/json"))
-    val body = rsp.text()
-    //log.info(s"rsp=${rsp.statusCode}: ${body}")
+    var r:Option[Long] = None
+    var rn = 0
     
-    rsp.statusCode match {
-      case 200 => //
-        log.debug(s"${body}")
-      case _ => 
-        // retry
-        log.error(s"RPC error: ${rsp.statusCode}: ${body}")
-        throw new RetryException("")
-    }
-    
-    try {
-      val r = ujson.read(rsp.text())
-      val result = r.obj("result")
-      val lastBlockHash = result.obj("bestblockhash").str
-      val lastBlock = result.obj("blocks").num
+    while(!r.isDefined && rn < retry)  {
+      log.debug(s"Latest -> ${uri.url}")
+      r = try { 
+        val rsp = requests.post(url, data = json,headers = Map("content-type" -> "application/json"))      
+        
+        val body = rsp.text()
+      
+        //log.info(s"rsp=${rsp.statusCode}: ${body}")
+      
+        rsp.statusCode match {
+          case 200 => //
+            log.debug(s"${body}")
+          case _ => 
+            // retry
+            log.error(s"RPC error: ${rsp.statusCode}: ${body}")
+            throw new RetryException("")
+        }
+        
+        
+          val r = ujson.read(rsp.text())
+          val result = r.obj("result")
+          val lastBlockHash = result.obj("bestblockhash").str
+          val lastBlock = result.obj("blocks").num
 
-      lastBlock.toLong
-    } catch {
-      case e:Exception =>
-        log.error(s"failed to get last block: ${body}",e)
-        throw e
+          Some(lastBlock.toLong)
+        
+      } catch {
+        case e:Exception =>
+          rn = rn + 1
+          log.warn(s"failed to get last block",e)
+          Thread.sleep(config.throttle)
+          None
+      }
     }
+
+    r.get
   }
 
   def askBlockHashes(uri:BitcoinURI,blocks:Seq[Long]):Seq[String] = {    
