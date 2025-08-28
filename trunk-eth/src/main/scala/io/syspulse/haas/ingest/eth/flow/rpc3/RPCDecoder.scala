@@ -623,6 +623,31 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     receiptMap
   }
 
+  def decodeReceiptsTest(block: RpcBlock)(implicit config:Config,uri:String): Map[String,RpcReceipt] = {
+    block.result.map(r => 
+      r.transactions.map(tx => {
+        val receipt = RpcReceipt(
+          blockHash = r.hash,
+          blockNumber = r.number,
+          transactionHash = tx.hash,
+          transactionIndex = tx.transactionIndex,
+          status = Some("0x1"),
+          logs = Array(),
+          logsBloom = r.logsBloom,
+          effectiveGasPrice = Some(tx.gasPrice),
+          from = tx.from,
+          to = tx.to,
+          contractAddress = tx.to,
+          gasUsed = tx.gas,
+          cumulativeGasUsed = tx.gas,
+          timestamp = Some(EthUtil.toLong(r.timestamp)),
+          `type` = Some("0x0")
+        )
+        tx.hash -> receipt
+      }).toMap
+    ).getOrElse(Map())
+  }
+
   def decodeReceipts(block: RpcBlock)(implicit config:Config,uri:String): Map[String,RpcReceipt] = {    
     if(config.receiptDelay > 0L) {
       // ATTENTION: Sleep inside Akka stream Thread !
@@ -632,6 +657,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     config.receiptRequest match {
       case "block" => decodeReceiptsBlock(block)
       case "batch" => decodeReceiptsBatch(block)
+      case "test" => decodeReceiptsTest(block)
       case _ => decodeReceiptsBlock(block)
     }
   }
