@@ -19,8 +19,6 @@ import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit
 
 
-import io.syspulse.haas.ingest.eth.EthURI
-
 import io.syspulse.haas.ingest.Decoder
 import io.syspulse.haas.ingest.eth._
 

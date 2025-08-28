@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 
-import io.syspulse.haas.ingest.eth.EthURI
+import io.syspulse.haas.ingest.eth.uri.{RpcURI,EthURI}
 import io.syspulse.haas.ingest.PipelineIngest
 import io.syspulse.haas.ingest.eth
 
@@ -76,12 +76,12 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
     case _ => new ReorgBlock2(config.blockReorg)
   }
 
-  implicit val uri = EthURI(config.feed,config.apiToken)
+  implicit val uri:RpcURI = EthURI(config.feed,config.apiToken)
       
   // ----- Source ----------------------------------------------------------------------------------------------------------------
   override def source(feed:String) = {
     feed.split("://").toList match {
-      case "http" :: _ | "https" :: _ | "eth" :: _  =>         
+      case _ if(uri.uri != "")  =>         
         
         val blockStr = 
           (config.block.split("://").toList match {

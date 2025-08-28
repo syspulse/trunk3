@@ -35,8 +35,6 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.eth._
 import io.syspulse.haas.ingest.eth.EthEtlJson._
 
-import io.syspulse.haas.ingest.eth.EthURI
-
 trait PipelineETL[E] extends ETLDecoder[E] {
 
   import EthEtlJson._

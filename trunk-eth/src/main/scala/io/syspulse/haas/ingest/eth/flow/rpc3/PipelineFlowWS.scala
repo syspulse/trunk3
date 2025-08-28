@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
 
-import io.syspulse.haas.ingest.eth.EthURI
+import io.syspulse.haas.ingest.eth.uri.{RpcURI,EthURI}
 import io.syspulse.haas.ingest.PipelineIngest
 import io.syspulse.haas.ingest.eth
 
@@ -64,7 +64,7 @@ abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
 
   import EthRpcJson._
   
-  implicit val uri = EthURI(config.feed,config.apiToken)
+  implicit val uri:RpcURI = EthURI(config.feed,config.apiToken)
 
   val reorg = config.reorgFlow match {
     case "reorg1" => new ReorgBlock1(config.blockReorg)

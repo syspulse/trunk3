@@ -19,8 +19,6 @@ import java.util.concurrent.TimeUnit
 
 import io.syspulse.haas.ingest.eth._
 
-import io.syspulse.haas.ingest.eth.EthURI
-
 import io.syspulse.haas.ingest.eth.EthEtlJson
 import io.syspulse.haas.ingest.eth.{EthBlock,EthTransaction,EthTokenTransfer,EthLog,EthTx}
 import io.syspulse.haas.ingest.Decoder

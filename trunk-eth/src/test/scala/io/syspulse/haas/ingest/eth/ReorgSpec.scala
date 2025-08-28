@@ -7,8 +7,9 @@ import org.scalatest.wordspec.AnyWordSpec
 import io.syspulse.skel.util.Util
 
 import io.syspulse.haas.ingest.Config
+
 import io.syspulse.haas.ingest.eth
-import io.syspulse.haas.ingest.eth.flow.rpc3.ReorgBlock2
+import io.syspulse.haas.reorg.ReorgBlock2
 
 class ReorgSpec extends AnyWordSpec with Matchers {
   //val testDir = this.getClass.getClassLoader.getResource(".").getPath + "../../../"
