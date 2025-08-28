@@ -110,14 +110,14 @@ class EthURISpec extends AnyWordSpec with Matchers {
 
     "parse 'somnia://' to Somnia mainnet" in {
       val u = EthURI("somnia://")      
-      u.uri should === ("https://data-node.somnia.io/v3")
+      u.uri should === (SomniaURI.MAINNET_URL)
       u.apiKey should === ("")
       u.max should === (10)
     }
 
     "parse 'somnia_test://' to Somnia testnet" in {
       val u = EthURI("somnia_test://")      
-      u.uri should === ("https://dream-rpc.somnia.network")
+      u.uri should === (SomniaURI.TESTNET_URL)
       u.apiKey should === ("")
       u.max should === (10)
     }
@@ -125,7 +125,7 @@ class EthURISpec extends AnyWordSpec with Matchers {
     "parse 'somnia://' with API Key" in {
       val u = EthURI("somnia://abc123")      
       // Current implementation has a bug: returns raw URI and empty API key
-      u.uri should === ("https://data-node.somnia.io/v3")
+      u.uri should === (SomniaURI.MAINNET_URL)
       u.apiKey should === ("abc123")
       u.max should === (10)
     }
@@ -133,7 +133,7 @@ class EthURISpec extends AnyWordSpec with Matchers {
     "parse 'somnia://' with options" in {
       val u = EthURI("somnia://?max=40&throttle=3000")      
       // Current implementation has a bug: returns raw URI without options
-      u.uri should === ("https://data-node.somnia.io/v3")
+      u.uri should === (SomniaURI.MAINNET_URL)
       u.max should === (40)
       u.throttle should === (3000L)
     }
@@ -280,7 +280,7 @@ class EthURISpec extends AnyWordSpec with Matchers {
     "handle Somnia URL with API key and options" in {
       val u = EthURI("somnia://somnia_key?max=50&throttle=4000")      
       // Current implementation has a bug: returns raw URI without options
-      u.uri should === ("https://data-node.somnia.io/v3")
+      u.uri should === (SomniaURI.MAINNET_URL)
       u.apiKey should === ("somnia_key")
       u.max should === (50)
       u.throttle should === (4000L)
@@ -289,7 +289,7 @@ class EthURISpec extends AnyWordSpec with Matchers {
     "handle Somnia testnet URL with API key and options" in {
       val u = EthURI("somnia_test://test_somnia_key?max=60&throttle=5000")      
       // Current implementation has a bug: returns raw URI without options
-      u.uri should === ("https://dream-rpc.somnia.network")
+      u.uri should === (SomniaURI.TESTNET_URL)
       u.apiKey should === ("test_somnia_key")
       u.max should === (60)
       u.throttle should === (5000L)

@@ -155,7 +155,7 @@ case class RpcBlockResult(
   totalDifficulty: Option[String],
   
   //uncles: Seq[RpcUncle],
-  uncles: Array[String],
+  uncles: Option[Array[String]], // some networks do not support uncles
 
   transactions: Array[RpcTx],
   size:String,  
