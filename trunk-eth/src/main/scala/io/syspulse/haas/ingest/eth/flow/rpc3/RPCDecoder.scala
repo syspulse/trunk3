@@ -623,7 +623,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     receiptMap
   }
 
-  def decodeReceiptsTest(block: RpcBlock)(implicit config:Config,uri:String): Map[String,RpcReceipt] = {
+  def decodeReceiptsEmpty(block: RpcBlock)(implicit config:Config,uri:String): Map[String,RpcReceipt] = {
     block.result.map(r => 
       r.transactions.map(tx => {
         val receipt = RpcReceipt(
@@ -657,7 +657,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     config.receiptRequest match {
       case "block" => decodeReceiptsBlock(block)
       case "batch" => decodeReceiptsBatch(block)
-      case "test" => decodeReceiptsTest(block)
+      case "empty" => decodeReceiptsEmpty(block)
       case _ => decodeReceiptsBlock(block)
     }
   }

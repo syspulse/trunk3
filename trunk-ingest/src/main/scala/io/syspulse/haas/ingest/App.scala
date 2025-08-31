@@ -1,10 +1,10 @@
 package io.syspulse.haas.ingest
 
+import scala.util.{Success, Failure}
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
 import java.util.concurrent.TimeUnit
-import scala.concurrent.Awaitable
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Awaitable, Await, ExecutionContext, Future}
 import akka.actor.typed.scaladsl.Behaviors
 import java.util.concurrent.Executors
 
@@ -257,7 +257,7 @@ object App extends skel.Server {
 
           // Standard Web3 RPC 
           case "block" | "block.eth" =>
-            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
+            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://"))
               Some(new eth.flow.rpc3.PipelineWsBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
             else
               Some(new eth.flow.rpc3.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
@@ -370,10 +370,17 @@ object App extends skel.Server {
     
     Console.err.println(s"r=${r}")
     r match {
-      case a:Awaitable[_] => {
-        val rr = Await.result(a,FiniteDuration(1,TimeUnit.MINUTES))
-        Console.err.println(s"rr: ${rr}")
-      }
+      case a:Future[_] => 
+        //val rr = Await.result(a,FiniteDuration(1,TimeUnit.MINUTES))
+        // Console.err.println(s"rr: ${rr}")
+        implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+        a.asInstanceOf[Future[_]].onComplete {
+          case Success(r) =>
+            Console.err.println(s"r: ${r}")
+          case Failure(e) =>
+            Console.err.println(s"r: ${e}")
+        }        
+      
       case akka.NotUsed => 
       case _ => 
         

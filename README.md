@@ -15,6 +15,12 @@ Streaming Web3 RPC ingestion engine
 <img src="doc/trunk3-Architecture-overview.drawio.png" width="800">
 
 
+## Docker
+
+Build must be done in [trunk-ingest](trunk-ingest)
+
+```sbt trunk_ingest/docker:publishLocal```
+
 ## Sources
 
 | source | uri | description | comments |
