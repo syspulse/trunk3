@@ -208,6 +208,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
     }}
     .map(tx => {
       if( config.cmd == "replay" && config.filter.size > 0) {
+        
         // replay mode, fix index and count for tx to be recognized by Detectors (must be 1 in 1 block)
         tx.copy(transaction_index = 0, block = tx.block.copy(transaction_count = 1))
 
@@ -220,7 +221,8 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       // commit cursor only if all transactions receipts recevied !
       cursor.commit(block_number)
     }
-
+    
+    log.debug(s"${block_number}: tx(${txx.size}) -->")
     txx
   }
 }

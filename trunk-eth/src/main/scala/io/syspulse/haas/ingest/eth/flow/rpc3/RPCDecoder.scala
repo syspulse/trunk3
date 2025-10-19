@@ -594,8 +594,10 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
                 throw new Exception(s"${b.number}: ${rsp}")
               }
             
-              val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
-              rr.map( r => r.transactionHash -> r).toSeq
+              rsp.parseJson.convertTo[RpcBlockReceiptsResult].result match {
+                case Some(rr) => rr.map( r => r.transactionHash -> r).toSeq
+                case None => Seq()
+              }              
 
             } catch {
               case e:Exception =>
@@ -736,5 +738,57 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
     // }
 
     (txx,receipts.values.toSeq)
+  }
+
+  def decodeBlocks[B](transactions: Seq[String],process:(RpcTx) => B)(implicit config:Config,uri:String): Seq[B] = {
+    
+    if(transactions.size == 0)
+      return Seq()
+    
+    val json = 
+      "[" + transactions.map( txHash => 
+        s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${txHash}"],"id":"${txHash}"}"""
+      ).mkString(",") +
+      "]"
+      .trim.replaceAll("\\s+","")
+          
+    try {
+      val rsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))        
+      val blocks:Seq[B] = rsp.statusCode match {
+        case 200 =>
+          
+          val batchRsp = rsp.text()
+          
+          try {
+            if(batchRsp.contains("""error""") && batchRsp.contains("""code""")) {
+              throw new Exception(s"${rsp}")
+            }
+                          
+            val batch = batchRsp.parseJson.convertTo[List[RpcTransactionsResult]]
+            
+            batch.flatMap(t => {
+              t.result match {
+                case Some(tx) => Some(process(tx))
+                case None => None
+              }
+            })
+
+          } catch {
+            case e:Exception =>
+              log.error(s"could not parse transactions batch: ${rsp}",e)
+              Seq()
+          }
+        case _ => 
+          log.warn(s"could not get transactions batch: ${rsp}")
+          Seq()
+      }
+
+      blocks
+
+    } catch {
+      case e:Exception =>
+        log.error("failed to get transactions",e)
+        Seq()
+    }
   }
 }

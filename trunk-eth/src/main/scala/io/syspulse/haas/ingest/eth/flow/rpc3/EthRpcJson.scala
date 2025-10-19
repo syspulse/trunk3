@@ -212,7 +212,13 @@ case class RpcReceiptResultBatch(
 
 case class RpcBlockReceiptsResult(  
   jsonrpc:String,  
-  result:Array[RpcReceipt],
+  result:Option[Array[RpcReceipt]],
+  id: Any
+) extends Ingestable
+
+case class RpcTransactionsResult(  
+  jsonrpc:String,  
+  result:Option[RpcTx],
   id: Any
 ) extends Ingestable
 
@@ -499,5 +505,7 @@ object EthRpcJson extends JsonCommon {
   
   implicit lazy val jf_rpc_call:JsonFormat[RpcTraceCall] = lazyFormat(jsonFormat11(RpcTraceCall))
   implicit val jf_rpc_call_res = jsonFormat3(RpcTraceCallResult)
+
+  implicit val jf_rpc_tx_res = jsonFormat3(RpcTransactionsResult)
 
 }

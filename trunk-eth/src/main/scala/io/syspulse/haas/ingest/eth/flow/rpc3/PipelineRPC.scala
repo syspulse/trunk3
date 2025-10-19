@@ -1,12 +1,13 @@
 package io.syspulse.haas.ingest.eth.flow.rpc3
 
 import java.util.concurrent.atomic.AtomicLong
-import io.syspulse.skel.ingest.flow.Flows
 
-import scala.util.{Success,Failure}
+import scala.util.{Success,Failure,Try}
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration.{Duration,FiniteDuration}
 import com.typesafe.scalalogging.Logger
+import scala.concurrent.Future
+import scala.concurrent.duration.{Duration,FiniteDuration}
+import java.util.concurrent.TimeUnit
 
 import akka.util.ByteString
 import akka.http.scaladsl.model.{HttpRequest,HttpMethods,HttpEntity,ContentTypes}
@@ -15,9 +16,23 @@ import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Flow
+import akka.stream.Attributes
+import akka.stream.OverflowStrategy
+import akka.actor.typed.ActorSystem
+import akka.stream.RestartSettings
+import scala.util.control.NoStackTrace
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.RestartSource
 
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
+
+import spray.json._
+import DefaultJsonProtocol._
+
+import requests.Response
+
+import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import io.syspulse.skel
 import io.syspulse.skel.config._
@@ -27,13 +42,8 @@ import io.syspulse.skel.config._
 import io.syspulse.skel.ingest._
 import io.syspulse.skel.ingest.store._
 import io.syspulse.skel.ingest.flow.Pipeline
-
-import spray.json._
-import DefaultJsonProtocol._
-
-import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
-
-import java.util.concurrent.TimeUnit
+import io.syspulse.skel.ingest.flow.Flows
+import io.syspulse.skel.blockchain.eth.EthUtil
 
 import io.syspulse.haas.ingest.eth.flow.rpc3._
 import io.syspulse.haas.ingest.eth.flow.rpc3.EthRpcJson._
@@ -44,19 +54,9 @@ import io.syspulse.haas.ingest.eth
 
 import io.syspulse.haas.ingest.Config
 
-import akka.actor.typed.ActorSystem
-import akka.stream.RestartSettings
-import scala.util.control.NoStackTrace
-import requests.Response
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.RestartSource
-
 import io.syspulse.haas.core.RetryException
 import io.syspulse.haas.ingest.CursorBlock
 import io.syspulse.haas.reorg.{ReorgBlock,ReorgBlock1,ReorgBlock2}
-import akka.stream.Attributes
-import akka.stream.OverflowStrategy
-import scala.concurrent.Future
 
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
@@ -104,6 +104,18 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               val list = data.split("[\\n,]").filter(!_.isBlank).map(_.trim.toLong)
               cursor.setList(list.toSeq)
               list.head.toString
+
+            case "rpc" :: Nil => 
+              log.info(s"transactions=${config.filter} -> ${uri.uri}")
+              // use this option with filter with transactions and find out all blocks for those transactions
+              val bb0 = decodeBlocks[Long](config.filter,tx => EthUtil.toLong(tx.blockNumber))(config,uri.uri)
+              if(bb0.size == 0) {
+                log.error(s"blocks not found: ${config.filter}")
+                sys.exit(3)
+              }
+              val bb = bb0.sorted.distinct
+              cursor.setList(bb)
+              bb.head.toString
 
             // start block and save to file (10://file.txt)
             case block :: file :: Nil => cursor.setFile(file).read(); 
