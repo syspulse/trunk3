@@ -326,7 +326,7 @@ Polling uses diff calculation to check only new Mempool transactions
 ### 0-Transactions Block:
 
 ```
-./run-trunk.sh -e tx.extractor -f http://geth.demo.hacken.cloud:8545 --block=22117774 --block.end=22117774 --format=json
+./run-trunk.sh -e tx.extractor -f http://geth.8545 --block=22117774 --block.end=22117774 --format=json
 ```
 
 

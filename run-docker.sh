@@ -1,5 +1,5 @@
 #!/bin/bash                                                                                                                                                                                            
-#CWD=`echo $(dirname $(readlink -f $0))`
+CWD=`echo $(dirname $(readlink -f $0))`
 #cd $CWD
 
 t=`pwd`;
