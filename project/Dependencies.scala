@@ -23,9 +23,9 @@ object Dependencies {
     lazy val elastic4sVersion = "7.17.3"
 
     lazy val skelVersion = "0.15.0"
-    lazy val extVersion = "0.15.0"
+    lazy val extVersion = "0.16.0"
 
-    lazy val appVersion = "0.15.0"
+    lazy val appVersion = "0.16.0"
     lazy val jarPrefix = ""
     
     lazy val appDockerRoot = "/app"
@@ -219,6 +219,6 @@ object Dependencies {
     
     val libEthAbi =           "com.github.lbqds"                %% "ethabi"                         % "0.4.1"
 
-    val libExtCore =          "io.syspulse"                     %% "ext-core"                       % extVersion
+    val libExtCore =          "io.hacken"                       %% "ext-core"                       % extVersion
   }
   

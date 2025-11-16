@@ -358,6 +358,13 @@ Example:
 ./run-trunk.sh replay -e tx.extractor --block=list://${BLOCK_FILE} --filter=file://${TX_FILE} --batch=1 --block.throttle=5000
 ```
 
+Also possible to auto-discover blocks:
+
+```
+./run-trunk.sh replay -e tx.extractor --block=rpc --filter=file://${TX_FILE} --batch=1 --block.throttle=5000
+```
+
+
 Conveneince Script to convert etherscan CSV export:
 
 ```

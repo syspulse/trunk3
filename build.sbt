@@ -52,14 +52,14 @@ lazy val dockerBuildxSettings = Seq(
 )
 
 val dockerRegistryLocal = Seq(
-  dockerRepository := Some("docker.u132.net:5000"),
-  dockerUsername := Some("syspulse"),
+  dockerRepository := Some("$AWS_ACCOUNT.dkr.ecr.${AWS_REGION}.amazonaws.com"),
+  dockerUsername := Some("haas"),
   // this fixes stupid idea of adding registry in publishLocal 
   dockerAlias := DockerAlias(registryHost=None,username = dockerUsername.value, name = name.value, tag = Some(version.value))
 )
 
 val dockerRegistryDockerHub = Seq(
-  dockerUsername := Some("syspulse")
+  dockerUsername := Some("haas")
 )
 
 val sharedConfigDocker = Seq(
@@ -271,7 +271,6 @@ lazy val trunk_core = (project in file("trunk-core"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,          
-          // libExtCore,          
           libUUID, 
           libScalaTest % "test"
         ),
@@ -429,7 +428,7 @@ lazy val trunk_intercept = (project in file("trunk-intercept"))
       // sharedConfigAssembly,
       // sharedConfigDocker,
       // dockerBuildxSettings,
-      // appDockerConfig("trunk3","io.syspulse.haas.intercept.App"),
+      // appDockerConfig("trunk3","io.haas.intercept.App"),
       
       name := "trunk-intercept",
     
@@ -466,7 +465,7 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
     sharedConfigDocker,
     dockerBuildxSettings,
 
-    appDockerConfig("trunk3","io.syspulse.haas.ingest.App"),
+    appDockerConfig("trunk3","io.haas.ingest.App"),
     
     libraryDependencies ++= libHttp ++ libAkka ++ libAlpakka ++ libPrometheus ++ Seq(
       libSkelCore,
@@ -501,7 +500,7 @@ lazy val trunk_stat = (project in file("trunk-stat"))
     sharedConfigDocker,
     dockerBuildxSettings,
 
-    appDockerConfig("trunk-stat","io.syspulse.haas.stat.App"),
+    appDockerConfig("trunk-stat","io.haas.stat.App"),
     
     libraryDependencies ++= 
       Seq(

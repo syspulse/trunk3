@@ -4,8 +4,8 @@ TX=${2}
 
 ETH_RPC_URL=${ETH_RPC_URL:-http://geth:8545}
 
-echo $BLOCK >/tmp/BLOCK
-echo $TX >/tmp/TX
+>&2 echo $BLOCK >/tmp/BLOCK
+>&2 echo $TX >/tmp/TX
 
 shift
 shift
