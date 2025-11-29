@@ -1,3 +1,4 @@
+#!/bin/bash
 CWD=`echo $(dirname $(readlink -f $0))`
 TX=${1}
 

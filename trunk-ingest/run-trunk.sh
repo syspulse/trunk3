@@ -1,7 +1,7 @@
 #!/bin/bash                                                                                                                                                                                            
 CWD=`echo $(dirname $(readlink -f $0))`
 #cd $CWD
-export APP_HOME=`pwd`
+export APP_HOME=$CWD
 
 #t=`pwd`;
 t=$CWD
