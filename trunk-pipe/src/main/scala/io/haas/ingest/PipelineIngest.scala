@@ -37,23 +37,45 @@ import spray.json._
 import DefaultJsonProtocol._
 
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
+import io.syspulse.skel.serde.Parq._
 
 import io.haas.ingest.Config
 import io.jvm.uuid._
-
-import io.hacken.ext.core.ExtractorJson._
 
 import io.haas.intercept.Script
 import io.haas.intercept.ScriptInterceptor
 import io.haas.intercept.InterceptResult
 import io.syspulse.skel.blockchain.Blockchain
 
+case class Alert(
+  did:String,
+  eid:String,
+  sid:String,
+  category:String,
+  `type`:String,
+  severity:Double,
+  ts:Long,
+  blockchain:String,
+  metadata:Map[String,String] = Map()
+) extends skel.Ingestable {
+  override def getKey:Option[Any] = Some(eid)
+}
+
+case class Alerts(alerts:Seq[Alert]) extends skel.Ingestable {
+  override def getKey:Option[Any] = None
+}
+
+object AlertJson extends DefaultJsonProtocol {  
+  implicit val jf_alert = jsonFormat9(Alert)
+  implicit val jf_alerts = jsonFormat1(Alerts)
+}
+
 abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
   (config:Config)
   (implicit val fmt:JsonFormat[E],
     parqEncoders0:ParquetRecordEncoder[E],parsResolver0:ParquetSchemaResolver[E]
   )
-  extends PipelineIngestable[T,O,E,io.hacken.ext.core.Events](config) {
+  extends PipelineIngestable[T,O,E,Alerts](config)(fmt, AlertJson.jf_alerts, parqEncoders0, parsResolver0, implicitly[ParquetRecordEncoder[Alerts]], implicitly[ParquetSchemaResolver[Alerts]]) {
     
   override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
     minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
@@ -87,7 +109,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
   // default is Ext interceptor
   def interception(e:E) = interceptionExt(e)
 
-  def interceptionExt(e:E):Seq[io.hacken.ext.core.Events] = {
+  def interceptionExt(e:E):Seq[Alerts] = {
     interceptor match {
       case Some(interceptor) => 
         
@@ -102,7 +124,7 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
         r.map(r => { 
           
-          val event = io.hacken.ext.core.Event(
+          val alert = Alert(
             did = config.interceptorName,
             eid = UUID.random.toString,
             sid = config.interceptorSid,
@@ -110,14 +132,14 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
             `type` = config.interceptorType,
             severity = config.interceptorSeverity,
             ts = System.currentTimeMillis(),
-            blockchain = io.hacken.ext.core.Chain(blockchain.id.getOrElse(""),blockchain.name),
+            blockchain = blockchain.name,
             metadata = Map(
               "tx_hash" -> r.txHash,
               "monitored_contract" -> config.interceptorContract,
             ) ++ r.data
           )
 
-          io.hacken.ext.core.Events(events = Seq(event))
+          Alerts(alerts = Seq(alert))
         })
       
       case None => 

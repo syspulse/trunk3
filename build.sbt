@@ -242,6 +242,7 @@ lazy val root = (project in file("."))
     // trunk_solana,
     trunk_intercept,
     trunk_ingest,
+    trunk_bitcoin
   )
   .dependsOn(
     trunk_core,
@@ -253,7 +254,8 @@ lazy val root = (project in file("."))
     // trunk_stark,
     // trunk_solana,
     trunk_intercept,
-    trunk_ingest,    
+    trunk_ingest,
+    trunk_bitcoin,
   )
   .disablePlugins(sbtassembly.AssemblyPlugin) // this is needed to prevent generating useless assembly and merge error
   .settings(
@@ -288,7 +290,6 @@ lazy val trunk_pipe = (project in file("trunk-pipe"))
           libSkelIngest,
           libSkelDSL,
           libSkelBlockchainCore,
-          libExtCore,
 
           libUUID, 
           libScalaTest % "test"
