@@ -47,7 +47,7 @@ case class Config(
   timeout:Long = 5000L,
   timeoutIdle:Long = 60000L,// websocket idle timeout
   throttle:Long = 3000L,    // throttle for stat aggregation
-  freq: Long = 3000L,       // Websocket freq update. Makes sense to be close to throttle
+  freq: String = "3000",       // Websocket freq update. Makes sense to be close to throttle
 
   cmd:String = "stream",
   params: Seq[String] = Seq(),
@@ -73,7 +73,7 @@ object App extends skel.Server {
 
         ArgLong('_', "cache.flush",s"Cache flush interval, msec (def: ${d.cacheFlush})"),
         ArgInt('_', "thread.pool",s"Thread pool for Websockets (def: ${d.threadPool})"),
-        ArgLong('_', "freq",s"Websocket Listeners update frequency, msec (def=${d.freq}"),
+        ArgString('_', "freq",s"Websocket Listeners update frequency, msec (def=${d.freq}"),
         
         ArgString('f', "feed",s"Input Feed (def: ${d.feed})"),
         
@@ -113,7 +113,7 @@ object App extends skel.Server {
             
       limit = c.getLong("limit").getOrElse(d.limit),
       size = c.getLong("size").getOrElse(d.size),
-      freq = c.getLong("freq").getOrElse(d.freq),
+      freq = c.getString("freq").getOrElse(d.freq),
       delimiter = c.getString("delimiter").getOrElse(d.delimiter),
       buffer = c.getInt("buffer").getOrElse(d.buffer),
       throttle = c.getLong("throttle").getOrElse(d.throttle),     

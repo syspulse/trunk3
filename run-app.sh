@@ -1,4 +1,5 @@
 #!/bin/bash                                                                                                                                                                                            
+SBT_ROOT=`echo $(dirname $(readlink -f $0))`
 #CWD=`echo $(dirname $(readlink -f $0))`
 #cd $CWD
 
@@ -23,6 +24,32 @@ if [ "$CWD" != "" ]; then
 else
    APP_HOME=${APP_HOME:-`pwd`}
 fi
+
+CONFIG="application${SITE}.conf"
+PLUGINS=${PLUGINS:-${CWD}/plugins}
+
+if [ "$APP_EXEC" == "bloop" ]; then
+  APP_PROJECT=${APP//-/_}
+  
+  if [ "$DEBUG" != "" ]; then      
+      >&2 echo "APP: $APP"
+      >&2 echo "APP_HOME: $APP_HOME"
+      >&2 echo "MAIN: $MAIN"
+      # to be compatibble with old scripts (to be deprecated)
+      >&2 echo "OPT: $OPT"
+      >&2 echo "JAVA_OPTS: $JAVA_OPTS"
+      >&2 echo "ARGS: $ARGS"
+      >&2 echo "SITE: ${SITE}"
+      >&2 echo "CONFIG: ${CONFIG}"
+      >&2 echo "MEM: ${MEM}"
+      >&2 echo "STACK: ${STACK}"
+      #>&2 echo $CP
+      >&2 echo "pwd: `pwd`"
+  fi
+  
+  exec bloop run ${APP_PROJECT} -c $SBT_ROOT/.bloop -m ${MAIN} -- -J-Dconfig.resource=$CONFIG -J-Dcolor $ARGS
+fi
+
 
 # fat jar
 JAR_FAT=`ls ${APP_HOME}/target/scala-2.13/*assembly*.jar`

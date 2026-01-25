@@ -11,8 +11,11 @@ import io.haas.ingest.eth.BlockJson
 import io.haas.ingest.eth.EventJson
 import io.syspulse.skel.service.JsonCommon
 
+import io.haas.ingest.ext.IngestExtJson
+import io.haas.ingest.ext.{BlockExt, LogExt, TxExt}
+
 object TxJson extends DefaultJsonProtocol { //JsonCommon {
-  implicit val jf_etl_block = jsonFormat19(Block.apply _)  
-  implicit val jf_etl_logtx = jsonFormat4(LogTx.apply _)  
-  implicit val jf_etl_tx = jsonFormat21(Tx.apply _)  
+  implicit val jf_etl_block = jsonFormat19(BlockExt.apply _)  
+  implicit val jf_etl_logtx = jsonFormat4(LogExt.apply _)  
+  implicit val jf_etl_tx = jsonFormat21(TxExt.apply _)    
 }

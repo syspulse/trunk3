@@ -11,6 +11,15 @@ case class CachedBlock(num:Long,hash:String,ts:Long = 0L,txCount:Long = 0)
 abstract class ReorgBlock(val depth:Int,reorgFile:String) {
   protected val log = Logger(this.getClass())  
   override def toString() = s"${last}"
+
+  // try to write to file
+  if(reorgFile.nonEmpty) {
+    try {
+      os.write.append(os.Path(reorgFile,os.pwd),s"\n")          
+    } catch {
+      case e:Exception => log.error(s"Failed to write reorg to file: '${reorgFile}': ${e}")
+    }
+  }
   
   var last:List[CachedBlock] = List() // hashes of last blocks to detect reorg 
 
@@ -116,11 +125,11 @@ abstract class ReorgBlock(val depth:Int,reorgFile:String) {
     
     if(rr.size > 0) {
       
-      log.warn(s"Reorg: block: >>>>>>>>> ${blockNum}/${blockHash}: reorgs=${rr}")
+      log.warn(s"Reorg: block: >>>>>>>>> ${blockNum} / ${blockHash}: reorgs=${rr}")
 
       if(reorgFile.nonEmpty) {
         try {        
-          os.write.append(os.Path(reorgFile),s"${ts},${blockNum},${blockHash},${txCount}\n")          
+          os.write.append(os.Path(reorgFile,os.pwd),s"${ts},${blockNum},${blockHash},${txCount}\n")          
         } catch {
           case e:Exception => log.error(s"Failed to write reorg to file: '${reorgFile}': ${e}")
         }
@@ -130,9 +139,11 @@ abstract class ReorgBlock(val depth:Int,reorgFile:String) {
       reorg(rr)
       
       (true,rr)      
-    } else {
-      
-      val fresh = cache(blockNum,blockHash,ts,txCount)      
+    } else {            
+      val fresh = cache(blockNum,blockHash,ts,txCount)
+
+      log.info(s"Reorg: block: ${blockNum} / ${blockHash}: cache=${rr}")
+
       (fresh,List.empty)
     }
   }

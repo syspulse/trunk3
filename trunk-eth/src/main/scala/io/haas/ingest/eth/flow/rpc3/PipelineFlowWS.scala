@@ -67,9 +67,9 @@ abstract class PipelineFlowWS[T,O <: Ingestable,E <: Ingestable](config:Config)
   implicit val uri:RpcURI = EthURI(config.feed,config.apiToken)
 
   val reorg = config.reorgFlow match {
-    case "reorg1" => new ReorgBlock1(config.blockReorg)
-    case "reorg2" => new ReorgBlock2(config.blockReorg)
-    case _ => new ReorgBlock2(config.blockReorg)
+    case "reorg1" => new ReorgBlock1(config.blockReorg,config.reorgFile)
+    case "reorg2" => new ReorgBlock2(config.blockReorg,config.reorgFile)
+    case _ => new ReorgBlock2(config.blockReorg,config.reorgFile)
   }
     
   override def source(feed:String) = {

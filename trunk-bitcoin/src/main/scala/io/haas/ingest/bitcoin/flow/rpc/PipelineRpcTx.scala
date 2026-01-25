@@ -58,15 +58,7 @@ abstract class PipelineRpcTx[E <: skel.Ingestable](config:Config)
     block
   }
 
-  // def transform(block: Block): Seq[Block] = {
-  //   Seq(block)
-  // }
-}
-
-
-class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
-
-  def transform(block: RpcBlock): Seq[Tx] = {
+  def transformTx(block: RpcBlock): Seq[Tx] = {
     
     if(config.filter.size != 0 && config.filter.contains(block.hash)) {
       return Seq()
@@ -76,7 +68,7 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
     // for transaction processing including prevout handling
     val txs = try {
 
-      val logMsg = s"Block[${block.height},${block.nTx}]"
+      val logMsg = s"Block[${block.height},${block.nTx},${block.size}]"
       if(block.nTx == 0)
         log.warn(logMsg + ": Empty")
       else 
@@ -93,5 +85,13 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
     cursor.commit(block.height)
 
     txs
+  }
+}
+
+
+class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
+
+  def transform(block: RpcBlock): Seq[Tx] = {
+    transformTx(block)
   }
 }

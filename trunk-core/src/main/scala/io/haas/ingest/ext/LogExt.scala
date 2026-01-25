@@ -1,16 +1,13 @@
-package io.haas.ingest.eth.etl
+package io.haas.ingest.ext
 
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
-// used only in Fat Tx
-case class LogTx(
+case class LogExt(
   index:Int,
   address:String,
   data:String,  
   topics:Array[String] = Array(), 
-) extends Ingestable {
-  
-  // override to show Array in a nice way
+) extends Ingestable {  
   override def toString = Util.toStringWithArray(this)
 }

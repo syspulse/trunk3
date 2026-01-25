@@ -361,7 +361,7 @@ Example:
 Also possible to auto-discover blocks:
 
 ```
-./run-trunk.sh replay -e tx.extractor --block=rpc --filter=file://${TX_FILE} --batch=1 --block.throttle=5000
+./run-trunk.sh replay -e tx.extractor -f $ETH_RPC_URL --block=rpc --filter=file://${TX_FILE} --batch=1 --block.throttle=5000
 ```
 
 

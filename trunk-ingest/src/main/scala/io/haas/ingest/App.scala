@@ -346,12 +346,13 @@ object App extends skel.Server {
           case "mempool.hash" | "ws.mempool.hash" => 
             Some(new eth.flow.rpc3.PipelineWsMempoolHash(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
-          // ICP Ledger API
-          case "block.btc" =>
+          case "block.btc" | "block.bitcoin" =>
             Some(new bitcoin.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "tx.btc" =>
+          case "tx.btc" | "tx.bitcoin" =>
             Some(new bitcoin.flow.rpc.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
-          case "block.mini.btc" =>
+          case "tx.extractor.btc" | "tx.extractor.bitcoin" =>
+            Some(new bitcoin.flow.rpc.PipelineTxExt(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
+          case "block.mini.btc" | "block.mini.bitcoin" =>
             import io.haas.ingest.bitcoin.flow.rpc.RpcJsonProtocol._            
             Some(new bitcoin.flow.rpc.PipelineRpcBlockMini(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))            
 

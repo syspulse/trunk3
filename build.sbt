@@ -23,6 +23,9 @@ test / fork := true
 run / fork := true
 run / connectInput := true
 
+// inject envs into tests
+Test / envVars := sys.env.toMap
+
 enablePlugins(JavaAppPackaging)
 enablePlugins(DockerPlugin)
 enablePlugins(AshScriptPlugin)
@@ -132,12 +135,28 @@ val sharedConfig = Seq(
       "confluent repo"     at "https://packages.confluent.io/maven/",
       "consensys repo"     at "https://artifacts.consensys.net/public/maven/maven/",
       "consensys teku"     at "https://artifacts.consensys.net/public/teku/maven/",
+      "mchv"               at "https://mvn.mchv.eu/repository/mchv/",
 
       "jitpack"            at "https://jitpack.io"
     ),
     
     // needed to fix error with quill-jasync
-    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % VersionScheme.Always
+    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % VersionScheme.Always,
+
+    // ----------------------- Bloop specific settings -------------------------------------------
+    // Add conf/ directory to classpath for running (NOT packaged in JAR)
+    Compile / unmanagedClasspath += Attributed.blank(baseDirectory.value / "conf"),
+    Runtime / unmanagedClasspath += Attributed.blank(baseDirectory.value / "conf"),
+
+    // Set working directory to project directory (not workspace root) for Bloop
+    run / javaOptions := {
+      val base = baseDirectory.value
+      Seq(s"-Duser.dir=$base")
+    },
+    Compile / javaOptions := {
+      val base = baseDirectory.value
+      Seq(s"-Duser.dir=$base")
+    }, 
   )
 
 val sharedConfigAssembly = Seq(
@@ -236,7 +255,7 @@ lazy val root = (project in file("."))
     trunk_pipe,
     trunk_eth,
     // trunk_icp,
-    // trunk_vechain,
+    // trunk_vechain,``
     // trunk_stellar,
     // trunk_stark,
     // trunk_solana,
@@ -305,7 +324,7 @@ lazy val trunk_eth = (project in file("trunk-eth"))
       libraryDependencies ++= 
         Seq(
           libSkelCore,
-          libSkelSerde,
+          // libSkelSerde,
           libSkelBlockchainEvm,
           libSkelBlockchainTron,
           libSkelIngest,          
@@ -472,11 +491,11 @@ lazy val trunk_ingest = (project in file("trunk-ingest"))
       libSkelCore,
       libSkelIngest,      
       libSkelDSL,
-      libSkelNotify,
+      // libSkelNotify,
       libUpickleLib,
 
-      libCsv,
-      libSkelSerde,
+      // libCsv,
+      // libSkelSerde,
 
       libSkelCrypto,
       libEthAbi,      

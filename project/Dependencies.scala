@@ -203,19 +203,19 @@ object Dependencies {
     val libSkelCrypto =       "io.syspulse"                     %% "skel-crypto"                    % skelVersion
     val libSkelIngest =       "io.syspulse"                     %% "skel-ingest"                    % skelVersion
     //val libSkelIngestFlow =   "io.syspulse"                     %% "ingest-flow"                    % skelVersion
-    val libSkelIngestElastic ="io.syspulse"                     %% "ingest-elastic"                 % skelVersion
+    // val libSkelIngestElastic ="io.syspulse"                     %% "ingest-elastic"                 % skelVersion
     val libSkelDSL =          "io.syspulse"                     %% "skel-dsl"                       % skelVersion
-    val libSkelNotify =       "io.syspulse"                     %% "skel-notify"                    % skelVersion
-    val libSkelNotifyCore =   "io.syspulse"                     %% "notify-core"                    % skelVersion
-    val libSkelCli =          "io.syspulse"                     %% "skel-cli"                       % skelVersion
-    val libSkelSerde =        "io.syspulse"                     %% "skel-serde"                     % skelVersion
+    // val libSkelNotify =       "io.syspulse"                     %% "skel-notify"                    % skelVersion
+    // val libSkelNotifyCore =   "io.syspulse"                     %% "notify-core"                    % skelVersion
+    // val libSkelCli =          "io.syspulse"                     %% "skel-cli"                       % skelVersion
+    // val libSkelSerde =        "io.syspulse"                     %% "skel-serde"                     % skelVersion
     val libSkelOdometer =     "io.syspulse"                     %% "skel-odometer"                  % skelVersion
     val libSkelBlockchainCore="io.syspulse"                     %% "blockchain-core"                % skelVersion
     val libSkelBlockchainEvm ="io.syspulse"                     %% "blockchain-evm"                 % skelVersion
     val libSkelBlockchainTron ="io.syspulse"                    %% "blockchain-tron"                % skelVersion
     
-    val libSkelSyslogCore =   "io.syspulse"                     %% "syslog-core"                    % skelVersion
-    val libSkelJobCore =      "io.syspulse"                     %% "job-core"                       % skelVersion
+    // val libSkelSyslogCore =   "io.syspulse"                     %% "syslog-core"                    % skelVersion
+    // val libSkelJobCore =      "io.syspulse"                     %% "job-core"                       % skelVersion
     
     val libEthAbi =           "com.github.lbqds"                %% "ethabi"                         % "0.4.1"
 

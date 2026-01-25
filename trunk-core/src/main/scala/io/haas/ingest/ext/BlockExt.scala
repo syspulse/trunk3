@@ -1,0 +1,28 @@
+package io.haas.ingest.ext
+
+import io.syspulse.skel.Ingestable
+
+case class BlockExt(  
+  number:Long,
+  hash:String,
+  parent_hash:String,
+  nonce:Option[String],
+  sha3_uncles:Option[String],
+  logs_bloom:String,
+  transactions_root:String,
+  state_root:String,
+  receipts_root:String,
+  miner:String,
+  difficulty:BigInt,
+  total_difficulty:Option[BigInt],
+  size:Long,
+  extra_data:String,
+  gas_limit:Long,
+  gas_used:Long,
+  timestamp:Long,
+  transaction_count:Long,
+  base_fee_per_gas:Option[Long],
+
+) extends Ingestable {
+  override def getKey:Option[Any] = Some(number)
+}

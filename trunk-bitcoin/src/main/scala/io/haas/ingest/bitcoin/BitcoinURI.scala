@@ -6,7 +6,7 @@ bitcoin://host:port/api
 
 object BitcoinURI {
   val PREFIX = "bitcoin://"
-  val DEFAULT_HOST = "https://bitcoin-mainnet.public.blastapi.io"
+  val DEFAULT_HOST = "https://bitcoin.api.onfinality.io/public"
 }
 
 case class BitcoinURI(uri:String) {

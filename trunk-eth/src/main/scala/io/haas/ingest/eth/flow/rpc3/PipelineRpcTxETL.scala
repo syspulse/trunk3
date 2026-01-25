@@ -95,7 +95,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       return Seq()
     }
 
-    val block = Block(
+    val block = new Block(
       EthUtil.toLong(b.number),
       b.hash,
       b.parentHash,
@@ -122,7 +122,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
 
     if(b.transactions.size == 0) {
       // special case for empty blocks      
-      val tx0 = Tx(
+      val tx0 = new Tx(
         hash = "",  
         nonce = BigInt(0),        
         transaction_index = 0,
@@ -168,7 +168,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
       }
       val receipt = receipts.get(tx.hash)
 
-      Tx(
+      new Tx(
         tx.hash,
 
         //EthUtil.toLong(tx.nonce),
@@ -195,7 +195,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
         block = block,
 
         logs = logs.map( r => {
-          LogTx(
+          new LogTx(
             EthUtil.toLong(r.logIndex).toInt,
             formatAddr(r.address,config.formatAddr),
             r.data,
