@@ -4,11 +4,22 @@ import java.util.concurrent.atomic.AtomicLong
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration,FiniteDuration}
+import scala.util.{Try,Success,Failure}
 import com.typesafe.scalalogging.Logger
 
-class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
+class CursorBlock(file:String = "",lag:Int = 0)(implicit config:Config) {
 
-  case class CursorFile(file:String) {
+  trait CursorStore {        
+    def read():String
+    def write(current:Long):Try[CursorStore]
+  }
+
+  case class CursorNone() extends CursorStore {
+    def read():String = ""
+    def write(current:Long):Try[CursorStore] = Success(this)
+  }
+
+  case class CursorFile(file:String) extends CursorStore {
     private val log = Logger(this.getClass)
 
     val datastore = if(config.datastore.isBlank() || file.startsWith("/")) "" else config.datastore + "/"  
@@ -30,23 +41,27 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
       }
     }
 
-    def write(current:Long) = this.synchronized {
+    def write(current:Long):Try[CursorStore] = this.synchronized {
       try {
-        os.write.over(os.Path(stateFile,os.pwd),current.toString)    
+        os.write.over(os.Path(stateFile,os.pwd),current.toString)   
+        Success(this)
       } catch {
         case e:Exception =>
           log.warn(s"failed to write cursor: ${stateFile}: ${e.getMessage}")
+          Failure(e)
       }
     }
   }
   
+  @volatile
+  private var cursor:CursorStore = if(file.isBlank()) CursorNone() else CursorFile(file)
 
   override def toString() = if(blockList.size > 0)
-    s"${current} [${blockList.mkString(",")}] : ${blockEnd} (${file})"
+    s"${current} [${blockList.mkString(",")}] : ${blockEnd} (${cursor})"
     else
-    s"${current} [${blockStart} : ${blockEnd}] (${file})"
-
-  private var cursor = CursorFile(file)
+    s"${current} [${blockStart} : ${blockEnd}] (${cursor})"
+  
+  
   private var current:Long = 0
   private var lastBlock:Long = 0
   var blockStart:Long = 0
@@ -69,9 +84,11 @@ class CursorBlock(file:String = "BLOCK",lag:Int = 0)(implicit config:Config) {
   
   def setFile(newStateFile:String) = this.synchronized {
     if(newStateFile.isBlank())
-      this
-    else 
-      cursor = CursorFile(newStateFile)
+      //this
+      cursor = CursorNone()
+    else {
+      cursor = CursorFile(newStateFile)      
+    }
       
     this
   }

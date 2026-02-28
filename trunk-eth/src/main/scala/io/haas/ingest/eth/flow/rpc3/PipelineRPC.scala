@@ -68,7 +68,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
   import EthRpcJson._
 
-  val cursor = new CursorBlock("BLOCK-eth")(config)
+  val cursor = new CursorBlock()(config)
   
   val reorg = config.reorgFlow match {
     case "reorg1" => new ReorgBlock1(config.blockReorg)
@@ -87,13 +87,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
           (config.block.split("://").toList match {
             // start from latest and save to file
             case "latest" :: file :: Nil => 
-              cursor.setFile(file).read()
+              cursor.setFile(file).read()              
               "latest"
             case "last" :: file :: Nil => 
               cursor.setFile(file).read()
               "latest"
             case "latest" :: Nil =>  // use default file
-              cursor.setFile("").read()
+              cursor.setFile("").read()              
               "latest"
 
             case "file" :: file :: Nil => cursor.setFile(file).read()
@@ -130,6 +130,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
               bb.head.toString
           })
+
 
         val blockStart = blockStr.strip match {
           case "latest" =>
