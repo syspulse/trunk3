@@ -254,26 +254,7 @@ object App extends skel.Server {
             Some(new eth.flow.lake.PipelineEvent(orf(config,config.feedLog,config.feed,config.outputLog,config.output)))
           case "tx.lake" =>
             Some(new eth.flow.lake.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
-
-          // Standard Web3 RPC 
-          case "block" | "block.eth" =>
-            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://"))
-              Some(new eth.flow.rpc3.PipelineWsBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-            else
-              Some(new eth.flow.rpc3.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-
-          case "tx" | "tx.eth" =>
-            Some(new eth.flow.rpc3.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "transaction" | "transaction.eth" =>
-            Some(new eth.flow.rpc3.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "log" | "event" | "log.eth" | "event.eth" =>
-            Some(new eth.flow.rpc3.PipelineEvent(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "transfer" | "token" | "transafer.eth" | "token.eth" =>
-            Some(new eth.flow.rpc3.PipelineTokenTransfer(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "tx.extractor" =>
-            Some(new eth.flow.rpc3.PipelineTxETL(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           
-
           // ICP Rosetta API
           case "block.icp.rosetta" =>
             Some(new icp.flow.rosetta.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
@@ -313,24 +294,15 @@ object App extends skel.Server {
           //   Some(new stellar.flow.horizon.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Solana
-          case "block.solana" =>
+          case "block" if config.feed.startsWith(solana.SolanaURI.PREFIX) =>
             Some(new solana.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+          case "block.solana" =>
+            Some(new solana.flow.rpc.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))          
+          case "transaction" if config.feed.startsWith(solana.SolanaURI.PREFIX) =>
+            Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           case "transaction.solana" =>
             Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-
-          // Ethereum mempool
-          case "mempool" => 
-            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
-              Some(new eth.flow.rpc3.PipelineWsMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-            else 
-              Some(new eth.flow.rpc3.PipelineMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-                      
-          case "mempool.trace" => 
-            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
-              Some(new eth.flow.rpc3.PipelineWsMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-            else
-              Some(new eth.flow.rpc3.PipelineMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
-
+          
           case "ws.mempool" => 
             Some(new eth.flow.rpc3.PipelineWsMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
           case "ws.mempool.trace" => 
@@ -355,6 +327,38 @@ object App extends skel.Server {
           case "block.mini.btc" | "block.mini.bitcoin" =>
             import io.haas.ingest.bitcoin.flow.rpc.RpcJsonProtocol._            
             Some(new bitcoin.flow.rpc.PipelineRpcBlockMini(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))            
+
+
+          // Standard Web3 RPC 
+          case "block" | "block.eth" =>
+            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://"))
+              Some(new eth.flow.rpc3.PipelineWsBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+            else
+              Some(new eth.flow.rpc3.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
+
+          case "tx" | "tx.eth" =>
+            Some(new eth.flow.rpc3.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "transaction" | "transaction.eth" =>
+            Some(new eth.flow.rpc3.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "log" | "event" | "log.eth" | "event.eth" =>
+            Some(new eth.flow.rpc3.PipelineEvent(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "transfer" | "token" | "transafer.eth" | "token.eth" =>
+            Some(new eth.flow.rpc3.PipelineTokenTransfer(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "tx.extractor" =>
+            Some(new eth.flow.rpc3.PipelineTxETL(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+
+          // Ethereum mempool
+          case "mempool" => 
+            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
+              Some(new eth.flow.rpc3.PipelineWsMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+            else 
+              Some(new eth.flow.rpc3.PipelineMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+                      
+          case "mempool.trace" => 
+            if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://")) 
+              Some(new eth.flow.rpc3.PipelineWsMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
+            else
+              Some(new eth.flow.rpc3.PipelineMempoolTxTrace(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
 
           case _ => 
             Console.err.println(s"Uknown entity: '${e}'");

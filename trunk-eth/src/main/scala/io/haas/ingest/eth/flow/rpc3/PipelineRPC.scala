@@ -134,11 +134,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
         val blockStart = blockStr.strip match {
           case "latest" =>
-            val json = s"""{
-                "jsonrpc":"2.0","method":"eth_blockNumber",
-                "params":[],
-                "id": 0
-              }""".trim.replaceAll("\\s+","")
+            val json = s"""{"jsonrpc":"2.0","method":"eth_blockNumber", "params":[],"id":0}"""
 
             val rsp = {
               log.info(s"Latest -> ${uri.uri}")
@@ -222,11 +218,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             log.debug(s"Cron --> ${h}")
 
             // request latest block to know where we are from current            
-            val json = s"""{
-                "jsonrpc":"2.0","method":"eth_blockNumber",
-                "params":[],
-                "id": 0
-              }""".trim.replaceAll("\\s+","")
+            val json = s"""{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id": 0}"""
 
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             val body = rsp.text()            
@@ -311,11 +303,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               val blocksReq = blockForget
                 .map(block => {
                   val blockHex = s"0x${block.toHexString}"
-                  s"""{
-                      "jsonrpc":"2.0","method":"eth_getBlockByNumber",
-                      "params":["${blockHex}",true],
-                      "id":0
-                    }""".trim.replaceAll("\\s+","")  
+                  s"""{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["${blockHex}",true],"id":0}"""
                 })
 
               // if only 1 tx, don't batch (to be compatible with some weird RPC which don't support batch)
@@ -372,7 +360,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                 reorgFlow(b)
               )
           }) 
-          .map(b => ByteString(b))          
+          .map(b => ByteString(b))
       
         // restarter for source 
         val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>

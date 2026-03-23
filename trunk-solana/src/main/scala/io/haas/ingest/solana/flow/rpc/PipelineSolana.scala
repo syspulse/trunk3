@@ -52,6 +52,7 @@ import akka.stream.scaladsl.RestartSource
 
 import io.haas.core.RetryException
 import io.haas.ingest.CursorBlock
+import akka.stream.Attributes
 
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
@@ -66,7 +67,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     
   override def source(feed:String) = {
     feed.split("://").toList match {
-      case ("http" | "https" | "sol" | "solana" | "sol:dev" | "solana:dev" | "sol:test" | "solana:test") :: _ => 
+      case ("http" | "https" | SolanaURI.PREFIX | SolanaURI.PREFIX2 | SolanaURI.PREFIX_DEV | SolanaURI.PREFIX_DEV2 | SolanaURI.PREFIX_TEST | SolanaURI.PREFIX_TEST2) :: _ => 
 
         log.info(s"uri=${uri}")
         
@@ -131,7 +132,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
             // request latest block to know where we are from current
             val blockHex = "latest"
-            val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id": 0}""".trim.replaceAll("\\s+","")
+            val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id": 0}"""
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
             log.debug(s"${json} -> ${uri.uri}")
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
@@ -149,38 +150,46 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             val lastBlock = r.obj("result").obj("context").obj("slot").num.toLong
             //val lastBlock = r.obj("result").num.toLong
             
-            log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}")
+            //log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}")
+            val currentBlock = cursor.get()
+            log.info(s"Cursor: last=${lastBlock}, current=${currentBlock}, distance=${lastBlock - currentBlock}, lag=${config.blockLag}, reorg=${config.blockReorg}")
             lastBlock - config.blockLag
           })
-          .mapConcat(lastBlock => {
+          .map(lastBlock => {
             // ATTENTION:
-            // lag and reorg are not compatible !            
-            if(config.blockReorg == 0 || cursor.get() < (lastBlock - config.blockReorg))              
-              // normal fast operation or reorg before the tip
-              cursor.get() to lastBlock
-            else
-              // reorg operation on the tip
-              (cursor.get() - config.blockReorg) to lastBlock
-          })          
-          .groupedWithin(config.blockBatch,FiniteDuration(1,TimeUnit.MILLISECONDS)) // batch limiter 
-          .map(blocks => 
-            // distinct and checking for current commit this is needed because of backpressure in groupedWithin when Sink is restarted (like Kafka reconnect)
-            // when downstream backpressur is working, it generated for every Cron tick a new Range which produces
-            // duplicates since commit is not changing. 
-            // Example: 
-            // PipelineRPC.scala:237] --> Vector(61181547, 61181548, 61181549, 61181547, 61181548)
-            // PipelineRPC.scala:237] --> Vector(61181549, 61181550, 61181547, 61181548, 61181549)
-            blocks
-            .distinct
-            .filter(b => 
-              b <= blockEnd 
-              && 
-              b >= cursor.get() 
-            )
-          )
-          .takeWhile(blocks => // limit flow by the specified end block
-            blocks.filter(_ <= blockEnd).size > 0
-          )
+            // lag and reorg are not compatible !
+
+            val bb = 
+              if(cursor.blockList.size > 0) {
+                // selected list
+                cursor.getList()
+              }
+              else
+              if(config.blockReorg == 0 || cursor.get() < (lastBlock - config.blockReorg))              
+                // normal fast operation or reorg before the tip
+                cursor.get() to lastBlock
+              else {
+                // reorg operation on the tip
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+                log.error(s"reorg operation on the tip: ${cursor.get()} -> ${lastBlock}")
+                //reorg.range(cursor.get(),lastBlock)
+                Seq()
+              }
+            
+            bb.grouped(config.blockBatch)
+            //bb.take(config.blockBatch)
+          })
+          // flatted seq of batchs to stream of batches
+          .mapConcat(bb => bb)
+
+          // limit flow by the specified end block
+          .takeWhile(blocks => {
+            //blocks.filter(_ <= blockEnd).size > 0
+            blockEnd == Long.MaxValue ||
+            blocks.size == 0 ||              
+            blocks.find(_ <= blockEnd).isDefined
+            
+          })
           .map(blocks => {
             log.info(s"--> ${blocks}")
             
@@ -188,17 +197,13 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
               .takeRight(if(config.blockLimit > 0) config.blockLimit else blocks.size)
               .map(block => {              
                 // ATTENTION: block is slot !!!
-                s"""{
-                    "jsonrpc":"2.0","method":"getBlock",
-                    "params":[${block},{"encoding":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }],
-                    "id":0
-                  }""".trim.replaceAll("\\s+","")
+                s"""{ "jsonrpc":"2.0","method":"getBlock", "params":[${block},{"encoding":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }], "id":${block} }"""
               })
             
                         
             val json = if(config.blockLimit > 1) s"""[${blocksReq.mkString(",")}]""" else blocksReq.head
 
-            log.debug(s"${json} -> ${uri.uri}")
+            log.info(s"${json} -> ${uri.uri}")
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))            
             val body = rsp.text()
             
@@ -216,9 +221,23 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             val batch = if(config.blockLimit > 1) decodeBatch(body) else decodeSingle(body)
             batch
           })
-          .log(s"${feed}")
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
-          .mapConcat(batch => batch)
+          .log(s"Source: feed=${feed}")
+          .addAttributes(
+            Attributes.logLevels(
+              onElement = Attributes.LogLevels.Off,
+              onFinish = Attributes.LogLevels.Warning,
+              onFailure = Attributes.LogLevels.Error))
+          // range -> blocks stream          
+          .mapConcat(batch => {
+            batch
+              .filter(b => 
+                // process reorgs here
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                //reorgFlow(b)
+                true
+              )
+          })          
           .map(b => {
             if(b.contains(""""error":{"code":""")) {
               log.warn(s"${b}")
@@ -275,7 +294,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   //           s"""{"jsonrpc":"2.0","method":"solana_getTransactionReceipt","params":["${txHash}"],"id":"${txHash}"}"""
   //         ).mkString(",") +
   //         "]"
-  //         .trim.replaceAll("\\s+","")
+  //         
           
   //       try {
   //         val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))        
@@ -346,7 +365,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
   //     val id = b.block_number
   //     val json =  s"""{"jsonrpc":"2.0","method":"solana_getBlockWithReceipts","params":["${b.block_number}"],"id":"${id}"}"""
-  //       .trim.replaceAll("\\s+","")
+  //       
         
   //     try {
   //       val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
