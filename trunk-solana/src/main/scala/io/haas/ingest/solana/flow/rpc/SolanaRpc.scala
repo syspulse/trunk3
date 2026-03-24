@@ -5,6 +5,7 @@ import com.typesafe.scalalogging.Logger
 import io.syspulse.skel.Ingestable
 import spray.json.JsArray
 import spray.json.JsObject
+import spray.json.JsValue
 
 // {
 //   "jsonrpc": "2.0",
@@ -126,8 +127,8 @@ case class RpcErr(
 )
 
 case class RpcStatus(
-  `Ok`: Option[String] = None,
-  `Err`: Option[JsObject] = None
+  `Ok`: Option[JsValue] = None,
+  `Err`: Option[JsValue] = None
 )
 
 case class RpcInnerInstruction(
@@ -156,11 +157,11 @@ case class RpcPostTokenBalance(
 
 case class RpcMeta(
   computeUnitsConsumed: Long,
-  err: Option[JsObject],
+  err: Option[JsValue],
   fee: Long,
-  innerInstructions: Array[RpcInnerInstruction],
+  innerInstructions: Option[Array[RpcInnerInstruction]],
   loadedAddresses: RpcLoadedAddresses,
-  logMessages: Array[String],
+  logMessages: Option[Array[String]],
   postBalances: Array[Long],
   postTokenBalances: Array[RpcPostTokenBalance],
   preTokenBalances: Array[RpcPostTokenBalance],
@@ -198,14 +199,19 @@ case class RpcTransaction(
   meta: RpcMeta,
   transaction: RpcTransactionTx,
 
-  version: Any
+  // Solana RPC returns `"legacy"` as a string or a numeric value for newer transaction versions (e.g. 0).
+  // Keep it as JsValue to avoid fragile implicit coercions during spray-json parsing.
+  version: Option[JsValue] = None
 
   // block_number:Option[Long] = None, // NOT FROM RPC !!! used internally for streaming Block timestamp 
   // timestamp:Option[Long] = None // NOT FROM RPC !!! used internally for streaming Block timestamp 
 )  extends Ingestable
 
 
-case class RpcBlock(  
+// SlotHeight	Latest network progress / time	Sync status, RPC freshness
+// BlockHeight	Latest confirmed block count	Chain history, indexing
+// Explorers show SlotHeight as block number
+case class RpcBlock(
   blockHeight: Long,
   blockTime: Long,
   blockhash: String,
@@ -219,5 +225,5 @@ case class RpcBlock(
 case class RpcBlockResult(  
   jsonrpc:String,  
   result:Option[RpcBlock],
-  id: Any
+  id: JsValue
 )

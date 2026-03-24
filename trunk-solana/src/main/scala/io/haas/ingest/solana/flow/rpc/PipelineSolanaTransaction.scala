@@ -44,7 +44,14 @@ abstract class PipelineSolanaTransaction[E <: skel.Ingestable](config:Config)
       val b = bb.last.result.get
       latestTs.set(b.blockTime * 1000L)      
     }
-    bb.flatMap(_.result)
+
+    bb
+      .flatMap(_.result)
+      .map(b => {
+        val logMsg = s"Block[${b.parentSlot+1},${b.transactions.size},${data.size}]"
+        log.info(logMsg)
+        b
+      })      
   }
 
   def convert(tx:RpcBlock):RpcBlock = {
@@ -56,32 +63,41 @@ abstract class PipelineSolanaTransaction[E <: skel.Ingestable](config:Config)
 class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Transaction](config) {    
 
   def transform(block: RpcBlock): Seq[Transaction] = {
-    var i = 0;
-    val txx = block.transactions.flatMap(tx => {
-      tx.transaction.signatures.map( sig => {
-        val t = Transaction(
-          ts = Some(block.blockTime * 1000L),          
-          s = Some(block.parentSlot - 1),        
-          b = Some(block.blockHeight), 
-          
-          sig = sig,
-          acc = tx.transaction.message.accountKeys,
-          units = tx.meta.computeUnitsConsumed,
-          fee = tx.meta.fee,
-          logs = tx.meta.logMessages,
-          st = parseStatus(tx.meta.status),
+    var i = 0L
+    
+    val txx = block.transactions.map(tx => {
+      val t = Transaction(
+        ts = Some(block.blockTime * 1000L),
+        b = Some(block.parentSlot + 1),
+        h = Some(block.blockHeight),
 
-          ver = tx.version.toString,
-            
-          i = Some(i), 
-        )        
-        i = i + 1
-        t
-      })      
-    })    
+        acc = tx.transaction.message.accountKeys,
+        unts = tx.meta.computeUnitsConsumed,
+        fee = tx.meta.fee,
+        logs = tx.meta.logMessages.getOrElse(Array.empty[String]),
+
+        // One Solana transaction object with its canonical (first) signature.
+        sig = tx.transaction.signatures.headOption.getOrElse(""),
+
+        sts = parseStatus(tx.meta.status),
+
+        ver = tx.version match {
+          case Some(JsString(s)) => s
+          case Some(JsNumber(n)) => n.toString
+          case Some(JsNull) => "legacy"
+          case _ => "legacy"
+        },
+
+        i = Some(i),
+      )
+      i = i + 1
+      t
+    })
 
     // commit cursor
     cursor.commit(block.parentSlot + 1)
+
+    log.info(s"Block[${block.parentSlot+1},${block.transactions.size},${txx.size}]")
 
     txx
   }    

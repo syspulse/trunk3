@@ -61,11 +61,10 @@ class PipelineBlock(config:Config) extends PipelineSolanaBlock[Block](config) {
     val b = block
 
     val blk = Block(
-      ts = b.blockTime * 1000L,
-      s = b.parentSlot + 1,
-      i = b.blockHeight,
-      s0 = b.parentSlot,
-            
+      ts = b.blockTime * 1000L,      
+      b = b.parentSlot + 1,
+      h = b.blockHeight,
+
       hash = b.blockhash,            
       phash = b.previousBlockhash,
       
@@ -73,7 +72,7 @@ class PipelineBlock(config:Config) extends PipelineSolanaBlock[Block](config) {
     )
 
     // ATTENTION: commit cursor to parent slot + 1
-    cursor.commit(blk.s)
+    cursor.commit(blk.b)
 
     Seq(blk)
   }    

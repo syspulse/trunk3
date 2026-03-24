@@ -132,8 +132,9 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
             // request latest block to know where we are from current
             val blockHex = "latest"
-            val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id": 0}"""
+            //val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id": 0}"""
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
+            val json = """{"jsonrpc":"2.0","method":"getSlot","params":[{"commitment":"finalized"}],"id":1}"""
             log.debug(s"${json} -> ${uri.uri}")
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             
@@ -147,8 +148,9 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             
             val r = ujson.read(rsp.text())
             //val lastBlock = r.obj("result").obj("value").obj("lastValidBlockHeight").num.toLong
-            val lastBlock = r.obj("result").obj("context").obj("slot").num.toLong
+            //val lastBlock = r.obj("result").obj("context").obj("slot").num.toLong
             //val lastBlock = r.obj("result").num.toLong
+            val lastBlock = r.obj("result").num.toLong
             
             //log.info(s"last=${lastBlock}, current=${cursor.get()}, lag=${config.blockLag}")
             val currentBlock = cursor.get()
@@ -201,15 +203,16 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
               })
             
                         
-            val json = if(config.blockLimit > 1) s"""[${blocksReq.mkString(",")}]""" else blocksReq.head
+            //val json = if(config.blockLimit > 1) s"""[${blocksReq.mkString(",")}]""" else blocksReq.head
+            val json = s"""[${blocksReq.mkString(",")}]"""
 
-            log.info(s"${json} -> ${uri.uri}")
+            log.debug(s"${json} -> ${uri.uri}")
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))            
             val body = rsp.text()
             
             rsp.statusCode match {
               case 200 => //
-                log.debug(s"body=${body}")                
+                log.debug(s"body=${body}")
 
               case _ => 
                 // retry
@@ -217,11 +220,11 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
                 throw new RetryException("")
             }
             
-            // val batch = decodeBatch(body)
-            val batch = if(config.blockLimit > 1) decodeBatch(body) else decodeSingle(body)
+            //val batch = if(config.blockLimit > 1) decodeBatch(body) else decodeSingle(body)
+            val batch = decodeBatch(body)
             batch
           })
-          .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
+          //.throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group 
           .log(s"Source: feed=${feed}")
           .addAttributes(
             Attributes.logLevels(
@@ -237,7 +240,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
                 //reorgFlow(b)
                 true
               )
-          })          
+          })
+          .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group           
           .map(b => {
             if(b.contains(""""error":{"code":""")) {
               log.warn(s"${b}")
@@ -266,140 +270,4 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     jsonBatch.arr.map(a => a.toString()).toSeq
   }
 
-  // ---- Receipts --------------------------------------------------------------------------------------------------------------------------
-  
-  // legacy and very inefficient for the whole Block  
-  // def decodeReceiptsBatch(block: RpcBlock): Map[String,RpcReceipt] = {
-  //   decodeTxReceipts(block.transactions.map(_.transaction_hash).toIndexedSeq)
-  // }
-
-  // def decodeTxReceipts(transactions: Seq[String]): Map[String,RpcReceipt] = {
-    
-  //   if(transactions.size == 0)
-  //     return Map()
-    
-  //   val receiptBatch = if(config.receiptBatch == -1) transactions.size else config.receiptBatch
-  //   val ranges = transactions.grouped(receiptBatch).toSeq
-
-  //   val receiptMap = ranges.view.zipWithIndex.map{ case(range,i) => {      
-  //     //log.debug(s"transactions: ${b.transactions.size}")
-        
-  //     if(range.size > 0) {
-  //       if(i != 0) {
-  //         Thread.sleep(config.receiptThrottle)
-  //       }
-
-  //       val json = 
-  //         "[" + range.map( txHash => 
-  //           s"""{"jsonrpc":"2.0","method":"solana_getTransactionReceipt","params":["${txHash}"],"id":"${txHash}"}"""
-  //         ).mkString(",") +
-  //         "]"
-  //         
-          
-  //       try {
-  //         val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))        
-  //         val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
-  //           case 200 =>
-              
-  //             val batchRsp = receiptsRsp.text()//receiptsRsp.data.toString
-              
-  //             try {
-  //               if(batchRsp.contains("""error""") && batchRsp.contains("""code""")) {
-  //                 throw new Exception(s"${batchRsp}")
-  //               }
-              
-  //               val batchReceipts = batchRsp.parseJson.convertTo[List[RpcReceiptResult]]
-
-  //               val rr:Seq[RpcReceipt] = batchReceipts.flatMap { r => 
-                  
-  //                 if(r.result.isDefined) {
-  //                   Some(r.result.get)
-  //                 } else {
-  //                   log.warn(s"could not get receipt: (tx=${r.id}): ${r}")
-  //                   None
-  //                 }
-  //               }
-                
-  //               rr.map( r => r.transaction_hash -> r).toSeq              
-
-  //             } catch {
-  //               case e:Exception =>
-  //                 log.error(s"could not parse receipts batch: ${receiptsRsp}",e)
-  //                 Seq()
-  //             }
-  //           case _ => 
-  //             log.warn(s"could not get receipts batch: ${receiptsRsp}")
-  //             Seq()
-  //         }
-  //         receipts
-  //       } catch {
-  //         case e:Exception =>
-  //           log.error("failed to get receipts",e)
-  //           Map()
-  //       }
-
-  //     } else
-  //       Map()  
-  //   }}.flatten.toMap 
-    
-  //   receiptMap
-  // }
-
-  // def decodeReceipts(block: RpcBlock): Map[String,RpcReceipt] = {
-  //   config.receiptRequest match {
-  //     case "block" => decodeReceiptsBlock(block)
-  //     case "batch" => decodeReceiptsBatch(block)
-  //     case _ => decodeReceiptsBlock(block)
-  //   }
-  // }
-  
-  // // --- Receipts via one call
-  // def decodeReceiptsBlock(block: RpcBlock): Map[String,RpcReceipt] = {
-  //   val b = block
-
-  //   if(b.transactions.size == 0)
-  //     return Map()
-            
-  //   val receiptMap = {      
-  //     //log.debug(s"transactions: ${b.transactions.size}")        
-
-  //     val id = b.block_number
-  //     val json =  s"""{"jsonrpc":"2.0","method":"solana_getBlockWithReceipts","params":["${b.block_number}"],"id":"${id}"}"""
-  //       
-        
-  //     try {
-  //       val receiptsRsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
-  //       val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
-  //         case 200 =>
-            
-  //           val rsp = receiptsRsp.text()
-            
-  //           try {
-  //             if(rsp.contains("""error""") && rsp.contains("""code""")) {
-  //               throw new Exception(s"${b.block_number}: ${rsp}")
-  //             }
-            
-  //             val rr = rsp.parseJson.convertTo[RpcBlockReceiptsResult].result
-  //             rr.map( r => r.transaction_hash -> r).toSeq
-
-  //           } catch {
-  //             case e:Exception =>
-  //               log.error(s"failed to parse receipts: ${b.block_number}: ${receiptsRsp}: rsp=${rsp}",e)
-  //               Seq()
-  //           }
-  //         case _ => 
-  //           log.warn(s"failed to get receipts: ${b.block_number}: ${receiptsRsp}")
-  //           Seq()
-  //       }
-  //       receipts
-  //     } catch {
-  //       case e:Exception =>
-  //         log.error(s"failed to get block receipts: ${b.block_number}",e)
-  //         Map()
-  //     }
-
-  //   }.toMap 
-    
-  //   receiptMap
-  // }
 }

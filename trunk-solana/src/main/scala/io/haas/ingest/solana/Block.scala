@@ -5,9 +5,8 @@ import io.syspulse.skel.util.Util
 
 case class Block(
   ts:Long,      // timestamp
-  s:Long,       // slot
-  i:Long,       // block number
-  s0:Long,      // parent block  
+  b:Long,       // block number (parent slot - 1)    
+  h:Long,       // block height
 
   hash:String,  // block hash 
   phash:String, // parent hash  
@@ -15,7 +14,7 @@ case class Block(
   tx:Option[Array[Transaction]], // transactions  
 
 ) extends Ingestable {
-  override def getKey:Option[Any] = Some(i)
+  override def getKey:Option[Any] = Some(b)
 
   override def toString = Util.toStringWithArray(this)
 }
