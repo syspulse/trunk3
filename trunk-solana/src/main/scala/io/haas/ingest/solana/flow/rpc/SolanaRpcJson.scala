@@ -15,24 +15,23 @@ object SolanaRpcJson extends JsonCommon {
   implicit val jf_rpc_rew = jsonFormat5(RpcReward)
   implicit val jf_rpc_st = jsonFormat2(RpcStatus)
 
-  implicit val jf_rpc_parsed_inst = jsonFormat2(RpcParsedInstruction)
-  // implicit val jf_rpc_parsed_inst: RootJsonFormat[RpcParsedInstruction] = new RootJsonFormat[RpcParsedInstruction] {
-  //   override def write(p: RpcParsedInstruction): JsValue = JsObject(
-  //     "info" -> p.info.fold[JsValue](JsNull)(identity),
-  //     "type" -> JsString(p.`type`)
-  //   )
+  implicit val jf_rpc_parsed_inst: RootJsonFormat[RpcParsedInstruction] = new RootJsonFormat[RpcParsedInstruction] {
+    override def write(p: RpcParsedInstruction): JsValue = JsObject(
+      "info" -> p.info.fold[JsValue](JsNull)(identity),
+      "type" -> JsString(p.`type`)
+    )
 
-  //   override def read(value: JsValue): RpcParsedInstruction = {
-  //     val obj = value.asJsObject
-  //     val info = obj.fields.get("info") match {
-  //       case Some(v: JsObject) => Some(v)
-  //       case Some(JsNull)      => None
-  //       case _                 => None
-  //     }
-  //     val tpe = obj.fields.get("type").collect { case JsString(s) => s }.getOrElse("")
-  //     RpcParsedInstruction(info = info, `type` = tpe)
-  //   }
-  // }
+    override def read(value: JsValue): RpcParsedInstruction = {
+      val obj = value.asJsObject
+      val info = obj.fields.get("info") match {
+        case Some(v: JsObject) => Some(v)
+        case Some(JsNull)      => None
+        case _                 => None
+      }
+      val tpe = obj.fields.get("type").collect { case JsString(s) => s }.getOrElse("")
+      RpcParsedInstruction(info = info, `type` = tpe)
+    }
+  }
 
   implicit val jf_rpc_inst: RootJsonFormat[RpcInstruction] = new RootJsonFormat[RpcInstruction] {
     override def write(i: RpcInstruction): JsValue = JsObject(
@@ -62,15 +61,30 @@ object SolanaRpcJson extends JsonCommon {
 
       RpcInstruction(
         accounts = accounts,
-        data = obj.fields.get("data").collect { case JsString(s) => s },
-        programIdIndex = obj.fields.get("programIdIndex").collect { case JsNumber(n) => n.toLong },
-        programId = obj.fields.get("programId").collect { case JsString(s) => s },
-        program = obj.fields.get("program").collect { case JsString(s) => s },
+        data = obj.fields.get("data") match {
+          case Some(JsString(s)) => Some(s)
+          case _ => None
+        },
+        programIdIndex = obj.fields.get("programIdIndex") match {
+          case Some(JsNumber(n)) => Some(n.toLong)
+          case _ => None
+        },
+        programId = obj.fields.get("programId") match {
+          case Some(JsString(s)) => Some(s)
+          case _ => None
+        },
+        program = obj.fields.get("program") match {
+          case Some(JsString(s)) => Some(s)
+          case _ => None
+        },
         parsed = obj.fields.get("parsed") match {
           case Some(v: JsObject) => Some(v.convertTo[RpcParsedInstruction])
           case _ => None
         },
-        stackHeight = obj.fields.get("stackHeight").collect { case JsNumber(n) => n.toLong }
+        stackHeight = obj.fields.get("stackHeight") match {
+          case Some(JsNumber(n)) => Some(n.toLong)
+          case _ => None
+        }
       )
     }
   }

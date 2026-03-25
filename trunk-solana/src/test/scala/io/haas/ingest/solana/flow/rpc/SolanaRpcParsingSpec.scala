@@ -124,8 +124,8 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
       }
     }    
 
-    "parse SOL-408538997 transactions into 1213 Transaction objects" in {
-      val text = scala.io.Source.fromResource("SOL-408538997.json").mkString
+    "parse SOL-408538997-jsonparsed transactions into 1213 Transaction objects (primary)" in {
+      val text = scala.io.Source.fromResource("SOL-408538997-jsonparsed.json").mkString
       val blockResult = text.parseJson.convertTo[RpcBlockResult]
 
       val config = Config(feed = "https://rpc.test", output = "null://")
@@ -133,10 +133,13 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
 
       val txs: Seq[Transaction] = blockResult.result.toSeq.flatMap(pipeline.transform)
       txs.size should be(1213)
+
+      // jsonParsed must populate parsed instructions for at least some transactions.
+      txs.exists(_.ins.exists(_.parsed.isDefined)) shouldBe true
     }
 
-    "parse SOL-408538997-jsonparsed transactions into 1213 Transaction objects" in {
-      val text = scala.io.Source.fromResource("SOL-408538997-jsonparsed.json").mkString
+    "parse SOL-408538997 (non-jsonParsed) transactions into 1213 Transaction objects (compat)" in {
+      val text = scala.io.Source.fromResource("SOL-408538997.json").mkString
       val blockResult = text.parseJson.convertTo[RpcBlockResult]
 
       val config = Config(feed = "https://rpc.test", output = "null://")
