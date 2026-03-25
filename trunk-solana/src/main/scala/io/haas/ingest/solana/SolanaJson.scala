@@ -8,11 +8,11 @@ import spray.json.{DefaultJsonProtocol,NullOptions}
 
 import io.haas.ingest.solana.flow.rpc.SolanaRpcJson._
 
-object SolanaJson extends DefaultJsonProtocol 
+object SolanaJson extends DefaultJsonProtocol with NullOptions
   //extends JsonCommon with ProductFormatsInstances 
 {  
   import DefaultJsonProtocol._  
 
-  implicit val jf_strk_tr = jsonFormat12(Transaction)
-  implicit val jf_strk_block = jsonFormat6(Block)
+  implicit val jf_strk_tr: RootJsonFormat[Transaction] = jsonFormat12(Transaction)
+  implicit val jf_strk_block: RootJsonFormat[Block] = jsonFormat6(Block)
 }

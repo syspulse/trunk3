@@ -16,10 +16,12 @@ object SolanaRpcJson extends JsonCommon {
   implicit val jf_rpc_st = jsonFormat2(RpcStatus)
 
   implicit val jf_rpc_parsed_inst: RootJsonFormat[RpcParsedInstruction] = new RootJsonFormat[RpcParsedInstruction] {
-    override def write(p: RpcParsedInstruction): JsValue = JsObject(
-      "info" -> p.info.fold[JsValue](JsNull)(identity),
-      "type" -> JsString(p.`type`)
-    )
+    override def write(p: RpcParsedInstruction): JsValue = {
+      val fields = scala.collection.mutable.LinkedHashMap.empty[String, JsValue]
+      fields += "type" -> JsString(p.`type`)
+      p.info.foreach(v => fields += "info" -> v)
+      JsObject(fields.toMap)
+    }
 
     override def read(value: JsValue): RpcParsedInstruction = {
       val obj = value.asJsObject
@@ -34,15 +36,21 @@ object SolanaRpcJson extends JsonCommon {
   }
 
   implicit val jf_rpc_inst: RootJsonFormat[RpcInstruction] = new RootJsonFormat[RpcInstruction] {
-    override def write(i: RpcInstruction): JsValue = JsObject(
-      "accounts" -> JsArray(i.accounts.map(JsString(_)).toVector),
-      "data" -> i.data.map(JsString(_)).getOrElse(JsNull),
-      "programIdIndex" -> i.programIdIndex.map(JsNumber(_)).getOrElse(JsNull),
-      "programId" -> i.programId.map(JsString(_)).getOrElse(JsNull),
-      "program" -> i.program.map(JsString(_)).getOrElse(JsNull),
-      "parsed" -> i.parsed.map(_.toJson).getOrElse(JsNull),
-      "stackHeight" -> i.stackHeight.map(JsNumber(_)).getOrElse(JsNull)
-    )
+    override def write(i: RpcInstruction): JsValue = {
+      val fields = scala.collection.mutable.LinkedHashMap.empty[String, JsValue]
+
+      // required-ish field
+      fields += "accounts" -> JsArray(i.accounts.map(JsString(_)).toVector)
+
+      i.data.foreach(v => fields += "data" -> JsString(v))
+      i.programIdIndex.foreach(v => fields += "programIdIndex" -> JsNumber(v))
+      i.programId.foreach(v => fields += "programId" -> JsString(v))
+      i.program.foreach(v => fields += "program" -> JsString(v))
+      i.parsed.foreach(v => fields += "parsed" -> v.toJson)
+      i.stackHeight.foreach(v => fields += "stackHeight" -> JsNumber(v))
+
+      JsObject(fields.toMap)
+    }
 
     override def read(value: JsValue): RpcInstruction = {
       val obj = value.asJsObject
