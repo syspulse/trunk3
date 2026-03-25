@@ -80,6 +80,8 @@ case class Config(
 
   sim:Option[String] = None, // simulation mode with specifi target (cid:1245 / addr:0x0001 / did:88764). Used by Ext/Sentinel
 
+  compression:String = "gzip", // compression for RPC requests
+
   cmd:String = "stream",
   params: Seq[String] = Seq(),
   c:Seq[String] = Seq()

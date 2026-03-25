@@ -209,7 +209,23 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
       txOpt shouldBe defined
 
       val tx0 = txOpt.get
-      val tx1 = tx0.toJson.compactPrint.parseJson.convertTo[Transaction]
+      val json0 = tx0.toJson.compactPrint
+
+      // ensure instruction field names are compact
+      json0.contains("\"accounts\"") shouldBe false
+      json0.contains("\"programId\"") shouldBe false
+      json0.contains("\"program\"") shouldBe false
+      json0.contains("\"stackHeight\"") shouldBe false
+      json0.contains("\"parsed\"") shouldBe false
+      json0.contains("\"acc\"") shouldBe true
+      json0.contains("\"pid\"") shouldBe true
+      json0.contains("\"pro\"") shouldBe true // at least for system transfer
+      json0.contains("\"sth\"") shouldBe true
+      json0.contains("\"dat\"") shouldBe true
+      json0.contains("\"typ\"") shouldBe true
+      json0.contains("\"info\"") shouldBe true
+
+      val tx1 = json0.parseJson.convertTo[Transaction]
 
       info(s"tx0: ${tx0.toJson.compactPrint}")
 

@@ -68,6 +68,12 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
   import EthRpcJson._
 
+  private val rpcHeaders: Map[String, String] = Map(
+    "content-type" -> "application/json",
+    // Ask server to gzip responses (requests-scala will transparently decompress).
+    "accept-encoding" -> config.compression
+  )
+
   val cursor = new CursorBlock()(config)
   
   val reorg = config.reorgFlow match {
@@ -142,7 +148,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
               var rsp:Option[requests.Response] = None
               while(!rsp.isDefined)  {
                 rsp = try {
-                  Some(requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json")))
+                  Some(requests.post(uri.uri, data = json,headers = rpcHeaders))
                 } catch {
                   case e:Exception => 
                     log.error(s"request latest block failed -> ${uri.uri}",e)
@@ -313,7 +319,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                 s"""[${blocksReq.mkString(",")}]"""
 
               val batch = try {
-                val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))                        
+                val rsp = requests.post(uri.uri, data = json,headers = rpcHeaders)
                 val body = rsp.text()
                 
                 rsp.statusCode match {

@@ -262,7 +262,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
   //     "id": ${tx.ts}}
   //     """.trim.replaceAll("\\s+","")
 
-  //   val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+  //   val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
   //   val body = rsp.text()
   //   log.info(s"body=${body}")
   //   body
@@ -273,7 +273,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
 
     val tx = {
       val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${txHash}"],"id": ${System.currentTimeMillis}}"""
-      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
       val body = rsp.text()    
       //log.debug(s"body=${body}")
       val r = try {
@@ -314,7 +314,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         "id": ${System.currentTimeMillis}}
         """.trim.replaceAll("\\s+","")
       
-      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
       val body = rsp.text()
       log.debug(s"body=${body}")
 
@@ -352,7 +352,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
 
     //   //log.debug(s"${json}")
 
-    //   val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+    //   val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
     //   val body = rsp.text()
     //   log.debug(s"body=${body}")
 
@@ -404,7 +404,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         "id": ${System.currentTimeMillis}}
         """.trim.replaceAll("\\s+","")
       
-      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
       val body = rsp.text()
       log.debug(s"body=${body}")
 
@@ -520,7 +520,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
           .trim.replaceAll("\\s+","")
           
         try {
-          val receiptsRsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))        
+          val receiptsRsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))        
           val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
             case 200 =>
               
@@ -583,7 +583,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         .trim.replaceAll("\\s+","")
         
       try {
-        val receiptsRsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))
+        val receiptsRsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
         val receipts:Seq[(String,RpcReceipt)] = receiptsRsp.statusCode match {
           case 200 =>
             
@@ -753,7 +753,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
       .trim.replaceAll("\\s+","")
           
     try {
-      val rsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json"))        
+      val rsp = requests.post(uri, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
       val blocks:Seq[B] = rsp.statusCode match {
         case 200 =>
           

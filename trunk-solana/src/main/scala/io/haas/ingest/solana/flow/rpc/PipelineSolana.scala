@@ -65,13 +65,12 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   val cursor = new CursorBlock("BLOCK-solana")(config)
   implicit val uri = SolanaURI(config.feed,config.apiToken)
 
-  val encoding = "jsonParsed"
-  val compression = "gzip"
+  val encoding = "jsonParsed"  
 
   private val rpcHeaders: Map[String, String] = Map(
     "content-type" -> "application/json",
     // Ask server to gzip responses (requests-scala will transparently decompress).
-    "accept-encoding" -> compression
+    "accept-encoding" -> config.compression
   )
     
   override def source(feed:String) = {

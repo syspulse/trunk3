@@ -18,7 +18,7 @@ object SolanaRpcJson extends JsonCommon {
   implicit val jf_rpc_parsed_inst: RootJsonFormat[RpcParsedInstruction] = new RootJsonFormat[RpcParsedInstruction] {
     override def write(p: RpcParsedInstruction): JsValue = {
       val fields = scala.collection.mutable.LinkedHashMap.empty[String, JsValue]
-      fields += "type" -> JsString(p.`type`)
+      fields += "typ" -> JsString(p.`type`)
       p.info.foreach(v => fields += "info" -> v)
       JsObject(fields.toMap)
     }
@@ -30,7 +30,12 @@ object SolanaRpcJson extends JsonCommon {
         case Some(JsNull)      => None
         case _                 => None
       }
-      val tpe = obj.fields.get("type").collect { case JsString(s) => s }.getOrElse("")
+      val tpe =
+        obj.fields
+          .get("typ")
+          .orElse(obj.fields.get("type")) // backward compat
+          .collect { case JsString(s) => s }
+          .getOrElse("")
       RpcParsedInstruction(info = info, `type` = tpe)
     }
   }
@@ -40,14 +45,19 @@ object SolanaRpcJson extends JsonCommon {
       val fields = scala.collection.mutable.LinkedHashMap.empty[String, JsValue]
 
       // required-ish field
-      fields += "accounts" -> JsArray(i.accounts.map(JsString(_)).toVector)
+      fields += "acc" -> JsArray(i.accounts.map(JsString(_)).toVector)
 
-      i.data.foreach(v => fields += "data" -> JsString(v))
+      i.data.foreach(v => fields += "dat" -> JsString(v))
       i.programIdIndex.foreach(v => fields += "programIdIndex" -> JsNumber(v))
-      i.programId.foreach(v => fields += "programId" -> JsString(v))
-      i.program.foreach(v => fields += "program" -> JsString(v))
-      i.parsed.foreach(v => fields += "parsed" -> v.toJson)
-      i.stackHeight.foreach(v => fields += "stackHeight" -> JsNumber(v))
+      i.programId.foreach(v => fields += "pid" -> JsString(v))
+      i.program.foreach(v => fields += "pro" -> JsString(v))
+      i.stackHeight.foreach(v => fields += "sth" -> JsNumber(v))
+
+      // Flatten parsed: typ/info at the same level as prog
+      i.parsed.foreach { p =>
+        fields += "typ" -> JsString(p.`type`)
+        p.info.foreach(info => fields += "info" -> info)
+      }
 
       JsObject(fields.toMap)
     }
@@ -55,7 +65,7 @@ object SolanaRpcJson extends JsonCommon {
     override def read(value: JsValue): RpcInstruction = {
       val obj = value.asJsObject
 
-      val accounts: Seq[String] = obj.fields.get("accounts") match {
+      val accounts: Seq[String] = obj.fields.get("acc").orElse(obj.fields.get("accounts")) match {
         case Some(JsArray(values)) =>
           values.map {
             case JsString(s) => s
@@ -69,27 +79,42 @@ object SolanaRpcJson extends JsonCommon {
 
       RpcInstruction(
         accounts = accounts,
-        data = obj.fields.get("data") match {
-          case Some(JsString(s)) => Some(s)
-          case _ => None
-        },
+        data =
+          obj.fields.get("dat").orElse(obj.fields.get("data")) match {
+            case Some(JsString(s)) => Some(s)
+            case _ => None
+          },
         programIdIndex = obj.fields.get("programIdIndex") match {
           case Some(JsNumber(n)) => Some(n.toLong)
           case _ => None
         },
-        programId = obj.fields.get("programId") match {
+        programId = obj.fields.get("pid").orElse(obj.fields.get("programId")) match {
           case Some(JsString(s)) => Some(s)
           case _ => None
         },
-        program = obj.fields.get("program") match {
+        program = obj.fields.get("pro").orElse(obj.fields.get("prog")).orElse(obj.fields.get("program")) match {
           case Some(JsString(s)) => Some(s)
           case _ => None
         },
         parsed = obj.fields.get("parsed") match {
+          // old format: nested parsed object
           case Some(v: JsObject) => Some(v.convertTo[RpcParsedInstruction])
-          case _ => None
+          case _ =>
+            // new format: flattened typ/info on the instruction itself
+            val tpe =
+              obj.fields
+                .get("typ")
+                .collect { case JsString(s) => s }
+
+            val info =
+              obj.fields.get("info") match {
+                case Some(v: JsObject) => Some(v)
+                case _ => None
+              }
+
+            tpe.map(t => RpcParsedInstruction(info = info, `type` = t))
         },
-        stackHeight = obj.fields.get("stackHeight") match {
+        stackHeight = obj.fields.get("sth").orElse(obj.fields.get("skh")).orElse(obj.fields.get("stackHeight")) match {
           case Some(JsNumber(n)) => Some(n.toLong)
           case _ => None
         }

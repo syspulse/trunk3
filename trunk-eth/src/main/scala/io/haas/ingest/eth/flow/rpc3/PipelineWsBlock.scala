@@ -59,7 +59,7 @@ abstract class PipelineWsHead[E <: skel.Ingestable](config:Config)
           }""".trim.replaceAll("\\s+","")  
 
     val txxReceipts = try {
-      val rsp = requests.post(config.rpcUrl, data = req,headers = Map("content-type" -> "application/json"))                        
+      val rsp = requests.post(config.rpcUrl, data = req,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
       val body = rsp.text()
       
       rsp.statusCode match {

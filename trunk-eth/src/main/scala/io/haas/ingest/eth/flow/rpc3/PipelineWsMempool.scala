@@ -68,7 +68,7 @@ abstract class PipelineWsMempool[E <: skel.Ingestable](config:Config)
     
     val tx:Option[RpcMempoolTransaction] = {
       val json = s"""{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["${m.hash}"],"id": ${System.currentTimeMillis}}"""
-      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json"))
+      val rsp = requests.post(config.rpcUrl, data = json,headers = Map("content-type" -> "application/json","accept-encoding" -> config.compression))
       val body = rsp.text()    
             
       val tx = try {
