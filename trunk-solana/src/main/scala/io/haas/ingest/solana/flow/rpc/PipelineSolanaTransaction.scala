@@ -30,6 +30,7 @@ import io.haas.ingest.Config
 
 import io.haas.ingest.solana.Block
 import io.haas.ingest.solana.Transaction
+import io.haas.ingest.solana.{TokBal,TokUI}
 import io.haas.ingest.solana.SolanaJson._
 
 import io.haas.ingest.solana.flow.rpc._
@@ -82,6 +83,19 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
         
     val txx = block.transactions.map(tx => {
 
+      def toTokBal(tb: RpcPostTokenBalance): TokBal =
+        TokBal(
+          i = tb.accountIndex,
+          pid = tb.programId,
+          ui = TokUI(
+            v = tb.uiTokenAmount.amount,
+            dec = tb.uiTokenAmount.decimals,
+            // RpcUiTokenAmount.uiAmount is Double in the RPC model; keep it optional in domain.
+            vu = Some(tb.uiTokenAmount.uiAmount),
+            vs = Option(tb.uiTokenAmount.uiAmountString)
+          )
+        )
+
       val t = Transaction(
         ts = Some(block.blockTime * 1000L),
         b = Some(block.parentSlot + 1),
@@ -90,6 +104,17 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
         acc = accountPubKeys(tx.transaction.message.accountKeys),
         unts = tx.meta.computeUnitsConsumed,
         fee = tx.meta.fee,
+        err = tx.meta.err match {
+          case None => None
+          case Some(JsNull) => None
+          case Some(v) => Some(v.compactPrint)
+        },
+        used = tx.meta.computeUnitsConsumed,
+        cost = tx.meta.costUnits,
+        bal1 = Some(tx.meta.postBalances),
+        bal0 = Some(tx.meta.preBalances),
+        tok0 = Some(tx.meta.postTokenBalances.map(toTokBal)),
+        tok1 = Some(tx.meta.preTokenBalances.map(toTokBal)),
         ins = tx.transaction.message.instructions,
         logs = tx.meta.logMessages.getOrElse(Array.empty[String]),
 

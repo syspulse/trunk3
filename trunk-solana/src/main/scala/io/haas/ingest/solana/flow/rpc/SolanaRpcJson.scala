@@ -129,7 +129,7 @@ object SolanaRpcJson extends JsonCommon {
 
   implicit val jf_rpc_err = jsonFormat1(RpcErr)
 
-  implicit val jf_rpc_meta = jsonFormat11(RpcMeta)
+  implicit val jf_rpc_meta = jsonFormat13(RpcMeta)
 
   implicit val jf_rpc_head = jsonFormat3(RpcHeader)
   

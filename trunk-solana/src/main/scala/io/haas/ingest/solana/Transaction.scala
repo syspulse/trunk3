@@ -4,14 +4,35 @@ import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 import io.haas.ingest.solana.flow.rpc.RpcInstruction
 
+// Compact token balance representation for Transaction meta fields
+case class TokUI(
+  v: String,                 // amount
+  dec: Int,                  // decimals
+  vu: Option[Double] = None, // uiAmount (nullable in RPC)
+  vs: Option[String] = None, // uiAmountString
+)
+
+case class TokBal(
+  i: Long,          // accountIndex
+  pid: String,      // programId
+  ui: TokUI,        // uiTokenAmount
+)
+
 case class Transaction(  
   ts:Option[Long],          // timestamp  
   b:Option[Long],           // block number (parent slot - 1)   
   h:Option[Long],           // block height  
   
   acc:Array[String],        // account key
-  unts:Long,                // consumed units
+  unts:Long,                // consumed units (legacy)
   fee:Long,                 // fee (lamports)
+  err:Option[String] = None,// error (stringified json if present)
+  used:Long = 0L,           // computeUnitsConsumed
+  cost:Long = 0L,           // costUnits
+  bal1:Option[Array[Long]] = None,          // postBalances
+  bal0:Option[Array[Long]] = None,          // preBalances
+  tok0:Option[Array[TokBal]] = None,        // postTokenBalances
+  tok1:Option[Array[TokBal]] = None,        // preTokenBalances
 
   ins:Array[RpcInstruction], // instructions
   logs:Array[String],        // log messages

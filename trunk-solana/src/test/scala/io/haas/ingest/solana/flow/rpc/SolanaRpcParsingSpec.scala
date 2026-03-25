@@ -230,7 +230,7 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
       info(s"tx0: ${tx0.toJson.compactPrint}")
 
       tx1.sig shouldBe tx0.sig
-      tx1.sts shouldBe tx0.sts
+      tx1.sta shouldBe tx0.sta
       tx1.ver shouldBe tx0.ver
       tx1.b shouldBe tx0.b
       tx1.h shouldBe tx0.h

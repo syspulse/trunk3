@@ -160,11 +160,13 @@ case class RpcPostTokenBalance(
 
 case class RpcMeta(
   computeUnitsConsumed: Long,
+  costUnits: Long,
   err: Option[JsValue],
   fee: Long,
   innerInstructions: Option[Array[RpcInnerInstruction]],
   loadedAddresses: Option[RpcLoadedAddresses],
   logMessages: Option[Array[String]],
+  preBalances: Array[Long],
   postBalances: Array[Long],
   postTokenBalances: Array[RpcPostTokenBalance],
   preTokenBalances: Array[RpcPostTokenBalance],
