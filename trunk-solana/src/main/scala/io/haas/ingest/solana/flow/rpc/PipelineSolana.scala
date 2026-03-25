@@ -66,6 +66,13 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   implicit val uri = SolanaURI(config.feed,config.apiToken)
 
   val encoding = "jsonParsed"
+  val compression = "gzip"
+
+  private val rpcHeaders: Map[String, String] = Map(
+    "content-type" -> "application/json",
+    // Ask server to gzip responses (requests-scala will transparently decompress).
+    "accept-encoding" -> compression
+  )
     
   override def source(feed:String) = {
     feed.split("://").toList match {
@@ -86,7 +93,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             log.debug(s"${json} -> ${uri.uri}")
             
             val rsp = requests.post(uri.uri,
-              headers = Seq(("Content-Type","application/json")),
+              headers = rpcHeaders,
               data = json
             )
             
@@ -138,7 +145,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
             val json = """{"jsonrpc":"2.0","method":"getSlot","params":[{"commitment":"finalized"}],"id":1}"""
             log.debug(s"${json} -> ${uri.uri}")
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
+            val rsp = requests.post(uri.uri, data = json, headers = rpcHeaders)
             
             rsp.statusCode match {
               case 200 => //
@@ -209,7 +216,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             val json = s"""[${blocksReq.mkString(",")}]"""
 
             log.debug(s"${json} -> ${uri.uri}")
-            val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))            
+            val rsp = requests.post(uri.uri, data = json, headers = rpcHeaders)
             val body = rsp.text()
             
             rsp.statusCode match {
