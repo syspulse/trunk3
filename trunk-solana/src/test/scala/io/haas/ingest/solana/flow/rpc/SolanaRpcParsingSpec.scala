@@ -4,10 +4,10 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 
 import spray.json._
-
 import io.haas.ingest.Config
 import io.haas.ingest.solana.flow.rpc.SolanaRpcJson._
 import io.haas.ingest.solana.Transaction
+import io.haas.ingest.solana.SolanaJson._
 
 class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
 
@@ -33,9 +33,9 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
                     val stages = List(
                       ("RpcBlockResult", () => item.convertTo[RpcBlockResult]),
                       ("RpcBlock", () => res.get.convertTo[RpcBlock]),
-                      ("RpcTransaction(first)", () => res.get.asJsObject.fields("transactions").convertTo[JsArray].elements.head.convertTo[RpcTransaction]),
+                      ("RpcTransaction(first)", () => res.get.asJsObject.fields("transactions").asInstanceOf[JsArray].elements.head.convertTo[RpcTransaction]),
                       ("RpcTransaction(find-fail)", () => {
-                        val txs = res.get.asJsObject.fields("transactions").convertTo[JsArray].elements
+                        val txs = res.get.asJsObject.fields("transactions").asInstanceOf[JsArray].elements
                         var failure: Option[String] = None
 
                         for ((tx, idx) <- txs.zipWithIndex if failure.isEmpty) {
@@ -62,17 +62,25 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
 
                                     val details = List(
                                       attempt("computeUnitsConsumed") {
-                                        metaJs.fields("computeUnitsConsumed").convertTo[Long]
+                                        metaJs.fields("computeUnitsConsumed") match {
+                                          case JsNumber(n) => n.toLong
+                                          case other => deserializationError(s"Expected JsNumber for computeUnitsConsumed but got: $other")
+                                        }
                                       },
-                                      attempt("err") { metaJs.fields.get("err").map(_.convertTo[Option[JsValue]]).getOrElse(None) },
-                                      attempt("fee") { metaJs.fields("fee").convertTo[Long] },
-                                      attempt("innerInstructions") { metaJs.fields("innerInstructions").convertTo[Option[Array[RpcInnerInstruction]]] },
+                                      attempt("err") { metaJs.fields.get("err").getOrElse(JsNull) },
+                                      attempt("fee") {
+                                        metaJs.fields("fee") match {
+                                          case JsNumber(n) => n.toLong
+                                          case other => deserializationError(s"Expected JsNumber for fee but got: $other")
+                                        }
+                                      },
+                                      attempt("innerInstructions") { metaJs.fields.getOrElse("innerInstructions", JsNull) },
                                       attempt("loadedAddresses") { metaJs.fields("loadedAddresses").convertTo[RpcLoadedAddresses] },
-                                      attempt("logMessages") { metaJs.fields("logMessages").convertTo[Option[Array[String]]] },
-                                      attempt("postBalances") { metaJs.fields("postBalances").convertTo[Array[Long]] },
-                                      attempt("postTokenBalances") { metaJs.fields("postTokenBalances").convertTo[Array[RpcPostTokenBalance]] },
-                                      attempt("preTokenBalances") { metaJs.fields("preTokenBalances").convertTo[Array[RpcPostTokenBalance]] },
-                                      attempt("rewards") { metaJs.fields.get("rewards").map(_.convertTo[Option[Array[RpcReward]]]).getOrElse(None) },
+                                      attempt("logMessages") { metaJs.fields.getOrElse("logMessages", JsNull) },
+                                      attempt("postBalances") { metaJs.fields.getOrElse("postBalances", JsNull) },
+                                      attempt("postTokenBalances") { metaJs.fields.getOrElse("postTokenBalances", JsNull) },
+                                      attempt("preTokenBalances") { metaJs.fields.getOrElse("preTokenBalances", JsNull) },
+                                      attempt("rewards") { metaJs.fields.get("rewards").getOrElse(JsNull) },
                                       attempt("status") { metaJs.fields("status").convertTo[RpcStatus] }
                                     ).mkString(" | ")
 
@@ -85,13 +93,7 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
                                 } catch {
                                   case ex2: spray.json.DeserializationException => s"transaction: FAIL: ${ex2.getMessage}"
                                 }
-                              val vDebug =
-                                try {
-                                  txObj.fields.get("version").map(_.convertTo[JsValue]).getOrElse(JsNull)
-                                  "version: OK"
-                                } catch {
-                                  case ex2: spray.json.DeserializationException => s"version: FAIL: ${ex2.getMessage}"
-                                }
+                              val vDebug = "version: OK"
 
                               failure = Some(s"idx=$idx msg=${ex.getMessage} | $metaDebug | $txDebug | $vDebug")
                           }
@@ -147,6 +149,88 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
 
       val txs: Seq[Transaction] = blockResult.result.toSeq.flatMap(pipeline.transform)
       txs.size should be(1213)
+    }
+
+    "parse SOL-399514308-jsonparsed and find BAaNb... with 3 instructions" in {
+      // This jsonParsed fixture can be large; keep it as a classpath resource.
+      val text = scala.io.Source.fromResource("SOL-399514308-jsonparsed.json").mkString
+      val blockResult = text.parseJson.convertTo[RpcBlockResult]
+
+      val source = "BAaNbWqNcr358iXAYHzD5sjuADBCNpjwE137fZqYxdRp"
+
+      val config = Config(feed = "https://rpc.test", output = "null://")
+      val pipeline = new PipelineTransaction(config)
+
+      val txs: Seq[Transaction] = blockResult.result.toSeq.flatMap(pipeline.transform)
+      txs.nonEmpty shouldBe true
+
+      val txOpt = txs.find { t =>
+        t.ins.exists { i =>
+          i.parsed.exists { p =>
+            p.`type` == "transfer" &&
+            p.info.exists(_.fields.get("source").contains(JsString(source)))
+          }
+        }
+      }
+
+      txOpt shouldBe defined
+
+      val tx = txOpt.get
+      tx.ins.length shouldBe 3
+
+      // 2 ComputeBudget instructions (raw) + 1 system transfer (parsed)
+      tx.ins(0).programId shouldBe Some("ComputeBudget111111111111111111111111111111")
+      tx.ins(1).programId shouldBe Some("ComputeBudget111111111111111111111111111111")
+
+      val i2 = tx.ins(2)
+      i2.programId shouldBe Some("11111111111111111111111111111111")
+      i2.parsed.map(_.`type`) shouldBe Some("transfer")
+      i2.parsed.flatMap(_.info).map(_.fields.get("source")) shouldBe Some(Some(JsString(source)))
+    }
+
+    "roundtrip Transaction json (toJson -> parse -> convertTo) preserves key fields" in {
+      val text = scala.io.Source.fromResource("SOL-399514308-jsonparsed.json").mkString
+      val blockResult = text.parseJson.convertTo[RpcBlockResult]
+
+      val source = "BAaNbWqNcr358iXAYHzD5sjuADBCNpjwE137fZqYxdRp"
+      val config = Config(feed = "https://rpc.test", output = "null://")
+      val pipeline = new PipelineTransaction(config)
+
+      val txs: Seq[Transaction] = blockResult.result.toSeq.flatMap(pipeline.transform)
+
+      val txOpt = txs.find { t =>
+        t.ins.exists { i =>
+          i.parsed.exists { p =>
+            p.`type` == "transfer" &&
+            p.info.exists(_.fields.get("source").contains(JsString(source)))
+          }
+        }
+      }
+      txOpt shouldBe defined
+
+      val tx0 = txOpt.get
+      val tx1 = tx0.toJson.compactPrint.parseJson.convertTo[Transaction]
+
+      info(s"tx0: ${tx0.toJson.compactPrint}")
+
+      tx1.sig shouldBe tx0.sig
+      tx1.sts shouldBe tx0.sts
+      tx1.ver shouldBe tx0.ver
+      tx1.b shouldBe tx0.b
+      tx1.h shouldBe tx0.h
+      tx1.i shouldBe tx0.i
+
+      tx1.acc.length shouldBe tx0.acc.length
+      tx1.ins.length shouldBe tx0.ins.length
+
+      tx1.ins.length shouldBe 3
+      tx1.ins(0).programId shouldBe Some("ComputeBudget111111111111111111111111111111")
+      tx1.ins(1).programId shouldBe Some("ComputeBudget111111111111111111111111111111")
+
+      val i2 = tx1.ins(2)
+      i2.programId shouldBe Some("11111111111111111111111111111111")
+      i2.parsed.map(_.`type`) shouldBe Some("transfer")
+      i2.parsed.flatMap(_.info).map(_.fields.get("source")) shouldBe Some(Some(JsString(source)))
     }
   }
 }

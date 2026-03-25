@@ -52,8 +52,7 @@ abstract class PipelineSolanaTransaction[E <: skel.Ingestable](config:Config)
     bb
       .flatMap(_.result)
       .map(b => {
-        val logMsg = s"Block[${b.parentSlot+1},${b.transactions.size},${data.size}]"
-        log.info(logMsg)
+        log.info(s"Block[${b.parentSlot+1},${b.transactions.size},${data.size}]")
         b
       })      
   }
@@ -80,8 +79,9 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
 
   def transform(block: RpcBlock): Seq[Transaction] = {
     var i = 0L
-    
+        
     val txx = block.transactions.map(tx => {
+
       val t = Transaction(
         ts = Some(block.blockTime * 1000L),
         b = Some(block.parentSlot + 1),
@@ -107,14 +107,16 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
 
         i = Some(i),
       )
+
       i = i + 1
       t
     })
 
+
     // commit cursor
     cursor.commit(block.parentSlot + 1)
 
-    log.info(s"Block[${block.parentSlot+1},${block.transactions.size},${txx.size}]")
+    log.debug(s"Block[${block.parentSlot+1},${block.transactions.size},${txx.size}]")
 
     txx
   }    

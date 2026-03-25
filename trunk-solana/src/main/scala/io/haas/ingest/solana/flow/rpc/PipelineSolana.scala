@@ -196,12 +196,12 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
           })
           .map(blocks => {
             log.info(s"--> ${blocks}")
-            
+
             val blocksReq = blocks
               .takeRight(if(config.blockLimit > 0) config.blockLimit else blocks.size)
               .map(block => {              
                 // ATTENTION: block is slot !!!
-                s"""{ "jsonrpc":"2.0","method":"getBlock", "params":[${block},{"${encoding}":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }], "id":${block} }"""
+                s"""{ "jsonrpc":"2.0","method":"getBlock", "params":[${block},{"encoding":"${encoding}","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }], "id":${block} }"""
               })
             
                         
