@@ -7,6 +7,9 @@ import spray.json.JsArray
 import spray.json.JsObject
 import spray.json.JsValue
 
+import com.github.mjakubowski84.parquet4s.{BinaryValue,NullValue,SchemaDef,TypedSchemaDef,ValueCodecConfiguration,ValueEncoder}
+import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.BINARY
+
 // {
 //   "jsonrpc": "2.0",
 //   "result": {
@@ -160,7 +163,7 @@ case class RpcMeta(
   err: Option[JsValue],
   fee: Long,
   innerInstructions: Option[Array[RpcInnerInstruction]],
-  loadedAddresses: RpcLoadedAddresses,
+  loadedAddresses: Option[RpcLoadedAddresses],
   logMessages: Option[Array[String]],
   postBalances: Array[Long],
   postTokenBalances: Array[RpcPostTokenBalance],
@@ -175,17 +178,24 @@ case class RpcHeader(
   numRequiredSignatures: Int,
 )
 
+case class RpcParsedInstruction(
+  info: Option[JsObject],
+  `type`: String
+)
+
 case class RpcInstruction(
-  accounts: Array[Long],
-  data: String,
-  programIdIndex: Long,
+  accounts: Seq[String],
+  data: Option[String],
+  programIdIndex: Option[Long],
+  programId: Option[String],
+  program: Option[String],
+  parsed: Option[RpcParsedInstruction],
   stackHeight: Option[Long],
 )
 
-
 case class RpcMessage(
-  accountKeys: Array[String],
-  header: RpcHeader,
+  accountKeys: Array[JsValue],
+  header: Option[RpcHeader],
   instructions: Array[RpcInstruction],
   recentBlockhash: String
 )
@@ -227,3 +237,26 @@ case class RpcBlockResult(
   result:Option[RpcBlock],
   id: JsValue
 )
+
+
+// ========================================================================================
+// Parq ingorers for nested types
+// ========================================================================================
+object RpcInstruction {
+  // Keep schema simple: instruction is stored as a nullable string blob.
+  implicit val parquetValueEncoder: ValueEncoder[RpcInstruction] =
+    (i: RpcInstruction, _: ValueCodecConfiguration) => NullValue
+      //if (i == null) NullValue else BinaryValue(i.toString)
+
+  implicit val parquetSchema: TypedSchemaDef[RpcInstruction] =
+    SchemaDef.primitive(BINARY, required = false).typed[RpcInstruction]
+}
+
+object RpcParsedInstruction {
+  implicit val parquetValueEncoder: ValueEncoder[RpcParsedInstruction] =
+    (p: RpcParsedInstruction, _: ValueCodecConfiguration) => NullValue
+      //if (p == null) NullValue else BinaryValue(p.toString)
+
+  implicit val parquetSchema: TypedSchemaDef[RpcParsedInstruction] =
+    SchemaDef.primitive(BINARY, required = false).typed[RpcParsedInstruction]
+}

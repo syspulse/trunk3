@@ -2,6 +2,7 @@ package io.haas.ingest.solana
 
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
+import io.haas.ingest.solana.flow.rpc.RpcInstruction
 
 case class Transaction(  
   ts:Option[Long],          // timestamp  
@@ -10,7 +11,9 @@ case class Transaction(
   
   acc:Array[String],        // account key
   unts:Long,               // consumed units
-  fee:Long,                 // fee    
+  fee:Long,                 // fee
+
+  ins:Array[RpcInstruction], // instructions
   logs:Array[String],       // log messsages
 
   sig:String,      // transaction signature 
@@ -24,3 +27,17 @@ case class Transaction(
 
   override def toString = Util.toStringWithArray(this)
 }
+
+
+// ======================================================
+// ATTENTION: This code kills the compiler (It hangs!)
+// ======================================================
+// object Transaction {
+//   /** Parquet4s encodes [[Block]] field `tx` via shapeless; nested [[Transaction]] / [[RpcInstruction]] is not supported.
+//     * This pair always writes SQL NULL and uses an optional BINARY column so generic [[ParquetRecordEncoder]] still applies.
+//     */
+//   implicit val parquetIgnoreOptionArrayTransaction: ValueEncoder[Option[Array[Transaction]]] =
+//     (_: Option[Array[Transaction]], _: ValueCodecConfiguration) => NullValue
+//   implicit val parquetIgnoreOptionArrayTransactionSchema: TypedSchemaDef[Option[Array[Transaction]]] =
+//     SchemaDef.primitive(BINARY, required = false).typed[Option[Array[Transaction]]]
+// }

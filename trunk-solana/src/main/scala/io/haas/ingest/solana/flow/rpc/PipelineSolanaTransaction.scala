@@ -17,8 +17,12 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
+import io.syspulse.skel.serde.ParqIgnore
 import io.syspulse.skel.serde.Parq._
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
+
+object ParqRpcInstructionTx extends ParqIgnore[RpcInstruction]
+import ParqRpcInstructionTx._
 
 import java.util.concurrent.TimeUnit
 
@@ -62,6 +66,18 @@ abstract class PipelineSolanaTransaction[E <: skel.Ingestable](config:Config)
 
 class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Transaction](config) {    
 
+  private def accountPubKeys(keys: Array[JsValue]): Array[String] = {
+    keys.map {
+      case JsString(s) => s
+      case JsObject(fields) =>
+        fields.get("pubkey") match {
+          case Some(JsString(s)) => s
+          case _ => JsObject(fields).compactPrint
+        }
+      case other => other.compactPrint
+    }
+  }
+
   def transform(block: RpcBlock): Seq[Transaction] = {
     var i = 0L
     
@@ -71,9 +87,10 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
         b = Some(block.parentSlot + 1),
         h = Some(block.blockHeight),
 
-        acc = tx.transaction.message.accountKeys,
+        acc = accountPubKeys(tx.transaction.message.accountKeys),
         unts = tx.meta.computeUnitsConsumed,
         fee = tx.meta.fee,
+        ins = tx.transaction.message.instructions,
         logs = tx.meta.logMessages.getOrElse(Array.empty[String]),
 
         // One Solana transaction object with its canonical (first) signature.

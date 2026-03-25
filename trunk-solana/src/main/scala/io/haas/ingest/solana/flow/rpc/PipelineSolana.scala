@@ -64,6 +64,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
   val cursor = new CursorBlock("BLOCK-solana")(config)
   implicit val uri = SolanaURI(config.feed,config.apiToken)
+
+  val encoding = "jsonParsed"
     
   override def source(feed:String) = {
     feed.split("://").toList match {
@@ -199,7 +201,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
               .takeRight(if(config.blockLimit > 0) config.blockLimit else blocks.size)
               .map(block => {              
                 // ATTENTION: block is slot !!!
-                s"""{ "jsonrpc":"2.0","method":"getBlock", "params":[${block},{"encoding":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }], "id":${block} }"""
+                s"""{ "jsonrpc":"2.0","method":"getBlock", "params":[${block},{"${encoding}":"json","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }], "id":${block} }"""
               })
             
                         

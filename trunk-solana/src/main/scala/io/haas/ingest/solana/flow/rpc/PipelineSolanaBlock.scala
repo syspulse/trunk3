@@ -17,19 +17,36 @@ import io.syspulse.skel.ingest.flow.Pipeline
 
 import spray.json._
 import DefaultJsonProtocol._
-import io.syspulse.skel.serde.Parq._
-import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.Config
 
-import io.haas.ingest.solana.Block
-import io.haas.ingest.solana.SolanaJson._
-
 import io.haas.ingest.solana.flow.rpc._
 import io.haas.ingest.solana.flow.rpc.SolanaRpcJson._
 
+import io.haas.ingest.solana.Block
+import io.haas.ingest.solana.Transaction
+import io.haas.ingest.solana.SolanaJson._
+
+// import io.syspulse.skel.serde.ParqIgnore
+import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
+
+// object ParqAny extends ParqIgnore[Any]
+// object ParqMapAny extends ParqIgnore[Map[String,Any]]
+// object ParqRpcParsedInstruction extends ParqIgnore[RpcParsedInstruction]
+// object ParqRpcInstruction extends ParqIgnore[RpcInstruction]
+// object ParqTransaction extends ParqIgnore[Transaction]
+// object ParqBlock extends ParqIgnore[Block]
+
+// import ParqAny._
+// import ParqMapAny._
+// import RpcInstruction._ 
+// import RpcParsedInstruction._ 
+// import ParqTransaction._ 
+// import ParqBlock._
+
+// import io.syspulse.skel.serde.Parq._
 
 abstract class PipelineSolanaBlock[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 

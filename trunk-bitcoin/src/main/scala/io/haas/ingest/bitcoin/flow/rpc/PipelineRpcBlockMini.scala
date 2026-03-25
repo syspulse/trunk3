@@ -26,7 +26,7 @@ import io.syspulse.skel.ingest.flow.Pipeline
 import spray.json._
 import DefaultJsonProtocol._
 
-import io.syspulse.skel.serde.ParqIgnore
+// import io.syspulse.skel.serde.ParqIgnore
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
 import io.haas.ingest.bitcoin.flow.rpc.RpcBlock
@@ -40,20 +40,19 @@ import io.haas.ingest.Config
 
 import io.syspulse.skel.serde.Parq._
 
-object ParqRpcScriptPubKey extends ParqIgnore[RpcScriptPubKey]
-object ParqRpcScriptSig extends ParqIgnore[RpcScriptSig]
-object ParqRpcVin extends ParqIgnore[RpcVin]
-object ParqRpcVout extends ParqIgnore[RpcVout]
-object ParqRpcTransaction extends ParqIgnore[RpcTransaction]
-object ParqRpcBlock extends ParqIgnore[RpcBlock]
+// object ParqRpcScriptPubKey extends ParqIgnore[RpcScriptPubKey]
+// object ParqRpcScriptSig extends ParqIgnore[RpcScriptSig]
+// object ParqRpcVin extends ParqIgnore[RpcVin]
+// object ParqRpcVout extends ParqIgnore[RpcVout]
+// object ParqRpcTransaction extends ParqIgnore[RpcTransaction]
+// object ParqRpcBlock extends ParqIgnore[RpcBlock]
 
-import ParqRpcBlock._ 
-import ParqRpcTransaction._
-import ParqRpcVin._
-import ParqRpcVout._
-import ParqRpcScriptPubKey._
-import ParqRpcScriptSig._
-
+// import ParqRpcBlock._ 
+// import ParqRpcTransaction._
+// import ParqRpcVin._
+// import ParqRpcVout._
+// import ParqRpcScriptPubKey._
+// import ParqRpcScriptSig._
 
 class PipelineRpcBlockMini(config:Config) extends PipelineRPC[RpcBlock,RpcBlock,RpcBlock](config) {  
 
