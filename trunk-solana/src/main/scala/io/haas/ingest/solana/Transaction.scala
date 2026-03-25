@@ -10,16 +10,16 @@ case class Transaction(
   h:Option[Long],           // block height  
   
   acc:Array[String],        // account key
-  unts:Long,               // consumed units
-  fee:Long,                 // fee
+  unts:Long,                // consumed units
+  fee:Long,                 // fee (lamports)
 
   ins:Array[RpcInstruction], // instructions
-  logs:Array[String],       // log messsages
+  logs:Array[String],        // log messages
 
-  sig:String,      // transaction signature 
+  sig:String,                // transaction signature 
 
-  sts:String,                // status
-  ver:String,
+  sta:String,                // status
+  ver:String,                // version
   i:Option[Long] = None,  // transaction index in Block
   
 ) extends Ingestable {

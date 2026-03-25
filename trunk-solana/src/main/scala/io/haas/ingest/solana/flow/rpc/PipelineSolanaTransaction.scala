@@ -96,7 +96,7 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
         // One Solana transaction object with its canonical (first) signature.
         sig = tx.transaction.signatures.headOption.getOrElse(""),
 
-        sts = parseStatus(tx.meta.status),
+        sta = parseStatus(tx.meta.status),
 
         ver = tx.version match {
           case Some(JsString(s)) => s
