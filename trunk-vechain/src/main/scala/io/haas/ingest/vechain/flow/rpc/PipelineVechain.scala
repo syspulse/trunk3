@@ -227,12 +227,5 @@ abstract class PipelineVechain[T,O <: skel.Ingestable,E <: skel.Ingestable](conf
       case _ => super.source(feed)
     }
   }
-
-  def decodeSingle(rsp:String):Seq[String] = Seq(rsp)
-  def decodeBatch(rsp:String):Seq[String] = {
-    // ATTENTION !!!
-    // very inefficient, optimize with web3-proxy approach 
-    val jsonBatch = ujson.read(rsp)
-    jsonBatch.arr.map(a => a.toString()).toSeq
-  }
+  
 }

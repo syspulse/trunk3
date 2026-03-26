@@ -114,11 +114,21 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             index
         }
         
+        // val blockEnd = config.blockEnd match {
+        //   case "" => Int.MaxValue
+        //   case "latest" => blockStart
+        //   case hex if hex.startsWith("0x") =>
+        //     java.lang.Long.parseLong(hex,16).toLong
+        //   case _ @ dec =>
+        //     dec.toLong
+        // }
         val blockEnd = config.blockEnd match {
-          case "" => Int.MaxValue
+          case "" => 
+            cursor.blockEnd
+            //Int.MaxValue
           case "latest" => blockStart
           case hex if hex.startsWith("0x") =>
-            java.lang.Long.parseLong(hex,16).toLong
+            java.lang.Long.parseLong(hex,16).toInt
           case _ @ dec =>
             dec.toLong
         }
@@ -128,19 +138,16 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
         log.info(s"cursor: ${cursor}")        
 
         val sourceTick = Source.tick(
-          FiniteDuration(10,TimeUnit.MILLISECONDS), 
-          //FiniteDuration(config.ingestCron.toLong,TimeUnit.SECONDS),
-          FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),
-          s"ingest-solana-${feed}"
+          FiniteDuration(10,TimeUnit.MILLISECONDS),          
+          FiniteDuration(config.throttle,TimeUnit.MILLISECONDS),          
+          s"${uri.uri}"
         )
                 
         // ------- Flow ------------------------------------------------------------------------------------
         val sourceFlow = sourceTick
           .map(h => {
             log.debug(s"Cron --> ${uri.uri}")
-
-            // request latest block to know where we are from current
-            val blockHex = "latest"
+            
             //val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id": 0}"""
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
             val json = """{"jsonrpc":"2.0","method":"getSlot","params":[{"commitment":"finalized"}],"id":1}"""
@@ -269,14 +276,6 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
           
       case _ => super.source(feed)
     }
-  }
-
-  def decodeSingle(rsp:String):Seq[String] = Seq(rsp)
-  def decodeBatch(rsp:String):Seq[String] = {
-    // ATTENTION !!!
-    // very inefficient, optimize with web3-proxy approach 
-    val jsonBatch = ujson.read(rsp)
-    jsonBatch.arr.map(a => a.toString()).toSeq
   }
 
 }
