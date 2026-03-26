@@ -63,7 +63,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   import SolanaRpcJson._
 
   val cursor = new CursorBlock("BLOCK-solana")(config)
-  implicit val uri = SolanaURI(config.feed,config.apiToken)
+  implicit val uri:SolanaURI = SolanaURI(config.feed,config.apiToken)
 
   val encoding = "jsonParsed"  
 
@@ -79,11 +79,12 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
         log.info(s"uri=${uri}")
         
-        val blockStr = config.block.split("://").toList match {
-          case "file" :: file :: Nil => cursor.setFile(file).read()
-          case "file" :: Nil => cursor.read()
-          case _ => config.block
-        }
+        val blockStr = setCursorBlock(cursor,(txs: Seq[String]) => throw new Exception("not implemented"))
+          // config.block.split("://").toList match {
+          //   case "file" :: file :: Nil => cursor.setFile(file).read()
+          //   case "file" :: Nil => cursor.read()
+          //   case _ => config.block
+          // }
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>

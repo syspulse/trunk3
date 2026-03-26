@@ -77,6 +77,8 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
   )
   extends PipelineIngestable[T,O,E,Alerts](config)(fmt, AlertJson.jf_alerts, parqEncoders0, parsResolver0, implicitly[ParquetRecordEncoder[Alerts]], implicitly[ParquetSchemaResolver[Alerts]]) {
     
+  private val log = Logger(getClass)
+ 
   override val retrySettings:Option[RestartSettings] = Some(RestartSettings(
     minBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
     maxBackoff = FiniteDuration(1000,TimeUnit.MILLISECONDS),
@@ -159,5 +161,53 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
   //   val s0 = sinking[io.hacken.ext.core.Events](config.alertOutput)
   //   f.to(s0)    
   // }
+
+  def setCursorBlock(cursor:CursorBlock,decodeBlocks:Seq[String] => Seq[Long]) = {
+    (config.block.split("://").toList match {
+      // start from latest and save to file
+      case "latest" :: file :: Nil => 
+        cursor.setFile(file).read()              
+        "latest"
+      case "last" :: file :: Nil => 
+        cursor.setFile(file).read()
+        "latest"
+      case "latest" :: Nil =>  // use default file
+        cursor.setFile("").read()              
+        "latest"
+
+      case "file" :: file :: Nil => cursor.setFile(file).read()
+      case "file" :: Nil => cursor.read()
+
+      case "list" :: file :: Nil => 
+        val data = os.read(os.Path(file,os.pwd))
+        val list = data.split("[\\n,]").filter(!_.isBlank).map(_.trim.toLong)
+        cursor.setList(list.toSeq)
+        list.head.toString
+
+      case "rpc" :: Nil =>         
+        // use this option with filter with transactions and find out all blocks for those transactions
+        val bb0 = decodeBlocks(config.filter)
+        if(bb0.size == 0) {
+          log.error(s"blocks not found: ${config.filter}")
+          sys.exit(3)
+        }
+        val bb = bb0.sorted.distinct
+        cursor.setList(bb)
+        bb.head.toString
+
+      // start block and save to file (10://file.txt)
+      case block :: file :: Nil => cursor.setFile(file).read(); 
+        block
+
+      case _ => 
+        // supports a list of blocks
+        val bb = config.block.split(",").map(_.trim.toLong).sorted.toSeq
+        
+        if(bb.size > 1) 
+          cursor.setList(bb)
+
+        bb.head.toString
+    })
+  }
 
 }

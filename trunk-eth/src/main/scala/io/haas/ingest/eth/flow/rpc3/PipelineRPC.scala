@@ -75,67 +75,66 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
   )
 
   val cursor = new CursorBlock()(config)
+  implicit val uri:RpcURI = EthURI(config.feed,config.apiToken)
   
   val reorg = config.reorgFlow match {
     case "reorg1" => new ReorgBlock1(config.blockReorg)
     case "reorg2" => new ReorgBlock2(config.blockReorg)
     case _ => new ReorgBlock2(config.blockReorg)
   }
-
-  implicit val uri:RpcURI = EthURI(config.feed,config.apiToken)
-      
+        
   // ----- Source ----------------------------------------------------------------------------------------------------------------
   override def source(feed:String) = {
     feed.split("://").toList match {
       case _ if(uri.uri != "")  =>         
         
-        val blockStr = 
-          (config.block.split("://").toList match {
-            // start from latest and save to file
-            case "latest" :: file :: Nil => 
-              cursor.setFile(file).read()              
-              "latest"
-            case "last" :: file :: Nil => 
-              cursor.setFile(file).read()
-              "latest"
-            case "latest" :: Nil =>  // use default file
-              cursor.setFile("").read()              
-              "latest"
+        val blockStr = setCursorBlock(cursor,(txs: Seq[String]) => decodeBlocks[Long](txs,tx => EthUtil.toLong(tx.blockNumber))(config,uri.uri))
+          // (config.block.split("://").toList match {
+          //   // start from latest and save to file
+          //   case "latest" :: file :: Nil => 
+          //     cursor.setFile(file).read()              
+          //     "latest"
+          //   case "last" :: file :: Nil => 
+          //     cursor.setFile(file).read()
+          //     "latest"
+          //   case "latest" :: Nil =>  // use default file
+          //     cursor.setFile("").read()              
+          //     "latest"
 
-            case "file" :: file :: Nil => cursor.setFile(file).read()
-            case "file" :: Nil => cursor.read()
+          //   case "file" :: file :: Nil => cursor.setFile(file).read()
+          //   case "file" :: Nil => cursor.read()
 
-            case "list" :: file :: Nil => 
-              val data = os.read(os.Path(file,os.pwd))
-              val list = data.split("[\\n,]").filter(!_.isBlank).map(_.trim.toLong)
-              cursor.setList(list.toSeq)
-              list.head.toString
+          //   case "list" :: file :: Nil => 
+          //     val data = os.read(os.Path(file,os.pwd))
+          //     val list = data.split("[\\n,]").filter(!_.isBlank).map(_.trim.toLong)
+          //     cursor.setList(list.toSeq)
+          //     list.head.toString
 
-            case "rpc" :: Nil => 
-              log.info(s"transactions=${config.filter} -> ${uri.uri}")
-              // use this option with filter with transactions and find out all blocks for those transactions
-              val bb0 = decodeBlocks[Long](config.filter,tx => EthUtil.toLong(tx.blockNumber))(config,uri.uri)
-              if(bb0.size == 0) {
-                log.error(s"blocks not found: ${config.filter}")
-                sys.exit(3)
-              }
-              val bb = bb0.sorted.distinct
-              cursor.setList(bb)
-              bb.head.toString
+          //   case "rpc" :: Nil => 
+          //     log.info(s"transactions=${config.filter} -> ${uri.uri}")
+          //     // use this option with filter with transactions and find out all blocks for those transactions
+          //     val bb0 = decodeBlocks[Long](config.filter,tx => EthUtil.toLong(tx.blockNumber))(config,uri.uri)
+          //     if(bb0.size == 0) {
+          //       log.error(s"blocks not found: ${config.filter}")
+          //       sys.exit(3)
+          //     }
+          //     val bb = bb0.sorted.distinct
+          //     cursor.setList(bb)
+          //     bb.head.toString
 
-            // start block and save to file (10://file.txt)
-            case block :: file :: Nil => cursor.setFile(file).read(); 
-              block
+          //   // start block and save to file (10://file.txt)
+          //   case block :: file :: Nil => cursor.setFile(file).read(); 
+          //     block
 
-            case _ => 
-              // supports a list of blocks
-              val bb = config.block.split(",").map(_.trim.toLong).sorted.toSeq
+          //   case _ => 
+          //     // supports a list of blocks
+          //     val bb = config.block.split(",").map(_.trim.toLong).sorted.toSeq
               
-              if(bb.size > 1) 
-                cursor.setList(bb)
+          //     if(bb.size > 1) 
+          //       cursor.setList(bb)
 
-              bb.head.toString
-          })
+          //     bb.head.toString
+          // })
 
 
         val blockStart = blockStr.strip match {
