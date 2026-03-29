@@ -33,7 +33,7 @@ import io.haas.ingest.eth.TransactionJson
 import io.haas.ingest.eth.TransactionJson._
 import io.haas.ingest.eth._
 import io.haas.ingest.Config
-import io.haas.ingest.eth.EthEtlJson._
+import EthEtlJson._
 import io.haas.ingest.PipelineIngest
 
 abstract class PipelineETLTransaction[E <: skel.Ingestable](config:Config)

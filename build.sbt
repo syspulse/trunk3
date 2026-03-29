@@ -258,10 +258,10 @@ lazy val root = (project in file("."))
     // trunk_vechain,``
     // trunk_stellar,
     // trunk_stark,
-    // trunk_solana,
     trunk_intercept,
     trunk_ingest,
-    trunk_bitcoin
+    trunk_bitcoin,
+    trunk_solana,
   )
   .dependsOn(
     trunk_core,
@@ -271,10 +271,10 @@ lazy val root = (project in file("."))
     // trunk_vechain,
     // trunk_stellar,
     // trunk_stark,
-    // trunk_solana,
     trunk_intercept,
     trunk_ingest,
     trunk_bitcoin,
+    trunk_solana,
   )
   .disablePlugins(sbtassembly.AssemblyPlugin) // this is needed to prevent generating useless assembly and merge error
   .settings(

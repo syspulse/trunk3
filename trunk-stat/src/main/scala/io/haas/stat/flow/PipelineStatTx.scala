@@ -29,8 +29,8 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 
 import java.util.concurrent.TimeUnit
 
-import io.haas.ingest.eth.etl.TxJson
-import io.haas.ingest.eth.etl.Tx
+import io.haas.ingest.eth.flow.etl.EtlJson
+import io.haas.ingest.eth.flow.etl.Tx
 
 import io.haas.ingest.PipelineIngest
 

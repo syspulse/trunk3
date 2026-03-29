@@ -32,8 +32,8 @@ import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.eth._
 
-import io.haas.ingest.eth.Event
-import io.haas.ingest.eth.EventJson._
+import io.haas.ingest.eth.Log
+import io.haas.ingest.eth.LogJson._
 
 import io.haas.ingest.Config
 import io.haas.ingest.eth.flow.rpc3._
@@ -61,10 +61,10 @@ abstract class PipelineRpcEvent[E <: skel.Ingestable](config:Config)
   }
 }
 
-class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
+class PipelineEvent(config:Config) extends PipelineRpcEvent[Log](config) {
   import io.haas.ingest.eth.flow.rpc3.EthRpcJson._
   
-  def transform(block: RpcBlock): Seq[Event] = {
+  def transform(block: RpcBlock): Seq[Log] = {
     val b = block.result.get
 
     val ts = EthUtil.toLong(b.timestamp)
@@ -80,7 +80,7 @@ class PipelineEvent(config:Config) extends PipelineRpcEvent[Event](config) {
       val logs = receipt.logs
       
       logs.map( log => {
-        Event(
+        Log(
           ts = ts * 1000L,
           blk = block_number,
           con = formatAddr(receipt.contractAddress.getOrElse(""),config.formatAddr),

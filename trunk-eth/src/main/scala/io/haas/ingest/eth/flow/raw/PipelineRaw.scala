@@ -33,7 +33,7 @@ import io.haas.ingest.eth.TransactionJson
 import io.haas.ingest.eth.TransactionJson._
 import io.haas.ingest.eth._
 import io.haas.ingest.Config
-import io.haas.ingest.eth.EthEtlJson._
+import io.haas.ingest.eth.flow.etl.EthEtlJson._
 import io.haas.ingest.PipelineIngest
 
 case class Textline(txt:String) extends skel.Ingestable {

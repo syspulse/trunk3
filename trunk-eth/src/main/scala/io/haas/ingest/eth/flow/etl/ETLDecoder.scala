@@ -19,11 +19,9 @@ import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.eth._
 
-import io.haas.ingest.eth.EthEtlJson
-import io.haas.ingest.eth.{EthBlock,EthTransaction,EthTokenTransfer,EthLog,EthTx}
 import io.haas.ingest.Decoder
 import io.haas.ingest.eth.BlockJson
-import io.haas.ingest.eth.EventJson
+import io.haas.ingest.eth.LogJson
 import io.haas.ingest.eth.TokenTransferJson
 import io.haas.ingest.eth.TxJson
 
@@ -35,7 +33,7 @@ trait ETLDecoder[T] extends Decoder[T,EthBlock,EthTransaction,EthTokenTransfer,E
   import TxJson._
   import BlockJson._
   import TokenTransferJson._
-  import EventJson._
+  import LogJson._
 
   def parseBlock(data:String):Seq[EthBlock] = {
     if(data.isEmpty()) return Seq()

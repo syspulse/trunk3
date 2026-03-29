@@ -31,7 +31,7 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 import io.haas.ingest.bitcoin.flow.rpc.RpcBlock
 import io.haas.ingest.bitcoin.flow.rpc.RpcJsonProtocol._
 import io.haas.ingest.bitcoin.{Tx, Block}
-import io.haas.ingest.ext.{TxExt, BlockExt, LogExt}
+import io.haas.ingest.ext
 import io.haas.ingest.ext.IngestExtJson._
 import io.haas.ingest.bitcoin.BitcoinJson._
 
@@ -39,13 +39,13 @@ import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.Config
 
-class PipelineTxExt(config:Config) extends PipelineRpcTx[TxExt](config) {
+class PipelineTxExt(config:Config) extends PipelineRpcTx[ext.Tx](config) {
 
-  def transform(block: RpcBlock): Seq[TxExt] = {
+  def transform(block: RpcBlock): Seq[ext.Tx] = {
     
     transformTx(block).map(tx => {
       // Convert bitcoin Block to BlockExt
-      val blockExt = BlockExt(
+      val blockExt = ext.Block(
         number = tx.block.i,
         hash = tx.block.hash,
         parent_hash = tx.block.phash,
@@ -67,7 +67,7 @@ class PipelineTxExt(config:Config) extends PipelineRpcTx[TxExt](config) {
         base_fee_per_gas = None
       )
       
-      TxExt(
+      ext.Tx(
         hash = tx.hash,
         nonce = BigInt(0), // Bitcoin doesn't have nonce in the same way
         transaction_index = tx.i.map(_.toInt).getOrElse(0),
@@ -87,7 +87,7 @@ class PipelineTxExt(config:Config) extends PipelineRpcTx[TxExt](config) {
         receipt_status = None,
         receipt_effective_gas_price = None,
         block = blockExt,
-        logs = Array.empty[LogExt], // Bitcoin doesn't have logs
+        logs = Array.empty[ext.Log], // Bitcoin doesn't have logs
         sim = None
       )
     })

@@ -32,10 +32,9 @@ import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.Config
 
-import io.haas.ingest.eth.etl.Tx
-import io.haas.ingest.eth.etl.Block
-import io.haas.ingest.eth.etl.LogTx
-import io.haas.ingest.eth.etl.TxJson._
+
+import io.haas.ingest.eth.flow.etl.{Tx,Block,Log}
+import io.haas.ingest.eth.flow.etl.EtlJson._
 
 import io.haas.ingest.eth.flow.rpc3._
 import io.haas.ingest.eth.flow.rpc3.EthRpcJson
@@ -195,7 +194,7 @@ class PipelineTxETL(config:Config) extends PipelineRpcTxETL[Tx](config) {
         block = block,
 
         logs = logs.map( r => {
-          new LogTx(
+          new Log(
             EthUtil.toLong(r.logIndex).toInt,
             formatAddr(r.address,config.formatAddr),
             r.data,

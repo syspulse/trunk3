@@ -1,4 +1,4 @@
-package io.haas.ingest.eth
+package io.haas.ingest.eth.flow.etl
 
 import com.typesafe.scalalogging.Logger
 

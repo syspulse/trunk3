@@ -2,7 +2,7 @@ package io.haas.ingest.ext
 
 import io.syspulse.skel.Ingestable
 
-case class BlockExt(  
+case class Block(  
   number:Long,
   hash:String,
   parent_hash:String,
@@ -23,6 +23,6 @@ case class BlockExt(
   transaction_count:Long,
   base_fee_per_gas:Option[Long],
 
-) extends Ingestable {
-  override def getKey:Option[Any] = Some(number)
+) extends BlockLike with Ingestable {
+  override def getKey:Option[Any] = Some(number)  
 }

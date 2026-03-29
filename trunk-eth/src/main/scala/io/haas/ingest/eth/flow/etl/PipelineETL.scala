@@ -33,7 +33,8 @@ import DefaultJsonProtocol._
 import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.eth._
-import io.haas.ingest.eth.EthEtlJson._
+import EthEtlJson._
+
 
 trait PipelineETL[E] extends ETLDecoder[E] {
 

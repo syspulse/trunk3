@@ -33,7 +33,7 @@ import io.haas.ingest.eth._
 import io.haas.ingest.eth.TxJson
 import io.haas.ingest.eth.TxJson._
 import io.haas.ingest.Config
-import io.haas.ingest.eth.EthEtlJson._
+import EthEtlJson._
 import io.haas.ingest.PipelineIngest
 
 abstract class PipelineETLTx[E <: skel.Ingestable](config:Config)
@@ -94,7 +94,7 @@ abstract class PipelineETLTx[E <: skel.Ingestable](config:Config)
       tx.block.base_fee_per_gas,
     ),
     
-    logs = tx.logs.map(e => EventTx(
+    logs = tx.logs.map(e => LogTx(
       e.index,
       e.address, 
       e.data,

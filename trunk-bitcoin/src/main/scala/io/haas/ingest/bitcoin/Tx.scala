@@ -2,6 +2,7 @@ package io.haas.ingest.bitcoin
 
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
+import io.haas.ingest.ext.TxLike
 
 case class Tx(  
   ts:Long,          // timestamp (millisec)
@@ -23,8 +24,17 @@ case class Tx(
   
   i:Option[Long] = None,  // transaction index in Block
 
-) extends Ingestable {
+) extends Ingestable with TxLike {
   override def getKey:Option[Any] = Some(hash)
+  
+  override def timestamp:Long = ts
+  override def index:Long = i.getOrElse(0L)
+  override def block_number:Long = block.i
+  override def transaction_count:Long = block.n
+  override def sim:Option[String] = None
+  override def emptyBlock[B](): B = {
+    block.copy(tx = Some(Array.empty[Transaction])).asInstanceOf[B]
+  }
 
   override def toString = Util.toStringWithArray(this)
 }

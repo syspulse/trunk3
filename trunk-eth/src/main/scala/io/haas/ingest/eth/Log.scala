@@ -3,7 +3,7 @@ package io.haas.ingest.eth
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 
-case class Event(
+case class Log(
   ts:Long,
   blk:Long,
   con:String,
@@ -20,7 +20,7 @@ case class Event(
 }
 
 // used only in Fat Tx
-case class EventTx(
+case class LogTx(
   i:Int,         // log index
   contract:String,
   data:String,  

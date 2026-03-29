@@ -14,6 +14,14 @@ import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Flow
+import akka.actor.typed.ActorSystem
+import akka.stream.RestartSettings
+import scala.util.control.NoStackTrace
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.RestartSource
+import akka.stream.Attributes
+
+import requests.Response
 
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
@@ -43,16 +51,10 @@ import io.haas.ingest.solana
 
 import io.haas.ingest.Config
 
-import akka.actor.typed.ActorSystem
-import akka.stream.RestartSettings
-import scala.util.control.NoStackTrace
-import requests.Response
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.RestartSource
-
 import io.haas.core.RetryException
 import io.haas.ingest.CursorBlock
-import akka.stream.Attributes
+
+import io.haas.ingest.solana.{TokBal,TokUI}
 
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
@@ -278,4 +280,28 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
     }
   }
 
+  protected def accountPubKeys(keys: Array[JsValue]): Array[String] = {
+    keys.map {
+      case JsString(s) => s
+      case JsObject(fields) =>
+        fields.get("pubkey") match {
+          case Some(JsString(s)) => s
+          case _ => JsObject(fields).compactPrint
+        }
+      case other => other.compactPrint
+    }
+  }
+
+  protected def toTokBal(tb: RpcPostTokenBalance): TokBal =
+    TokBal(
+      i = tb.accountIndex,
+      pid = tb.programId,
+      ui = TokUI(
+        v = BigInt(tb.uiTokenAmount.amount),
+        dec = tb.uiTokenAmount.decimals,
+        // RpcUiTokenAmount.uiAmount is Double in the RPC model; keep it optional in domain.
+        vu = Some(tb.uiTokenAmount.uiAmount),
+        vs = Option(tb.uiTokenAmount.uiAmountString)
+      )
+    )
 }

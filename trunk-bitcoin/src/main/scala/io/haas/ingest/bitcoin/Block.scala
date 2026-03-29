@@ -2,6 +2,7 @@ package io.haas.ingest.bitcoin
 
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
+import io.haas.ingest.ext.BlockLike
 
 case class Block(
   ts:Long,       // timestamp
@@ -25,8 +26,8 @@ case class Block(
   
   tx:Option[Array[Transaction]] = None, // transactions  
 
-) extends Ingestable {
+) extends Ingestable with BlockLike {
   override def getKey:Option[Any] = Some(i)
-
+  override def number:Long = i  
   override def toString = Util.toStringWithArray(this)
 }

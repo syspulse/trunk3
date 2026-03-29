@@ -141,7 +141,7 @@ class PipelineTx(config:Config) extends PipelineRpcTx[Tx](config) {
         block = block,
 
         logs = logs.map( r => {
-          EventTx(
+          LogTx(
             EthUtil.toLong(r.logIndex).toInt,
             formatAddr(r.address,config.formatAddr),
             r.data,

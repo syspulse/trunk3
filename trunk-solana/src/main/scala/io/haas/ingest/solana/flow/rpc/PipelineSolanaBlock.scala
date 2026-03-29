@@ -46,7 +46,7 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 // import ParqTransaction._ 
 // import ParqBlock._
 
-// import io.syspulse.skel.serde.Parq._
+import io.syspulse.skel.serde.Parq._
 
 abstract class PipelineSolanaBlock[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 

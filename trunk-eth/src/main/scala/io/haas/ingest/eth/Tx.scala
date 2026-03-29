@@ -30,7 +30,7 @@ case class Tx(
   p0: Option[BigInt],       // price Effective
 
   block:Block,
-  logs: Array[EventTx],
+  logs: Array[LogTx],
 
   sim:Option[String] = None, // sim
 

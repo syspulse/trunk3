@@ -9,5 +9,5 @@ import io.syspulse.skel.util.Util
 
 object EthUtil {
   
-  def decodeERC20Transfer(e:etl.LogTx) = io.syspulse.skel.blockchain.eth.EthUtil.decodeERC20Transfer(e.data,e.topics)    
+  def decodeERC20Transfer(e:flow.etl.Log) = io.syspulse.skel.blockchain.eth.EthUtil.decodeERC20Transfer(e.data,e.topics)
 }

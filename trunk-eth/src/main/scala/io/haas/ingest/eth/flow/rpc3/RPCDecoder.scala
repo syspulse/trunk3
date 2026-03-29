@@ -38,7 +38,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
   import TxJson._
   import BlockJson._
   import TokenTransferJson._
-  import EventJson._
+  import LogJson._
     
   def parseBlock(data:String):Seq[RpcBlock] = {
     if(data.isEmpty()) return Seq()
@@ -713,7 +713,7 @@ trait RPCDecoder[T] extends Decoder[T,RpcBlock,RpcTx,RpcTokenTransfer,RpcLog,Rpc
         receipt.map(_.effectiveGasPrice.map(r => EthUtil.toBigInt(r))).flatten, //tx.receipt_effective_gas_price
 
         logs = Some(logs.map( r => {
-          EventTx(
+          LogTx(
             EthUtil.toLong(r.logIndex).toInt,
             formatAddr(r.address,config.formatAddr),
             r.data,

@@ -22,20 +22,22 @@ import io.syspulse.skel.serde.ParqIgnore
 import io.syspulse.skel.serde.Parq._
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
+// object ParqRpcInstructionTx extends ParqIgnore[RpcInstruction]
+// import ParqRpcInstructionTx._
+
 import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.Config
 
 import io.haas.ingest.solana.Block
-import io.haas.ingest.solana.Transaction
+import io.haas.ingest.solana.Tx
 import io.haas.ingest.solana.{TokBal,TokUI}
 import io.haas.ingest.solana.SolanaJson._
 
 import io.haas.ingest.solana.flow.rpc._
 import io.haas.ingest.solana.flow.rpc.SolanaRpcJson._
 
-
-abstract class PipelineSolanaTransaction[E <: skel.Ingestable](config:Config)
+abstract class PipelineSolanaTx[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineSolana[RpcBlock,RpcBlock,E](config) {
     
@@ -62,17 +64,14 @@ abstract class PipelineSolanaTransaction[E <: skel.Ingestable](config:Config)
 
 }
 
-class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Transaction](config) {    
-
-  def transform(block: RpcBlock): Seq[Transaction] = {
+class PipelineTx(config:Config) extends PipelineSolanaTx[Tx](config) {    
+  
+  def transform(block: RpcBlock): Seq[Tx] = {
     var i = 0L
         
     val txx = block.transactions.map(tx => {
-
-      val t = Transaction(
-        ts = Some(block.blockTime * 1000L),
-        b = Some(block.parentSlot + 1),
-        h = Some(block.blockHeight),
+      
+      val t = Tx(        
 
         acc = accountPubKeys(tx.transaction.message.accountKeys),
         unts = tx.meta.computeUnitsConsumed,
@@ -104,6 +103,15 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
         },
 
         i = Some(i),
+
+        block = Block(
+          ts = block.blockTime * 1000L,
+          b = block.parentSlot + 1,
+          h = block.blockHeight,
+          hash = block.blockhash,
+          phash = block.previousBlockhash,
+          tx = None
+        ),
       )
 
       i = i + 1
@@ -114,7 +122,7 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
     // commit cursor
     cursor.commit(block.parentSlot + 1)
 
-    log.debug(s"Block[${block.parentSlot+1},${block.transactions.size},${txx.size}]")
+    //log.debug(s"Block[${block.parentSlot+1},${block.transactions.size},${txx.size}]")
 
     ArraySeq.unsafeWrapArray(txx)
   }    

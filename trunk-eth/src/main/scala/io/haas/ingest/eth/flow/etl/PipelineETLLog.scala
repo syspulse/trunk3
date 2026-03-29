@@ -31,19 +31,19 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.eth._
-import io.haas.ingest.eth.EthEtlJson._
+import EthEtlJson._
 import java.util.concurrent.atomic.AtomicLong
 
 
-import io.haas.ingest.eth.EventJson
-import io.haas.ingest.eth.EventJson._
+import io.haas.ingest.eth.LogJson
+import io.haas.ingest.eth.LogJson._
 import io.haas.ingest.Config
 import io.haas.ingest.eth._
-import io.haas.ingest.eth.EthEtlJson._
+import EthEtlJson._
 import io.haas.ingest.PipelineIngest
 
 abstract class PipelineETLLog[E <: skel.Ingestable](config:Config)(implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
-  PipelineIngest[EthLog,Event,E](config) with PipelineETL[E] {
+  PipelineIngest[EthLog,Log,E](config) with PipelineETL[E] {
     
   def apiSuffix():String = s"/log"
   
@@ -54,7 +54,7 @@ abstract class PipelineETLLog[E <: skel.Ingestable](config:Config)(implicit val 
     d
   }
 
-  def convert(e:EthLog):Event = Event(
+  def convert(e:EthLog):Log = Log(
     e.block_timestamp * 1000L, 
     e.block_number, 
     e.address, 
@@ -67,8 +67,8 @@ abstract class PipelineETLLog[E <: skel.Ingestable](config:Config)(implicit val 
 
 }
 
-class PipelineLog(config:Config) extends PipelineETLLog[Event](config) {
+class PipelineLog(config:Config) extends PipelineETLLog[Log](config) {
 
-  def transform(e: Event): Seq[Event] = Seq(e)
+  def transform(l: Log): Seq[Log] = Seq(l)
 }
 

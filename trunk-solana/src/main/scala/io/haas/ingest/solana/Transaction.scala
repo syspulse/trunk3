@@ -6,7 +6,7 @@ import io.haas.ingest.solana.flow.rpc.RpcInstruction
 
 // Compact token balance representation for Transaction meta fields
 case class TokUI(
-  v: String,                 // amount
+  v: BigInt,                 // amount
   dec: Int,                  // decimals
   vu: Option[Double] = None, // uiAmount (nullable in RPC)
   vs: Option[String] = None, // uiAmountString

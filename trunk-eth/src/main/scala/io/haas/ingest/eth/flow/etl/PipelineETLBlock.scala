@@ -32,9 +32,8 @@ import io.haas.ingest.eth.BlockJson
 import io.haas.ingest.eth.BlockJson._
 import io.haas.ingest.Config
 import io.haas.ingest.eth._
-import io.haas.ingest.eth.EthEtlJson._
+import EthEtlJson._
 import io.haas.ingest.PipelineIngest
-
 
 abstract class PipelineETLBlock[E <: skel.Ingestable](config:Config)(implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineIngest[EthBlock,Block,E](config) with PipelineETL[E]{

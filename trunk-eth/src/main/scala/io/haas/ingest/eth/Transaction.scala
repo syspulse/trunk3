@@ -30,7 +30,7 @@ case class Transaction(
   st: Option[Int],          // status
   p0: Option[BigInt],       // price Effective
 
-  logs: Option[Array[EventTx]] = None
+  logs: Option[Array[LogTx]] = None
 
   //timestamp:Option[Long]
 ) extends Ingestable {

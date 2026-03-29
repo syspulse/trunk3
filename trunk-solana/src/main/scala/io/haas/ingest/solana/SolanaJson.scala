@@ -15,7 +15,9 @@ object SolanaJson extends DefaultJsonProtocol with NullOptions
 
   implicit val jf_tok_ui: RootJsonFormat[TokUI] = jsonFormat4(TokUI)
   implicit val jf_tok_bal: RootJsonFormat[TokBal] = jsonFormat3(TokBal)
-
+  
   implicit val jf_strk_tr: RootJsonFormat[Transaction] = jsonFormat19(Transaction)
   implicit val jf_strk_block: RootJsonFormat[Block] = jsonFormat6(Block)
+
+  implicit val jf_sol_tx: RootJsonFormat[Tx] = jsonFormat17(Tx)
 }

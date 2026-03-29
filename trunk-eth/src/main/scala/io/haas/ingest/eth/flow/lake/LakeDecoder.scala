@@ -22,14 +22,14 @@ import java.util.concurrent.TimeUnit
 import io.haas.ingest.Decoder
 import io.haas.ingest.eth._
 
-trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx] {
+trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Log,Tx] {
 
   val log = Logger(s"${this}")
   
   import BlockJson._
   import TransactionJson._
   import TokenTransferJson._
-  import EventJson._
+  import LogJson._
   import TxJson._
 
   def parseBlock(data:String):Seq[Block] = {
@@ -219,15 +219,15 @@ trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx]
   }
 
   
-  def parseEventLog(data:String):Seq[Event] = {
+  def parseEventLog(data:String):Seq[Log] = {
     if(data.isEmpty()) return Seq()
 
     try {
       // check it is JSON
       if(data.stripLeading().startsWith("{")) {
-        val tt = data.parseJson.convertTo[Event]
+        val ll = data.parseJson.convertTo[Log]
         
-        Seq(tt)
+        Seq(ll)
 
       } else {
         // log_index,transaction_hash,transaction_index,block_hash,block_number,block_timestamp,address,data,topics
@@ -244,7 +244,7 @@ trait LakeDecoder[T] extends Decoder[T,Block,Transaction,TokenTransfer,Event,Tx]
                 val ts = block_timestamp.trim.toLong
                 //latestTs.set(ts * 1000L)
 
-                Seq(Event(
+                Seq(Log(
                   ts,
                   block_number.toLong,                  
                   address,

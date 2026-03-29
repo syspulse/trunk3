@@ -8,6 +8,6 @@ import spray.json._
 import DefaultJsonProtocol._
 
 object TransactionJson extends DefaultJsonProtocol {
-  import EventJson._
+  import LogJson._
   implicit val jf_transaction = jsonFormat21(Transaction.apply _)
 }

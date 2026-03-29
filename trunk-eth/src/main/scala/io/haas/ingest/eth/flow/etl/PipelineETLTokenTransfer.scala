@@ -38,7 +38,7 @@ import io.haas.ingest.eth.TokenTransferJson
 import io.haas.ingest.eth.TokenTransferJson._
 import io.haas.ingest.eth._
 import io.haas.ingest.Config
-import io.haas.ingest.eth.EthEtlJson._
+import EthEtlJson._
 import io.haas.ingest.PipelineIngest
 
 abstract class PipelineETLTokenTransfer[E <: skel.Ingestable](config:Config)

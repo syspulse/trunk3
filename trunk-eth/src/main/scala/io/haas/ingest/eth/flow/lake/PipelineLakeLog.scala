@@ -30,31 +30,31 @@ import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaRes
 import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.eth._
-import io.haas.ingest.eth.EventJson
-import io.haas.ingest.eth.EventJson._
+import io.haas.ingest.eth.LogJson
+import io.haas.ingest.eth.LogJson._
 import io.haas.ingest.Config
-import io.haas.ingest.eth.EthEtlJson._
+import io.haas.ingest.eth.flow.etl.EthEtlJson._
 import io.haas.ingest.PipelineIngest
 
 abstract class PipelineLakeEvent[E <: skel.Ingestable](config:Config)
                                                       (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
-  PipelineIngest[Event,Event,E](config) with PipelineLake[E] {
+  PipelineIngest[Log,Log,E](config) with PipelineLake[E] {
   
   def apiSuffix():String = s"/tx"
 
-  def parse(data:String):Seq[Event] = {
+  def parse(data:String):Seq[Log] = {
     val d = parseEventLog(data)
     if(d.size!=0)
       latestTs.set(d.last.ts)
     d
   }
 
-  def convert(tx:Event):Event = tx
+  def convert(l:Log):Log = l
 
 }
 
 class PipelineEvent(config:Config) 
-  extends PipelineLakeEvent[Event](config) {
+  extends PipelineLakeEvent[Log](config) {
 
-  def transform(tx: Event): Seq[Event] = Seq(tx)
+  def transform(l: Log): Seq[Log] = Seq(l)
 }
