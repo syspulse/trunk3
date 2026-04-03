@@ -248,6 +248,32 @@ class SolanaRpcParsingSpec extends AnyWordSpec with Matchers {
       i2.parsed.map(_.`type`) shouldBe Some("transfer")
       i2.parsed.flatMap(_.info).map(_.fields.get("source")) shouldBe Some(Some(JsString(source)))
     }
+
+    "populate innerInstructions into Transaction.ins (SOL-410702214-jsonparsed)" in {
+      val text = scala.io.Source.fromResource("SOL-410702214-jsonparsed.json").mkString
+      val blockResult = text.parseJson.convertTo[RpcBlockResult]
+
+      val config = Config(feed = "https://rpc.test", output = "null://")
+      val pipeline = new PipelineTransaction(config)
+
+      val rpcBlock = blockResult.result.get
+      val txs = pipeline.transform(rpcBlock)
+
+      // Ensure we have at least one tx with inner instructions in the fixture.
+      val pairs = rpcBlock.transactions.zip(txs)
+      pairs.exists { case (rpcTx, _) =>
+        rpcTx.meta.innerInstructions.exists(_.exists(_.instructions.nonEmpty))
+      } shouldBe true
+
+      // For any tx where innerInstructions exist, we expect ins to include both outer + inner.
+      pairs.foreach { case (rpcTx, tx) =>
+        val outer = rpcTx.transaction.message.instructions.length
+        val inner = rpcTx.meta.innerInstructions.toSeq.flatten.map(_.instructions.length).sum
+        if (inner > 0) {
+          tx.ins.length shouldBe (outer + inner)
+        }
+      }
+    }
   }
 }
 

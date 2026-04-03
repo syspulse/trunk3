@@ -3,7 +3,7 @@ package io.haas.ingest.solana
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
 import io.haas.ingest.solana.flow.rpc.RpcInstruction
-import io.haas.ingest.ext.TxLike
+import io.haas.ingest.ext.{BlockLike,TxLike}
 
 case class Tx(  
   
@@ -30,6 +30,7 @@ case class Tx(
   block:Block,               // block
   
 ) extends Ingestable with TxLike {
+
   override def getKey:Option[Any] = Some(sig)
   override def hash:String = sig
   override def timestamp:Long = block.ts
@@ -37,10 +38,9 @@ case class Tx(
   override def block_number:Long = block.b
   override def transaction_count:Long = block.tx.map(_.size.toLong).getOrElse(0L)
   override def sim:Option[String] = None
-  override def emptyBlock[B](): B = {
-    block.copy(tx = Some(Array.empty[Transaction])).asInstanceOf[B]
-  }
-    
+  override def getBlock[B <: BlockLike]():Option[B] = Some(block.asInstanceOf[B])
+  override def emptyBlock[B <: BlockLike]():Option[B] = Some(block.emptyBlock().asInstanceOf[B])
+
   override def toString = Util.toStringWithArray(this)
 }
 

@@ -147,7 +147,7 @@ case class RpcUiTokenAmount(
 )
 
 case class RpcPostTokenBalance(
-  accountIndex: Long,
+  accountIndex: Int,
   mint: String,
   owner: String,
   programId: String,

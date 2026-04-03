@@ -302,6 +302,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
         // RpcUiTokenAmount.uiAmount is Double in the RPC model; keep it optional in domain.
         vu = Some(tb.uiTokenAmount.uiAmount),
         vs = Option(tb.uiTokenAmount.uiAmountString)
-      )
+      ),
+      mint = tb.mint,
+      own = tb.owner
     )
 }

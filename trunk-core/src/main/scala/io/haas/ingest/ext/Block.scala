@@ -23,6 +23,12 @@ case class Block(
   transaction_count:Long,
   base_fee_per_gas:Option[Long],
 
+  tx:Option[Seq[Tx]] = None,
+
 ) extends BlockLike with Ingestable {
-  override def getKey:Option[Any] = Some(number)  
+  override def getKey:Option[Any] = Some(number)
+  
+  //override def getTx() = tx
+
+  override def emptyBlock() = this.copy(tx = None)
 }

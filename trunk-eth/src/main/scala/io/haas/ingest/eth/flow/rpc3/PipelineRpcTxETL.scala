@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.Config
 
-
 import io.haas.ingest.eth.flow.etl.{Tx,Block,Log}
 import io.haas.ingest.eth.flow.etl.EtlJson._
 
@@ -40,13 +39,42 @@ import io.haas.ingest.eth.flow.rpc3._
 import io.haas.ingest.eth.flow.rpc3.EthRpcJson
 import io.syspulse.skel.blockchain.eth.EthUtil
 
+// disable Parquet4s recursion
+object ParqTxIgnore extends skel.serde.ParqIgnore[Tx] 
+import ParqTxIgnore._
+
+// object ParqTx { 
+//   import com.github.mjakubowski84.parquet4s._
+//   import org.apache.parquet.schema._
+  
+//   implicit val abstactSerClassTypeCodec: OptionalValueCodec[Tx] = new OptionalValueCodec[Tx] {
+//     override protected def decodeNonNull(value: Value, configuration: ValueCodecConfiguration): Tx =
+//       value match {
+//           case BinaryValue(binary) => null
+//       }
+
+//     override protected def encodeNonNull(data: Tx, configuration: ValueCodecConfiguration): Value = {
+//       BinaryValue(data.toString.getBytes())
+//     }
+//   }
+
+//   implicit val abstractSerClassSchema: TypedSchemaDef[Tx] = SchemaDef
+//       .primitive(
+//         primitiveType         = PrimitiveType.PrimitiveTypeName.BINARY,
+//         logicalTypeAnnotation = Option(LogicalTypeAnnotation.stringType())
+//       )
+//       .typed[Tx]
+// }
+
+// import ParqTx._
+
 // ====================================================================================================
 // ATTENTION !
 // 
 // This is a special Pipeline to be compatible with legacy ethereum-etl output fot tx (Fat Transaction)
 // ====================================================================================================
 abstract class PipelineRpcTxETL[E <: skel.Ingestable](config:Config)
-                                                  (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
+  (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineRPC[RpcBlock,RpcBlock,E](config) {
   
   def apiSuffix():String = s"/tx.etl"

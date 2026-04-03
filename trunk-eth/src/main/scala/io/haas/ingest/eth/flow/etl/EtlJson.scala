@@ -15,7 +15,7 @@ import io.haas.ingest.ext.IngestExtJson
 import io.haas.ingest.ext.{Block, Log, Tx}
 
 object EtlJson extends DefaultJsonProtocol { //JsonCommon {
-  implicit val jf_etl_block = jsonFormat19(Block.apply _)  
-  implicit val jf_etl_logtx = jsonFormat4(Log.apply _)  
-  implicit val jf_etl_tx = jsonFormat21(Tx.apply _)    
+  implicit val jf_etl_block: RootJsonFormat[Block] = jsonFormat20(Block)  
+  implicit val jf_etl_logtx: RootJsonFormat[Log] = jsonFormat4(Log)  
+  implicit val jf_etl_tx: RootJsonFormat[Tx] = jsonFormat21(Tx)    
 }

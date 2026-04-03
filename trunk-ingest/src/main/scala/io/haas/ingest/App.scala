@@ -232,15 +232,15 @@ object App extends skel.Server {
             Some(new eth.flow.raw.PipelineRaw(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
 
           // ethereum_etl compatible input !
-          case "block.etl" =>
+          case "block.ethereum_etl" =>
             Some(new eth.flow.etl.PipelineBlock(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))
-          case "transaction.etl" =>
+          case "transaction.ethereum_etl" =>
             Some(new eth.flow.etl.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTx,config.output)))          
-          case "transfer.etl" | "token.etl" =>
+          case "transfer.ethereum_etl" | "token.ethereum_etl" =>
             Some(new eth.flow.etl.PipelineTokenTransfer(orf(config,config.feedTransfer,config.feed,config.outputTransfer,config.output)))
-          case "log.etl" | "event.etl" => 
+          case "log.ethereum_etl" | "event.ethereum_etl" => 
             Some(new eth.flow.etl.PipelineLog(orf(config,config.feedLog,config.feed,config.outputLog,config.output)))
-          case "tx.etl" =>
+          case "tx.ethereum_etl" =>
             Some(new eth.flow.etl.PipelineTx(orf(config,config.feedTx,config.feed,config.outputTx,config.output)))
           
           // Lake format
@@ -302,6 +302,10 @@ object App extends skel.Server {
             Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           case "transaction.solana" =>
             Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "tx" if config.feed.startsWith(solana.SolanaURI.PREFIX) =>
+            Some(new solana.flow.rpc.PipelineTransaction(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
+          case "tx.solana" =>
+            Some(new solana.flow.rpc.PipelineTx(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           
           case "ws.mempool" => 
             Some(new eth.flow.rpc3.PipelineWsMempoolTx(orf(config,config.feedMempool,config.feed,config.outputMempool,config.output)))
@@ -328,7 +332,6 @@ object App extends skel.Server {
             import io.haas.ingest.bitcoin.flow.rpc.RpcJsonProtocol._            
             Some(new bitcoin.flow.rpc.PipelineRpcBlockMini(orf(config,config.feedBlock,config.feed,config.outputBlock,config.output)))            
 
-
           // Standard Web3 RPC 
           case "block" | "block.eth" =>
             if(config.feed.startsWith("ws://") || config.feed.startsWith("wss://"))
@@ -344,7 +347,7 @@ object App extends skel.Server {
             Some(new eth.flow.rpc3.PipelineEvent(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
           case "transfer" | "token" | "transafer.eth" | "token.eth" =>
             Some(new eth.flow.rpc3.PipelineTokenTransfer(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
-          case "tx.extractor" =>
+          case "tx.extractor" | "tx.ethereum" | "tx.etl" =>
             Some(new eth.flow.rpc3.PipelineTxETL(orf(config,config.feedTransaction,config.feed,config.outputTransaction,config.output)))
 
           // Ethereum mempool

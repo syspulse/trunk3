@@ -7,11 +7,10 @@ import spray.json.{DefaultJsonProtocol,NullOptions}
 
 import io.syspulse.skel.service.JsonCommon
 
-object BitcoinJson extends DefaultJsonProtocol //with JsonCommon  
-{
+object BitcoinJson extends JsonCommon with NullOptions {  
   import DefaultJsonProtocol._
   
-  implicit val jf_btc_trx = jsonFormat13(Transaction)
-  implicit val jf_btc_block = jsonFormat18(Block)  
-  implicit val jf_btc_tx = jsonFormat14(Tx)   
+  implicit val jf_btc_trx: RootJsonFormat[Transaction] = jsonFormat13(Transaction)  
+  implicit val jf_btc_block: RootJsonFormat[Block] = jsonFormat18(Block)  
+  implicit val jf_btc_tx: RootJsonFormat[Tx] = jsonFormat14(Tx)
 }

@@ -93,7 +93,7 @@ abstract class RpcURI(uri0:String) {
 
 case class EvmURI(ethUri:String,apiSuffix:String="",apiToken:String="") extends RpcURI(ethUri) {
 
-  override def getMainnet():String = "https://eth.llamarpc.com"
+  override def getMainnet():String = "https://ethereum-rpc.publicnode.com"
   override def getTestnet():String = "https://ethereum-sepolia-rpc.publicnode.com"
   override def getMainnetPrefix():String = "eth"
   override def getTestnetPrefix():String = "sepolia"

@@ -1,8 +1,9 @@
 package io.haas.ingest.bitcoin
 
+import scala.collection.immutable.ArraySeq
 import io.syspulse.skel.Ingestable
 import io.syspulse.skel.util.Util
-import io.haas.ingest.ext.BlockLike
+import io.haas.ingest.ext.{BlockLike,TxLike}
 
 case class Block(
   ts:Long,       // timestamp
@@ -24,10 +25,13 @@ case class Block(
   sz: Int,                   // Block size
   w: Int,                   // Block weight
   
-  tx:Option[Array[Transaction]] = None, // transactions  
+  tx:Option[Array[Tx]] = None, // transactions  
 
 ) extends Ingestable with BlockLike {
   override def getKey:Option[Any] = Some(i)
   override def number:Long = i  
+  //override def getTx():Option[Seq[Tx]] = tx.map(ArraySeq.unsafeWrapArray(_))
+  override def emptyBlock() = this.copy(tx = None)
+
   override def toString = Util.toStringWithArray(this)
 }

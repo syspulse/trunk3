@@ -40,3 +40,17 @@ Free subscription does not support RPC batches
 ```
 ./run-trunk.sh -e transaction.solana -f "https://mainnet.helius-rpc.com/?api-key=$HELIUS_API_KEY" --block.limit=1 --batch=1 --throttle=10000
 ```
+
+## Raw 
+
+```
+./sol-block.sh 407647907 jsonParsed >SOL-407647907-jsonparsed.json
+```
+
+## Fails
+
+```
+failed to transform: RpcBlock(388902501,1775239344,JDnXuu6JXmjhdUwzLBkawhYaG1vac56ArfQDVyhRzrjJ,410802496,G1nW7gG
+LWjyMqauZWLJ2obQXK8RyofwttJ7zWbpdV8ks,[Lio.haas.ingest.solana.flow.rpc.RpcTransaction;@23db843f)
+[E] java.lang.NumberFormatException: For input string: "18446247074340918157"
+```

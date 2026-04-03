@@ -37,6 +37,9 @@ import io.haas.ingest.solana.SolanaJson._
 import io.haas.ingest.solana.flow.rpc._
 import io.haas.ingest.solana.flow.rpc.SolanaRpcJson._
 
+object ParqTxIgnore extends skel.serde.ParqIgnore[Tx] 
+import ParqTxIgnore._
+
 abstract class PipelineSolanaTx[E <: skel.Ingestable](config:Config)
                                                      (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineSolana[RpcBlock,RpcBlock,E](config) {
@@ -71,6 +74,12 @@ class PipelineTx(config:Config) extends PipelineSolanaTx[Tx](config) {
         
     val txx = block.transactions.map(tx => {
       
+      val innerIns: Array[RpcInstruction] =
+        tx.meta.innerInstructions
+          .getOrElse(Array.empty)
+          .sortBy(_.index)
+          .flatMap(_.instructions)
+
       val t = Tx(        
 
         acc = accountPubKeys(tx.transaction.message.accountKeys),
@@ -87,7 +96,7 @@ class PipelineTx(config:Config) extends PipelineSolanaTx[Tx](config) {
         bal0 = Some(tx.meta.preBalances),
         tok0 = Some(tx.meta.postTokenBalances.map(toTokBal)),
         tok1 = Some(tx.meta.preTokenBalances.map(toTokBal)),
-        ins = tx.transaction.message.instructions,
+        ins = tx.transaction.message.instructions ++ innerIns,
         logs = tx.meta.logMessages.getOrElse(Array.empty[String]),
 
         // One Solana transaction object with its canonical (first) signature.

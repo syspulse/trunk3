@@ -13,9 +13,11 @@ case class TokUI(
 )
 
 case class TokBal(
-  i: Long,          // accountIndex
+  i: Int,          // accountIndex
   pid: String,      // programId
   ui: TokUI,        // uiTokenAmount
+  mint: String,     // mint address
+  own: String
 )
 
 case class Transaction(  
@@ -45,13 +47,14 @@ case class Transaction(
   
 ) extends Ingestable {
   override def getKey:Option[Any] = Some(sig)
+  
 
   override def toString = Util.toStringWithArray(this)
 }
 
 
 // ======================================================
-// ATTENTION: This code kills the compiler (It hangs!)
+// ATTENTION: This Parquet4s code kills the compiler (It hangs!)
 // ======================================================
 // object Transaction {
 //   /** Parquet4s encodes [[Block]] field `tx` via shapeless; nested [[Transaction]] / [[RpcInstruction]] is not supported.
