@@ -125,7 +125,7 @@ case class RpcReward(
 //   "Ok": null
 // }
 
-case class RpcErr(
+case class RpcInstructionError(
   `InstructionError`:Option[JsArray]
 )
 
@@ -240,6 +240,18 @@ case class RpcBlockResult(
   id: JsValue
 )
 
+
+//{"error":{"code":-32009,"message":"text"},"id":413393588,"jsonrpc":"2.0"}
+case class RpcErrorErr(
+  code: Int,
+  message: String
+)
+
+case class RpcError(
+  error: RpcErrorErr,
+  id: JsValue,
+  jsonrpc: String
+)
 
 // ========================================================================================
 // Parq ingorers for nested types

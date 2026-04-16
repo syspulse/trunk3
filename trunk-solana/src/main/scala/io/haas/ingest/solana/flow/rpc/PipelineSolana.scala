@@ -1,5 +1,7 @@
 package io.haas.ingest.solana.flow.rpc
 
+import scala.util.{Success,Failure,Try}
+
 import java.util.concurrent.atomic.AtomicLong
 import io.syspulse.skel.ingest.flow.Flows
 
@@ -254,20 +256,29 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             batch
               .filter(b => 
                 // process reorgs here
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // Solana may skip block (slots)
                 //reorgFlow(b)
                 true
               )
           })
           .throttle(1,FiniteDuration(config.blockThrottle,TimeUnit.MILLISECONDS)) // throttle fast range group           
-          .map(b => {
+          .filter(b => {
             if(b.contains(""""error":{"code":""")) {
-              log.warn(s"${b}")
-              throw new RetryException("")
 
+              decodeError(b) match {
+                case Success(err) if isMissing(err) =>
+                  log.warn(s"Block[${err.id}]: missing")
+                  // conitnue with next block
+                  false
+                  
+                case _ =>
+                  log.warn(s"Error: ${b}")
+                  throw new RetryException("")
+              }
             } else
-              ByteString(b)
+              true
           })
+          .map(b => ByteString(b))
         
         val sourceRestart = RestartSource.onFailuresWithBackoff(retrySettings.get) { () =>
           log.info(s"connect -> ${uri.uri}")
@@ -278,6 +289,15 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
           
       case _ => super.source(feed)
     }
+  }
+
+  def decodeError(b:String):Try[RpcError] = {
+    Try(b.parseJson.convertTo[RpcError])
+  }
+
+  // """{"error":{"code":-32009,"message":"Slot 413393588 was skipped, or missing in long-term storage"},"id":413393588,"jsonrpc":"2.0"}"""
+  def isMissing(err:RpcError):Boolean = {    
+    err.error.code == -32009    
   }
 
   protected def accountPubKeys(keys: Array[JsValue]): Array[String] = {

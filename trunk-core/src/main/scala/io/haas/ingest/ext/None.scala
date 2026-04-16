@@ -41,9 +41,3 @@ class BlockNone extends BlockLike {
 }
 
 class MempoolNone
-
-package object ext {
-  type Tx0 = TxNone
-  type Block0 = BlockNone
-  type Mempool0 = MempoolNone
-}

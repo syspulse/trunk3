@@ -127,7 +127,7 @@ object SolanaRpcJson extends JsonCommon {
   implicit val jf_rpc_ui = jsonFormat4(RpcUiTokenAmount)
   implicit val jf_rpc_tok_bal = jsonFormat5(RpcPostTokenBalance)
 
-  implicit val jf_rpc_err = jsonFormat1(RpcErr)
+  implicit val jf_rpc_inst_err = jsonFormat1(RpcInstructionError)
 
   implicit val jf_rpc_meta = jsonFormat13(RpcMeta)
 
@@ -141,4 +141,6 @@ object SolanaRpcJson extends JsonCommon {
 
   implicit val jf_rpc_blk_res = jsonFormat3(RpcBlockResult)   
   
+  implicit val jf_rpc_err_err = jsonFormat2(RpcErrorErr)
+  implicit val jf_rpc_err = jsonFormat3(RpcError)
 }

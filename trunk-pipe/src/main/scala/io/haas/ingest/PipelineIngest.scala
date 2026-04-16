@@ -215,8 +215,16 @@ abstract class PipelineIngest[T,O <: skel.Ingestable,E <: skel.Ingestable]
   def decodeBatch(rsp:String):Seq[String] = {
     // ATTENTION !!!
     // very inefficient, optimize with web3-proxy approach 
-    val jsonBatch = ujson.read(rsp)
-    jsonBatch.arr.map(a => a.toString()).toSeq
-  }
+    // val jsonBatch = ujson.read(rsp)
+    // jsonBatch.arr.map(a => a.toString()).toSeq
 
+    // Batch JSON-RPC responses are arrays; unwrap to per-item JSON strings.
+    // Fast path avoids re-stringifying whole response and is allocation-light.    
+    rsp.parseJson match {
+      case JsArray(elements) =>
+        elements.iterator.map(_.compactPrint).toVector        
+      case _ =>
+        Seq(rsp)
+    }
+  }
 }
