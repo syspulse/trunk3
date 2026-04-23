@@ -25,8 +25,7 @@ case class Transaction(
   b:Option[Long],           // block number (parent slot - 1)   
   h:Option[Long],           // block height  
   
-  acc:Array[String],        // account key
-  unts:Long,                // consumed units (legacy)
+  acc:Array[String],        // account key  
   fee:Long,                 // fee (lamports)
   err:Option[String] = None,// error (stringified json if present)
   used:Long = 0L,           // computeUnitsConsumed

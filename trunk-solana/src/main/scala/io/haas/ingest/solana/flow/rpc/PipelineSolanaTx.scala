@@ -80,10 +80,9 @@ class PipelineTx(config:Config) extends PipelineSolanaTx[Tx](config) {
           .sortBy(_.index)
           .flatMap(_.instructions)
 
-      val t = Tx(        
+      val t = Tx(
 
         acc = accountPubKeys(tx.transaction.message.accountKeys),
-        unts = tx.meta.computeUnitsConsumed,
         fee = tx.meta.fee,
         err = tx.meta.err match {
           case None => None

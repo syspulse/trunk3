@@ -80,7 +80,6 @@ class PipelineTransaction(config:Config) extends PipelineSolanaTransaction[Trans
         h = Some(block.blockHeight),
 
         acc = accountPubKeys(tx.transaction.message.accountKeys),
-        unts = tx.meta.computeUnitsConsumed,
         fee = tx.meta.fee,
         err = tx.meta.err match {
           case None => None

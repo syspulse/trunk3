@@ -6,9 +6,7 @@ import io.haas.ingest.solana.flow.rpc.RpcInstruction
 import io.haas.ingest.ext.{BlockLike,TxLike}
 
 case class Tx(  
-  
-  acc:Array[String],        // account key
-  unts:Long,                // consumed units (legacy)
+  acc:Array[String],        // account key  
   fee:Long,                 // fee (lamports)
   err:Option[String] = None,// error (stringified json if present)
   used:Long = 0L,           // computeUnitsConsumed
