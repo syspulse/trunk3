@@ -137,7 +137,7 @@ object SolanaRpcJson extends JsonCommon {
 
   implicit val jf_rpc_tx_tx = jsonFormat2(RpcTransactionTx) 
   implicit val jf_rpc_tx = jsonFormat3(RpcTransaction) 
-  implicit val jf_rpc_blk = jsonFormat6(RpcBlock)   
+  implicit val jf_rpc_blk = jsonFormat7(RpcBlock)   
 
   implicit val jf_rpc_blk_res = jsonFormat3(RpcBlockResult)   
   

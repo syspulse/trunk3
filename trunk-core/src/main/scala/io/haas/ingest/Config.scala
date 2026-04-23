@@ -79,6 +79,7 @@ case class Config(
   reorgFile:String = "",  // file to dump reorgs log
 
   sim:Option[String] = None, // simulation mode with specifi target (cid:1245 / addr:0x0001 / did:88764). Used by Ext/Sentinel
+  options:Map[String,String] = Map(),
 
   compression:String = "gzip", // compression for RPC requests
 

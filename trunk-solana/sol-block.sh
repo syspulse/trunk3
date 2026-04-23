@@ -1,7 +1,7 @@
 BLOCK=${1:-408538997}
 ENCODING=${2:-json}
 TRANSACTION_DETAILS=${3:-full}
-REWARDS=${4:-false}
+REWARDS=${4:-true}
 MAX_TX_VERSION=${5:-0}
 
 curl https://api.mainnet-beta.solana.com \

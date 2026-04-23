@@ -5,6 +5,14 @@ import io.syspulse.skel.util.Util
 import io.haas.ingest.ext.{BlockLike,TxLike}
 import scala.collection.immutable.ArraySeq
 
+case class Reward(
+  c:Option[Long], // commission
+  v:Long,         // value (lamports)
+  b1:Long,        // postBalance
+  pk:String,      // pubkey
+  typ:String,     // reward type
+)
+
 case class Block(
   ts:Long,      // timestamp
   b:Long,       // block number (parent slot - 1)    
@@ -14,6 +22,7 @@ case class Block(
   phash:String, // parent hash  
 
   tx:Option[Array[Tx]], // transactions  
+  rw:Option[Array[Reward]] = None, // rewards  
 
 ) extends Ingestable with BlockLike {
   override def getKey:Option[Any] = Some(b)

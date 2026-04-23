@@ -61,7 +61,7 @@ import io.haas.ingest.solana.{TokBal,TokUI}
 // ATTENTION !!!
 // throttle is overriden in Config to support batchable retries !
 abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](config:Config)
-                                                                       (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
+  (implicit fmt:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E])
   extends PipelineIngest[T,O,E](config.copy(throttle = 0L))(fmt,parqEncoders,parsResolver) with SolanaDecoder[E] {
   
   import SolanaRpcJson._
@@ -69,7 +69,11 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   val cursor = new CursorBlock("BLOCK-solana")(config)
   implicit val uri:SolanaURI = SolanaURI(config.feed,config.apiToken)
 
-  val encoding = "jsonParsed"  
+  val encoding = config.options.getOrElse("encoding","jsonParsed")
+  val rewards = config.options.getOrElse("rewards","false").toBoolean
+  val commitment = config.options.getOrElse("commitment","finalized")
+  val maxSupportedTransactionVersion = config.options.getOrElse("maxSupportedTransactionVersion","0").toInt
+  val transactionDetails = config.options.getOrElse("transactionDetails","full")
 
   private val rpcHeaders: Map[String, String] = Map(
     "content-type" -> "application/json",
@@ -92,7 +96,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>
-            val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id":1}"""
+            val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"${commitment}"}],"id":1}"""
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
             log.debug(s"${json} -> ${uri.uri}")
             
@@ -154,7 +158,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             
             //val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"finalized"}],"id": 0}"""
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
-            val json = """{"jsonrpc":"2.0","method":"getSlot","params":[{"commitment":"finalized"}],"id":1}"""
+            val json = s"""{"jsonrpc":"2.0","method":"getSlot","params":[{"commitment":"${commitment}"}],"id":1}"""
             log.debug(s"${json} -> ${uri.uri}")
             val rsp = requests.post(uri.uri, data = json, headers = rpcHeaders)
             
@@ -219,7 +223,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
               .takeRight(if(config.blockLimit > 0) config.blockLimit else blocks.size)
               .map(block => {              
                 // ATTENTION: block is slot !!!
-                s"""{ "jsonrpc":"2.0","method":"getBlock", "params":[${block},{"encoding":"${encoding}","maxSupportedTransactionVersion":0,"transactionDetails":"full","rewards":false }], "id":${block} }"""
+                s"""{ "jsonrpc":"2.0","method":"getBlock", "params":[${block},{"encoding":"${encoding}","maxSupportedTransactionVersion":${maxSupportedTransactionVersion},"transactionDetails":"${transactionDetails}","rewards":${rewards} }], "id":${block} }"""
               })
             
                         

@@ -71,7 +71,7 @@ object App extends skel.Server {
         // ArgString('_', "abi",s"directory with ABI jsons (format: NAME-0xaddress.json) (def=${d.abi}"),
 
         ArgString('d', "datastore",s"datastore dir (def: ${d.datastore})"),
-        ArgString('d', "datastore.intercept",s"Intercept datastore dir (def: ${d.datastoreIntercept})"),
+        ArgString('_', "datastore.intercept",s"Intercept datastore dir (def: ${d.datastoreIntercept})"),
 
         ArgLong('_', "block.throttle",s"Throttle between block batches (e.g. (def: ${d.blockThrottle}))"),
         ArgString('_', "block",s"Ingest from this block [<number>,latest,list://,file://,rpc] (def: ${d.block})"),
@@ -103,7 +103,8 @@ object App extends skel.Server {
         ArgString('_', "reorg.file",s"Reorg file (def: ${d.reorgFile})"),
 
         ArgString('_', "sim",s"Simulation mode (def: ${d.sim})"),
-        
+        ArgString('_', "options",s"Options (def: ${d.options})"),
+
         ArgParam("<params>",""),
 
         ArgCmd("server",s"Server"),
@@ -182,8 +183,9 @@ object App extends skel.Server {
       reorgFile = c.getString("reorg.file").getOrElse(d.reorgFile),
 
       sim = c.getSmartString("sim"),
+      options = c.getMap("options",d.options),
       
-      cmd = c.getCmd().getOrElse(d.cmd),      
+      cmd = c.getCmd().getOrElse(d.cmd),
       params = c.getParams(),
     )
 

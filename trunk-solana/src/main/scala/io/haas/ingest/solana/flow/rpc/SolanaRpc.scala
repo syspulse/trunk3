@@ -231,6 +231,7 @@ case class RpcBlock(
   previousBlockhash: String,
   
   transactions: Array[RpcTransaction],  
+  rewards: Option[Array[RpcReward]],
   
 ) extends Ingestable
 

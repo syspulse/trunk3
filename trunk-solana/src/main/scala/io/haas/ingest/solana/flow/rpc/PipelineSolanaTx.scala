@@ -22,9 +22,6 @@ import io.syspulse.skel.serde.ParqIgnore
 import io.syspulse.skel.serde.Parq._
 import com.github.mjakubowski84.parquet4s.{ParquetRecordEncoder,ParquetSchemaResolver}
 
-// object ParqRpcInstructionTx extends ParqIgnore[RpcInstruction]
-// import ParqRpcInstructionTx._
-
 import java.util.concurrent.TimeUnit
 
 import io.haas.ingest.Config

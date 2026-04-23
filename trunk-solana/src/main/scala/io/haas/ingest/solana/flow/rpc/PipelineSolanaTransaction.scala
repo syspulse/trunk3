@@ -34,6 +34,9 @@ import io.haas.ingest.solana.SolanaJson._
 import io.haas.ingest.solana.flow.rpc._
 import io.haas.ingest.solana.flow.rpc.SolanaRpcJson._
 
+object ParqTransactionIgnore extends skel.serde.ParqIgnore[Transaction] 
+import ParqTransactionIgnore._
+
 abstract class PipelineSolanaTransaction[E <: skel.Ingestable](config:Config)
   (implicit val fmtE:JsonFormat[E],parqEncoders:ParquetRecordEncoder[E],parsResolver:ParquetSchemaResolver[E]) extends 
   PipelineSolana[RpcBlock,RpcBlock,E](config) {
