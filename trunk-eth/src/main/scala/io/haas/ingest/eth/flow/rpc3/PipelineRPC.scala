@@ -89,53 +89,6 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
       case _ if(uri.uri != "")  =>         
         
         val blockStr = setCursorBlock(cursor,(txs: Seq[String]) => decodeBlocks[Long](txs,tx => EthUtil.toLong(tx.blockNumber))(config,uri.uri))
-          // (config.block.split("://").toList match {
-          //   // start from latest and save to file
-          //   case "latest" :: file :: Nil => 
-          //     cursor.setFile(file).read()              
-          //     "latest"
-          //   case "last" :: file :: Nil => 
-          //     cursor.setFile(file).read()
-          //     "latest"
-          //   case "latest" :: Nil =>  // use default file
-          //     cursor.setFile("").read()              
-          //     "latest"
-
-          //   case "file" :: file :: Nil => cursor.setFile(file).read()
-          //   case "file" :: Nil => cursor.read()
-
-          //   case "list" :: file :: Nil => 
-          //     val data = os.read(os.Path(file,os.pwd))
-          //     val list = data.split("[\\n,]").filter(!_.isBlank).map(_.trim.toLong)
-          //     cursor.setList(list.toSeq)
-          //     list.head.toString
-
-          //   case "rpc" :: Nil => 
-          //     log.info(s"transactions=${config.filter} -> ${uri.uri}")
-          //     // use this option with filter with transactions and find out all blocks for those transactions
-          //     val bb0 = decodeBlocks[Long](config.filter,tx => EthUtil.toLong(tx.blockNumber))(config,uri.uri)
-          //     if(bb0.size == 0) {
-          //       log.error(s"blocks not found: ${config.filter}")
-          //       sys.exit(3)
-          //     }
-          //     val bb = bb0.sorted.distinct
-          //     cursor.setList(bb)
-          //     bb.head.toString
-
-          //   // start block and save to file (10://file.txt)
-          //   case block :: file :: Nil => cursor.setFile(file).read(); 
-          //     block
-
-          //   case _ => 
-          //     // supports a list of blocks
-          //     val bb = config.block.split(",").map(_.trim.toLong).sorted.toSeq
-              
-          //     if(bb.size > 1) 
-          //       cursor.setList(bb)
-
-          //     bb.head.toString
-          // })
-
 
         val blockStart = blockStr.strip match {
           case "latest" =>
@@ -150,7 +103,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
                   Some(requests.post(uri.uri, data = json,headers = rpcHeaders))
                 } catch {
                   case e:Exception => 
-                    log.error(s"request latest block failed -> ${uri.uri}",e)
+                    log.error(s"failed to request latest block: ${uri.uri}",e)
                     Thread.sleep(config.throttle)
                     None
                 }              
@@ -169,7 +122,7 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
 
                 } catch {
                   case e:Exception =>
-                    log.error(s"failed to get block: ${body}",e)
+                    log.error(s"failed to decode block: ${body}",e)
                     sys.exit(3)
                     0
                 }
@@ -218,11 +171,12 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
         // ------- Flow ------------------------------------------------------------------------------------
         val sourceFlow = 
           sourceTick
-          .map(h => {
-            log.debug(s"Cron --> ${h}")
+          .map(h => {            
 
             // request latest block to know where we are from current            
             val json = s"""{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id": 0}"""
+
+            log.debug(s"Cron: ${h}: ${json} -> ${uri.uri}")
 
             val rsp = requests.post(uri.uri, data = json,headers = Map("content-type" -> "application/json"))
             val body = rsp.text()            
@@ -237,7 +191,13 @@ abstract class PipelineRPC[T,O <: skel.Ingestable,E <: skel.Ingestable]
             }
             
             val r = ujson.read(body)
-            val lastBlock = java.lang.Long.decode(r.obj("result").str).toLong
+            val lastBlock = try {
+              java.lang.Long.decode(r.obj("result").str).toLong
+            } catch {
+              case e:Exception =>
+                log.error(s"Failed to decode last block: '${body}': ${e.getMessage}")
+                throw e
+            }
             
             val currentBlock = cursor.get()
             log.info(s"Cursor: last=${lastBlock}, current=${currentBlock}, distance=${lastBlock - currentBlock}, lag=${config.blockLag}, reorg=${config.blockReorg}")

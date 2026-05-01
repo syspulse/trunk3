@@ -70,7 +70,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
   implicit val uri:SolanaURI = SolanaURI(config.feed,config.apiToken)
 
   val encoding = config.options.getOrElse("encoding","jsonParsed")
-  val rewards = config.options.getOrElse("rewards","false").toBoolean
+  val rewards = config.options.getOrElse("rewards","true").toBoolean
   val commitment = config.options.getOrElse("commitment","finalized")
   val maxSupportedTransactionVersion = config.options.getOrElse("maxSupportedTransactionVersion","0").toInt
   val transactionDetails = config.options.getOrElse("transactionDetails","full")
@@ -88,16 +88,12 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
         log.info(s"uri=${uri}")
         
         val blockStr = setCursorBlock(cursor,(txs: Seq[String]) => throw new Exception("not implemented"))
-          // config.block.split("://").toList match {
-          //   case "file" :: file :: Nil => cursor.setFile(file).read()
-          //   case "file" :: Nil => cursor.read()
-          //   case _ => config.block
-          // }
 
         val blockStart:Long = blockStr.strip match {
           case "latest" =>
-            val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"${commitment}"}],"id":1}"""
+            //val json = s"""{"jsonrpc":"2.0","method":"getLatestBlockhash","params":[{"commitment":"${commitment}"}],"id":1}"""
             //val json = s"""{"jsonrpc":"2.0","method":"getBlockHeight","id":1}"""
+            val json = s"""{"jsonrpc":"2.0","method":"getSlot","params":[{"commitment":"${commitment}"}],"id":1}"""
             log.debug(s"${json} -> ${uri.uri}")
             
             val rsp = requests.post(uri.uri,
@@ -111,8 +107,8 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             } else {
               val r = ujson.read(rsp.text())
               //r.obj("result").obj("context").obj("lastValidBlockHeight").num.toLong
-              r.obj("result").obj("context").obj("slot").num.toLong
-              //r.obj("result").num.toLong
+              //r.obj("result").obj("context").obj("slot").num.toLong
+              r.obj("result").num.toLong
             }
           case hex if hex.startsWith("0x") =>
             val index = java.lang.Long.parseLong(hex.drop(2),16).toLong
@@ -121,15 +117,7 @@ abstract class PipelineSolana[T,O <: skel.Ingestable,E <: skel.Ingestable](confi
             val index = dec.toLong
             index
         }
-        
-        // val blockEnd = config.blockEnd match {
-        //   case "" => Int.MaxValue
-        //   case "latest" => blockStart
-        //   case hex if hex.startsWith("0x") =>
-        //     java.lang.Long.parseLong(hex,16).toLong
-        //   case _ @ dec =>
-        //     dec.toLong
-        // }
+                
         val blockEnd = config.blockEnd match {
           case "" => 
             cursor.blockEnd

@@ -17,9 +17,16 @@ Streaming Web3 RPC ingestion engine
 
 ## Docker
 
-Build must be done in [trunk-ingest](trunk-ingest)
+Docker Build must be done for [trunk-ingest](trunk-ingest)
 
 ```sbt trunk_ingest/docker:publishLocal```
+
+Publishing must be done from `root`:
+
+```
+VERSION=0.20.0 REPO=haas ../skel/tools/docker-push.sh aws
+```
+
 
 ## Sources
 

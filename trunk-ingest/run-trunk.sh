@@ -1,6 +1,8 @@
 #!/bin/bash                                                                                                                                                                                            
 CWD=`echo $(dirname $(readlink -f $0))`
 #cd $CWD
+export APP_EXEC=${APP_EXEC:-bloop}
+
 export APP_HOME=$CWD
 
 #t=`pwd`;
